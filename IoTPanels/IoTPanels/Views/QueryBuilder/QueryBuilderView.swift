@@ -45,6 +45,7 @@ struct QueryBuilderView: View {
     @State private var availableFields: [String] = []
     @State private var selectedFields: Set<String> = []
     @State private var isLoadingFields = false
+    @State private var fieldsLoadedForMeasurement = ""
 
     // Tags
     @State private var availableTagKeys: [String] = []
@@ -52,6 +53,7 @@ struct QueryBuilderView: View {
     @State private var selectedTagValues: [String: Set<String>] = [:]
     @State private var expandedTag: String?
     @State private var isLoadingTags = false
+    @State private var tagsLoadedForMeasurement = ""
 
     // Time & Aggregation
     @State private var timeRange: TimeRange = .oneHour
@@ -217,15 +219,26 @@ struct QueryBuilderView: View {
 
         switch step {
         case .measurement:
-            withAnimation { step = next }
-            if availableFields.isEmpty {
+            if fieldsLoadedForMeasurement != selectedMeasurement {
+                selectedFields = []
+                availableFields = []
+                availableTagKeys = []
+                tagValues = [:]
+                selectedTagValues = [:]
+                expandedTag = nil
+                tagsLoadedForMeasurement = ""
                 loadFields(measurement: selectedMeasurement)
             }
-        case .fields:
             withAnimation { step = next }
-            if availableTagKeys.isEmpty {
+        case .fields:
+            if tagsLoadedForMeasurement != selectedMeasurement {
+                availableTagKeys = []
+                tagValues = [:]
+                selectedTagValues = [:]
+                expandedTag = nil
                 loadTagKeys(measurement: selectedMeasurement)
             }
+            withAnimation { step = next }
         case .filters:
             withAnimation { step = next }
         case .timeAggregation:
@@ -472,6 +485,7 @@ struct QueryBuilderView: View {
                 let result = try await service.fetchFieldKeys(measurement: measurement)
                 await MainActor.run {
                     availableFields = result
+                    fieldsLoadedForMeasurement = measurement
                     isLoadingFields = false
                 }
             } catch {
@@ -491,6 +505,7 @@ struct QueryBuilderView: View {
                 let result = try await service.fetchTagKeys(measurement: measurement)
                 await MainActor.run {
                     availableTagKeys = result
+                    tagsLoadedForMeasurement = measurement
                     isLoadingTags = false
                 }
             } catch {
@@ -603,6 +618,7 @@ struct QueryBuilderView: View {
         target.modifiedAt = Date()
 
         try? viewContext.save()
+        WidgetHelper.reloadWidgets()
         dismiss()
     }
 

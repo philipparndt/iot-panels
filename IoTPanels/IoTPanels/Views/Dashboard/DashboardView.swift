@@ -26,6 +26,7 @@ struct DashboardView: View {
                                     withAnimation {
                                         viewContext.delete(panel)
                                         try? viewContext.save()
+                                        WidgetHelper.reloadWidgets()
                                     }
                                 } label: {
                                     Label("Remove", systemImage: "trash")

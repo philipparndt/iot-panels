@@ -85,6 +85,7 @@ struct AddPanelView: View {
 
         dashboard.modifiedAt = Date()
         try? viewContext.save()
+        WidgetHelper.reloadWidgets()
         dismiss()
     }
 }
