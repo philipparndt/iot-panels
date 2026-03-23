@@ -24,5 +24,22 @@
         <attribute name="tagFiltersJSON" optional="YES" attributeType="String"/>
         <attribute name="timeRange" optional="YES" attributeType="String"/>
         <relationship name="dataSource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DataSource" inverseName="savedQueries" inverseEntity="DataSource"/>
+        <relationship name="panels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="DashboardPanel" inverseName="savedQuery" inverseEntity="DashboardPanel"/>
+    </entity>
+    <entity name="Dashboard" representedClassName="Dashboard" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="panels" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DashboardPanel" inverseName="dashboard" inverseEntity="DashboardPanel"/>
+    </entity>
+    <entity name="DashboardPanel" representedClassName="DashboardPanel" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="sortOrder" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="dashboard" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dashboard" inverseName="panels" inverseEntity="Dashboard"/>
+        <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="panels" inverseEntity="SavedQuery"/>
     </entity>
 </model>

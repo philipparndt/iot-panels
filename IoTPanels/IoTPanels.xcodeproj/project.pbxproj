@@ -23,6 +23,11 @@
 		B10000040000000000000004 /* QueryResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000040000000000000004 /* QueryResultTableView.swift */; };
 		B10000050000000000000005 /* SavedQueryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000050000000000000005 /* SavedQueryListView.swift */; };
 		B10000060000000000000006 /* SavedQueryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000060000000000000006 /* SavedQueryDetailView.swift */; };
+		C10000010000000000000001 /* Dashboard+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000010000000000000001 /* Dashboard+Wrapped.swift */; };
+		C10000020000000000000002 /* DashboardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000020000000000000002 /* DashboardListView.swift */; };
+		C10000030000000000000003 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000030000000000000003 /* DashboardView.swift */; };
+		C10000040000000000000004 /* AddPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000040000000000000004 /* AddPanelView.swift */; };
+		C10000050000000000000005 /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
 		A1000011000000000000000B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B /* Preview Assets.xcassets */; };
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
@@ -56,6 +61,11 @@
 		B20000040000000000000004 /* QueryResultTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryResultTableView.swift; sourceTree = "<group>"; };
 		B20000050000000000000005 /* SavedQueryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryListView.swift; sourceTree = "<group>"; };
 		B20000060000000000000006 /* SavedQueryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryDetailView.swift; sourceTree = "<group>"; };
+		C20000010000000000000001 /* Dashboard+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dashboard+Wrapped.swift"; sourceTree = "<group>"; };
+		C20000020000000000000002 /* DashboardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardListView.swift; sourceTree = "<group>"; };
+		C20000030000000000000003 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		C20000040000000000000004 /* AddPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPanelView.swift; sourceTree = "<group>"; };
+		C20000050000000000000005 /* PanelCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelCardView.swift; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000011000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
@@ -117,6 +127,7 @@
 				A20000040000000000000004 /* DataSource+Wrapped.swift */,
 				B20000010000000000000001 /* TimeRange.swift */,
 				B20000020000000000000002 /* SavedQuery+Wrapped.swift */,
+				C20000010000000000000001 /* Dashboard+Wrapped.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -136,6 +147,7 @@
 				A20000070000000000000007 /* ContentView.swift */,
 				A70000060000000000000006 /* DataSource */,
 				B70000010000000000000001 /* QueryBuilder */,
+				C70000010000000000000001 /* Dashboard */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -148,6 +160,17 @@
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
 			);
 			path = DataSource;
+			sourceTree = "<group>";
+		};
+		C70000010000000000000001 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				C20000020000000000000002 /* DashboardListView.swift */,
+				C20000030000000000000003 /* DashboardView.swift */,
+				C20000040000000000000004 /* AddPanelView.swift */,
+				C20000050000000000000005 /* PanelCardView.swift */,
+			);
+			path = Dashboard;
 			sourceTree = "<group>";
 		};
 		B70000010000000000000001 /* QueryBuilder */ = {
@@ -294,6 +317,11 @@
 				B10000040000000000000004 /* QueryResultTableView.swift in Sources */,
 				B10000050000000000000005 /* SavedQueryListView.swift in Sources */,
 				B10000060000000000000006 /* SavedQueryDetailView.swift in Sources */,
+				C10000010000000000000001 /* Dashboard+Wrapped.swift in Sources */,
+				C10000020000000000000002 /* DashboardListView.swift in Sources */,
+				C10000030000000000000003 /* DashboardView.swift in Sources */,
+				C10000040000000000000004 /* AddPanelView.swift in Sources */,
+				C10000050000000000000005 /* PanelCardView.swift in Sources */,
 				A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
