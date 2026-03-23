@@ -10,5 +10,19 @@
         <attribute name="organization" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>
         <attribute name="url" optional="YES" attributeType="String"/>
+        <relationship name="savedQueries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="SavedQuery" inverseName="dataSource" inverseEntity="SavedQuery"/>
+    </entity>
+    <entity name="SavedQuery" representedClassName="SavedQuery" syncable="YES" codeGenerationType="class">
+        <attribute name="aggregateFunction" optional="YES" attributeType="String"/>
+        <attribute name="aggregateWindow" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="fieldsJSON" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="measurement" optional="YES" attributeType="String"/>
+        <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="tagFiltersJSON" optional="YES" attributeType="String"/>
+        <attribute name="timeRange" optional="YES" attributeType="String"/>
+        <relationship name="dataSource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DataSource" inverseName="savedQueries" inverseEntity="DataSource"/>
     </entity>
 </model>

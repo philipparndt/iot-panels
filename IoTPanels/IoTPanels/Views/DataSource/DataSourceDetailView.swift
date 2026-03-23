@@ -68,6 +68,16 @@ struct DataSourceDetailView: View {
                 }
             }
 
+            if isEditing, let dataSource {
+                Section {
+                    NavigationLink {
+                        SavedQueryListView(dataSource: dataSource)
+                    } label: {
+                        Label("Queries", systemImage: "magnifyingglass")
+                    }
+                }
+            }
+
             Section {
                 Button(action: testConnection) {
                     if isTesting {

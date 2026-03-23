@@ -60,7 +60,8 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
     }
 
     func query(_ queryString: String) async throws -> QueryResult {
-        let endpoint = "\(url)/api/v2/query?org=\(organization)"
+        let encodedOrg = organization.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? organization
+        let endpoint = "\(url)/api/v2/query?org=\(encodedOrg)"
         guard let requestUrl = URL(string: endpoint) else {
             throw InfluxError.invalidURL
         }
@@ -86,8 +87,54 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
         return parseCSV(csv)
     }
 
+    // MARK: - Schema Discovery
+
+    func fetchMeasurements() async throws -> [String] {
+        let flux = """
+        import "influxdata/influxdb/schema"
+        schema.measurements(bucket: "\(bucket)")
+        """
+        return try await queryValues(flux)
+    }
+
+    func fetchFieldKeys(measurement: String) async throws -> [String] {
+        let flux = """
+        import "influxdata/influxdb/schema"
+        schema.measurementFieldKeys(bucket: "\(bucket)", measurement: "\(measurement)")
+        """
+        return try await queryValues(flux)
+    }
+
+    func fetchTagKeys(measurement: String) async throws -> [String] {
+        let flux = """
+        import "influxdata/influxdb/schema"
+        schema.measurementTagKeys(bucket: "\(bucket)", measurement: "\(measurement)")
+        """
+        return try await queryValues(flux)
+    }
+
+    func fetchTagValues(measurement: String, tag: String) async throws -> [String] {
+        let flux = """
+        import "influxdata/influxdb/schema"
+        schema.measurementTagValues(bucket: "\(bucket)", measurement: "\(measurement)", tag: "\(tag)")
+        """
+        return try await queryValues(flux)
+    }
+
+    private func queryValues(_ flux: String) async throws -> [String] {
+        // Trim leading whitespace from each line (multi-line string indentation)
+        let trimmedFlux = flux.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: "\n")
+        let result = try await query(trimmedFlux)
+        print("InfluxDB query result: \(result.columns.map(\.name)) — \(result.rows.count) rows")
+        if let firstRow = result.rows.first {
+            print("InfluxDB first row: \(firstRow.values)")
+        }
+        return result.rows.compactMap { $0.values["_value"] }.filter { !$0.isEmpty }
+    }
+
     private func parseCSV(_ csv: String) -> QueryResult {
-        let lines = csv.components(separatedBy: "\n").filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        let lines = csv.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+            .components(separatedBy: "\n").filter { !$0.isEmpty && !$0.hasPrefix("#") }
 
         guard let headerLine = lines.first else {
             return QueryResult(columns: [], rows: [])

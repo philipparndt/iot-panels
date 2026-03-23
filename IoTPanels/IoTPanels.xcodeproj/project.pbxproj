@@ -17,6 +17,12 @@
 		A10000080000000000000008 /* DataSourceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000080000000000000008 /* DataSourceListView.swift */; };
 		A10000090000000000000009 /* DataSourceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000090000000000000009 /* DataSourceDetailView.swift */; };
 		A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A0000000000000010 /* InfluxDB2SetupView.swift */; };
+		B10000010000000000000001 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* TimeRange.swift */; };
+		B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
+		B10000030000000000000003 /* QueryBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000030000000000000003 /* QueryBuilderView.swift */; };
+		B10000040000000000000004 /* QueryResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000040000000000000004 /* QueryResultTableView.swift */; };
+		B10000050000000000000005 /* SavedQueryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000050000000000000005 /* SavedQueryListView.swift */; };
+		B10000060000000000000006 /* SavedQueryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000060000000000000006 /* SavedQueryDetailView.swift */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
 		A1000011000000000000000B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B /* Preview Assets.xcassets */; };
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
@@ -44,6 +50,12 @@
 		A20000080000000000000008 /* DataSourceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceListView.swift; sourceTree = "<group>"; };
 		A20000090000000000000009 /* DataSourceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceDetailView.swift; sourceTree = "<group>"; };
 		A200000A0000000000000010 /* InfluxDB2SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB2SetupView.swift; sourceTree = "<group>"; };
+		B20000010000000000000001 /* TimeRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeRange.swift; sourceTree = "<group>"; };
+		B20000020000000000000002 /* SavedQuery+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SavedQuery+Wrapped.swift"; sourceTree = "<group>"; };
+		B20000030000000000000003 /* QueryBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryBuilderView.swift; sourceTree = "<group>"; };
+		B20000040000000000000004 /* QueryResultTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryResultTableView.swift; sourceTree = "<group>"; };
+		B20000050000000000000005 /* SavedQueryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryListView.swift; sourceTree = "<group>"; };
+		B20000060000000000000006 /* SavedQueryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryDetailView.swift; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000011000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
@@ -103,6 +115,8 @@
 			children = (
 				A20000030000000000000003 /* BackendType.swift */,
 				A20000040000000000000004 /* DataSource+Wrapped.swift */,
+				B20000010000000000000001 /* TimeRange.swift */,
+				B20000020000000000000002 /* SavedQuery+Wrapped.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -121,6 +135,7 @@
 			children = (
 				A20000070000000000000007 /* ContentView.swift */,
 				A70000060000000000000006 /* DataSource */,
+				B70000010000000000000001 /* QueryBuilder */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -133,6 +148,17 @@
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
 			);
 			path = DataSource;
+			sourceTree = "<group>";
+		};
+		B70000010000000000000001 /* QueryBuilder */ = {
+			isa = PBXGroup;
+			children = (
+				B20000030000000000000003 /* QueryBuilderView.swift */,
+				B20000040000000000000004 /* QueryResultTableView.swift */,
+				B20000050000000000000005 /* SavedQueryListView.swift */,
+				B20000060000000000000006 /* SavedQueryDetailView.swift */,
+			);
+			path = QueryBuilder;
 			sourceTree = "<group>";
 		};
 		A70000070000000000000007 /* Preview Content */ = {
@@ -262,6 +288,12 @@
 				A10000080000000000000008 /* DataSourceListView.swift in Sources */,
 				A10000090000000000000009 /* DataSourceDetailView.swift in Sources */,
 				A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */,
+				B10000010000000000000001 /* TimeRange.swift in Sources */,
+				B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */,
+				B10000030000000000000003 /* QueryBuilderView.swift in Sources */,
+				B10000040000000000000004 /* QueryResultTableView.swift in Sources */,
+				B10000050000000000000005 /* SavedQueryListView.swift in Sources */,
+				B10000060000000000000006 /* SavedQueryDetailView.swift in Sources */,
 				A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

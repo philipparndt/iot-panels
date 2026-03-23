@@ -31,9 +31,20 @@ struct PersistenceController {
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "IoTPanels")
 
-        if inMemory {
-            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
+        guard let description = container.persistentStoreDescriptions.first else {
+            fatalError("No persistent store descriptions found")
         }
+
+        if inMemory {
+            description.url = URL(fileURLWithPath: "/dev/null")
+        }
+
+        // Configure CloudKit sync
+        description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
+            containerIdentifier: "iCloud.de.rnd7.iotpanels"
+        )
+        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
         container.loadPersistentStores { _, error in
             if let error = error as NSError? {
