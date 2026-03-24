@@ -15,6 +15,9 @@ struct WidgetDesignEditorView: View {
                 // Size picker
                 sizePicker
 
+                // Text scale
+                textScalePicker
+
                 // Live preview
                 previewSection
 
@@ -67,6 +70,31 @@ struct WidgetDesignEditorView: View {
         }
     }
 
+    // MARK: - Text Scale Picker
+
+    private var textScalePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Text Size")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            Picker("Text Size", selection: Binding(
+                get: { design.wrappedTextScale },
+                set: {
+                    design.wrappedTextScale = $0
+                    design.modifiedAt = Date()
+                    try? viewContext.save()
+                    WidgetHelper.reloadWidgets()
+                }
+            )) {
+                ForEach(TextScale.allCases) { s in
+                    Text(s.displayName).tag(s)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
     // MARK: - Preview
 
     private var previewSection: some View {
@@ -89,7 +117,8 @@ struct WidgetDesignEditorView: View {
             WidgetDesignPreviewView(
                 sizeType: design.wrappedSizeType,
                 groups: design.resolvedGroups,
-                seriesData: seriesData
+                seriesData: seriesData,
+                textScale: design.wrappedTextScale.factor
             )
         }
     }

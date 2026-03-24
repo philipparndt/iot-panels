@@ -44,6 +44,38 @@ enum WidgetSizeType: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Text Scale
+
+enum TextScale: String, CaseIterable, Identifiable {
+    case xs
+    case small
+    case medium
+    case large
+    case xl
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .xs: return "XS"
+        case .small: return "S"
+        case .medium: return "M"
+        case .large: return "L"
+        case .xl: return "XL"
+        }
+    }
+
+    var factor: CGFloat {
+        switch self {
+        case .xs: return 0.75
+        case .small: return 0.875
+        case .medium: return 1.0
+        case .large: return 1.15
+        case .xl: return 1.3
+        }
+    }
+}
+
 // MARK: - Chart Series (multi-series rendering)
 
 struct ChartSeries: Identifiable {
@@ -78,6 +110,11 @@ extension WidgetDesign {
     var wrappedSizeType: WidgetSizeType {
         get { WidgetSizeType(rawValue: sizeType ?? "") ?? .medium }
         set { sizeType = newValue.rawValue }
+    }
+
+    var wrappedTextScale: TextScale {
+        get { TextScale(rawValue: textScale ?? "") ?? .medium }
+        set { textScale = newValue.rawValue }
     }
 
     var wrappedCreatedAt: Date {
@@ -116,7 +153,7 @@ extension WidgetDesign {
                 seenGroups[tag] = groups.count
                 groups.append(WidgetRenderGroup(
                     id: tag,
-                    title: item.wrappedTitle,
+                    title: wrappedName,
                     style: item.wrappedDisplayStyle,
                     items: [item]
                 ))
@@ -159,6 +196,11 @@ extension WidgetDesignItem {
 
     var color: Color {
         Color(hex: wrappedColorHex)
+    }
+
+    var wrappedStyleConfig: StyleConfig {
+        get { StyleConfig.decode(from: styleConfigJSON) }
+        set { styleConfigJSON = newValue.encode() }
     }
 
     var wrappedCreatedAt: Date {

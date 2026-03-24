@@ -9,6 +9,7 @@ struct WidgetDesignEntry: TimelineEntry {
     let date: Date
     let designName: String
     let sizeType: WidgetSizeType
+    let textScale: CGFloat
     let groups: [RenderedGroup]
     let isPlaceholder: Bool
 
@@ -17,6 +18,7 @@ struct WidgetDesignEntry: TimelineEntry {
         let title: String
         let style: PanelDisplayStyle
         let series: [ChartSeries]
+        let styleConfig: StyleConfig
     }
 
     static var placeholder: WidgetDesignEntry {
@@ -24,6 +26,7 @@ struct WidgetDesignEntry: TimelineEntry {
             date: Date(),
             designName: "My Widget",
             sizeType: .medium,
+            textScale: 1.0,
             groups: [
                 RenderedGroup(id: "1", title: "Temperature", style: .chart, series: [
                     ChartSeries(id: "a", label: "Indoor", color: Color(hex: "#4A90D9"), dataPoints:
@@ -32,17 +35,17 @@ struct WidgetDesignEntry: TimelineEntry {
                     ChartSeries(id: "b", label: "Outdoor", color: Color(hex: "#2ECC71"), dataPoints:
                         (0..<20).map { i in ChartDataPoint(time: Date().addingTimeInterval(Double(i - 20) * 300), value: 15 + sin(Double(i) * 0.4) * 3, field: "outdoor") }
                     ),
-                ]),
+                ], styleConfig: .default),
                 RenderedGroup(id: "2", title: "Battery", style: .singleValue, series: [
                     ChartSeries(id: "c", label: "level", color: .green, dataPoints: [ChartDataPoint(time: Date(), value: 87, field: "level")])
-                ]),
+                ], styleConfig: .default),
             ],
             isPlaceholder: true
         )
     }
 
     static var empty: WidgetDesignEntry {
-        WidgetDesignEntry(date: Date(), designName: "Select a widget", sizeType: .medium, groups: [], isPlaceholder: false)
+        WidgetDesignEntry(date: Date(), designName: "Select a widget", sizeType: .medium, textScale: 1.0, groups: [], isPlaceholder: false)
     }
 }
 
@@ -137,10 +140,11 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
                     groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: []))
                 }
             }
-            renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries))
+            let config = group.items.first?.wrappedStyleConfig ?? .default
+            renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
         }
 
-        return WidgetDesignEntry(date: Date(), designName: design.wrappedName, sizeType: design.wrappedSizeType, groups: renderedGroups, isPlaceholder: false)
+        return WidgetDesignEntry(date: Date(), designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, groups: renderedGroups, isPlaceholder: false)
     }
 }
 
@@ -161,7 +165,7 @@ struct DesignWidgetView: View {
             switch entry.sizeType {
             case .small:
                 if let g = visibleGroups.first {
-                    groupCell(g, compact: false)
+                    groupCell(g, compact: true)
                 }
             case .medium:
                 HStack(spacing: 12) {
@@ -188,14 +192,18 @@ struct DesignWidgetView: View {
                 title: group.title,
                 style: group.style,
                 dataPoints: group.series.first?.dataPoints ?? [],
-                compact: compact
+                compact: compact,
+                textScale: entry.textScale,
+                styleConfig: group.styleConfig
             )
         } else {
             PanelRenderer(
                 title: group.title,
                 style: .chart,
                 series: group.series,
-                compact: compact
+                compact: compact,
+                textScale: entry.textScale,
+                styleConfig: group.styleConfig
             )
         }
     }
@@ -213,7 +221,6 @@ struct IoTPanelsWidget: Widget {
             provider: WidgetDesignTimelineProvider()
         ) { entry in
             DesignWidgetView(entry: entry)
-                .padding()
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("IoT Panel")

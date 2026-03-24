@@ -71,6 +71,11 @@ extension DashboardPanel {
         set { displayStyle = newValue.rawValue }
     }
 
+    var wrappedStyleConfig: StyleConfig {
+        get { StyleConfig.decode(from: styleConfigJSON) }
+        set { styleConfigJSON = newValue.encode() }
+    }
+
     var wrappedCreatedAt: Date {
         get { createdAt ?? Date() }
         set { createdAt = newValue }

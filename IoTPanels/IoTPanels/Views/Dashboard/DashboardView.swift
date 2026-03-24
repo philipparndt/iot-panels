@@ -7,6 +7,7 @@ struct DashboardView: View {
     @State private var showingAddPanel = false
     @State private var editingPanel: DashboardPanel?
     @State private var isEditMode = false
+    @State private var refreshID = UUID()
 
     var body: some View {
         ScrollView {
@@ -22,6 +23,7 @@ struct DashboardView: View {
                 } else {
                     ForEach(Array(panels.enumerated()), id: \.element.objectID) { index, panel in
                         PanelCardView(panel: panel)
+                            .id("\(panel.objectID)-\(refreshID)")
                             .contextMenu {
                                 Button {
                                     editingPanel = panel
@@ -34,8 +36,10 @@ struct DashboardView: View {
                                         Button {
                                             panel.wrappedDisplayStyle = style
                                             panel.modifiedAt = Date()
+                                            dashboard.modifiedAt = Date()
                                             try? viewContext.save()
                                             WidgetHelper.reloadWidgets()
+                                            refreshID = UUID()
                                         } label: {
                                             Label(style.displayName, systemImage: style.icon)
                                             if panel.wrappedDisplayStyle == style {
@@ -68,8 +72,10 @@ struct DashboardView: View {
                                 Button(role: .destructive) {
                                     withAnimation {
                                         viewContext.delete(panel)
+                                        dashboard.modifiedAt = Date()
                                         try? viewContext.save()
                                         WidgetHelper.reloadWidgets()
+                                        refreshID = UUID()
                                     }
                                 } label: {
                                     Label("Remove", systemImage: "trash")
@@ -80,6 +86,9 @@ struct DashboardView: View {
             }
             .padding()
         }
+        .refreshable {
+            refreshID = UUID()
+        }
         .navigationTitle(dashboard.wrappedName)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -88,11 +97,11 @@ struct DashboardView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingAddPanel) {
+        .sheet(isPresented: $showingAddPanel, onDismiss: { refreshID = UUID() }) {
             AddPanelView(dashboard: dashboard)
                 .environment(\.managedObjectContext, viewContext)
         }
-        .sheet(item: $editingPanel) { panel in
+        .sheet(item: $editingPanel, onDismiss: { refreshID = UUID() }) { panel in
             EditPanelView(panel: panel)
                 .environment(\.managedObjectContext, viewContext)
         }
@@ -108,8 +117,10 @@ struct DashboardView: View {
         for (i, p) in panels.enumerated() {
             p.sortOrder = Int32(i)
         }
+        dashboard.modifiedAt = Date()
         try? viewContext.save()
         WidgetHelper.reloadWidgets()
+        refreshID = UUID()
     }
 }
 
@@ -123,6 +134,9 @@ struct EditPanelView: View {
 
     @State private var title: String = ""
     @State private var style: PanelDisplayStyle = .auto
+    @State private var styleConfig = StyleConfig.default
+    @State private var gaugeMinText = ""
+    @State private var gaugeMaxText = ""
 
     var body: some View {
         NavigationStack {
@@ -149,6 +163,54 @@ struct EditPanelView: View {
                     }
                 }
 
+                if style == .gauge {
+                    Section {
+                        HStack {
+                            Text("Min")
+                                .frame(width: 40)
+                            TextField("Auto", text: $gaugeMinText)
+                                .keyboardType(.decimalPad)
+                                .onChange(of: gaugeMinText) {
+                                    styleConfig.gaugeMin = Double(gaugeMinText)
+                                }
+                        }
+                        HStack {
+                            Text("Max")
+                                .frame(width: 40)
+                            TextField("Auto", text: $gaugeMaxText)
+                                .keyboardType(.decimalPad)
+                                .onChange(of: gaugeMaxText) {
+                                    styleConfig.gaugeMax = Double(gaugeMaxText)
+                                }
+                        }
+                    } header: {
+                        Text("Gauge Range")
+                    } footer: {
+                        Text("Leave empty for auto range based on data.")
+                    }
+
+                    Section("Gauge Color Scheme") {
+                        ForEach(GaugeColorScheme.allCases) { scheme in
+                            Button {
+                                styleConfig.gaugeColorScheme = scheme.rawValue
+                            } label: {
+                                HStack(spacing: 8) {
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(LinearGradient(colors: scheme.colors, startPoint: .leading, endPoint: .trailing))
+                                        .frame(width: 40, height: 10)
+                                    Text(scheme.displayName)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    if styleConfig.resolvedGaugeColorScheme == scheme {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Section("Preview") {
                     PanelCardView(panel: panel)
                         .listRowInsets(EdgeInsets())
@@ -165,6 +227,7 @@ struct EditPanelView: View {
                     Button("Save") {
                         panel.title = title
                         panel.wrappedDisplayStyle = style
+                        panel.wrappedStyleConfig = styleConfig
                         panel.modifiedAt = Date()
                         try? viewContext.save()
                         WidgetHelper.reloadWidgets()
@@ -175,9 +238,15 @@ struct EditPanelView: View {
             .onAppear {
                 title = panel.wrappedTitle
                 style = panel.wrappedDisplayStyle
+                styleConfig = panel.wrappedStyleConfig
+                if let min = styleConfig.gaugeMin { gaugeMinText = String(format: "%.1f", min) }
+                if let max = styleConfig.gaugeMax { gaugeMaxText = String(format: "%.1f", max) }
             }
             .onChange(of: style) {
                 panel.wrappedDisplayStyle = style
+            }
+            .onChange(of: styleConfig) {
+                panel.wrappedStyleConfig = styleConfig
             }
         }
     }

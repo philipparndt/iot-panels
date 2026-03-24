@@ -11,12 +11,19 @@ struct WidgetItemConfigView: View {
     @State private var style: PanelDisplayStyle = .chart
     @State private var selectedColor = ""
     @State private var groupTag = ""
+    @State private var styleConfig = StyleConfig.default
+    @State private var gaugeMinText = ""
+    @State private var gaugeMaxText = ""
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Title") {
-                    TextField("Title", text: $title)
+                Section {
+                    TextField("e.g. in, out, temp", text: $title)
+                } header: {
+                    Text("Legend Label")
+                } footer: {
+                    Text("Short name shown in the chart legend. Keep it brief for small widgets.")
                 }
 
                 Section("Display Style") {
@@ -31,6 +38,61 @@ struct WidgetItemConfigView: View {
                                 if style == s {
                                     Image(systemName: "checkmark")
                                         .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if style == .gauge {
+                    Section {
+                        HStack {
+                            Text("Min")
+                                .frame(width: 40)
+                            TextField("Auto", text: $gaugeMinText)
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .onChange(of: gaugeMinText) {
+                                    styleConfig.gaugeMin = Double(gaugeMinText)
+                                }
+                        }
+
+                        HStack {
+                            Text("Max")
+                                .frame(width: 40)
+                            TextField("Auto", text: $gaugeMaxText)
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .onChange(of: gaugeMaxText) {
+                                    styleConfig.gaugeMax = Double(gaugeMaxText)
+                                }
+                        }
+                    } header: {
+                        Text("Gauge Range")
+                    } footer: {
+                        Text("Leave empty for auto range based on data.")
+                    }
+
+                    Section("Gauge Color Scheme") {
+                        ForEach(GaugeColorScheme.allCases) { scheme in
+                            Button {
+                                styleConfig.gaugeColorScheme = scheme.rawValue
+                            } label: {
+                                HStack(spacing: 8) {
+                                    // Color preview bar
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(LinearGradient(colors: scheme.colors, startPoint: .leading, endPoint: .trailing))
+                                        .frame(width: 40, height: 10)
+
+                                    Text(scheme.displayName)
+                                        .foregroundStyle(.primary)
+
+                                    Spacer()
+
+                                    if styleConfig.resolvedGaugeColorScheme == scheme {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(Color.accentColor)
+                                    }
                                 }
                             }
                         }
@@ -98,6 +160,7 @@ struct WidgetItemConfigView: View {
                         item.wrappedDisplayStyle = style
                         item.colorHex = selectedColor
                         item.groupTag = groupTag.isEmpty ? nil : groupTag
+                        item.wrappedStyleConfig = styleConfig
                         item.modifiedAt = Date()
                         design.modifiedAt = Date()
                         try? viewContext.save()
@@ -111,6 +174,9 @@ struct WidgetItemConfigView: View {
                 style = item.wrappedDisplayStyle
                 selectedColor = item.wrappedColorHex
                 groupTag = item.groupTag ?? ""
+                styleConfig = item.wrappedStyleConfig
+                if let min = styleConfig.gaugeMin { gaugeMinText = String(format: "%.1f", min) }
+                if let max = styleConfig.gaugeMax { gaugeMaxText = String(format: "%.1f", max) }
             }
         }
     }

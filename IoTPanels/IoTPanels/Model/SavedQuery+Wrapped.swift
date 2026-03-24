@@ -58,6 +58,25 @@ extension SavedQuery {
         set { unit = newValue }
     }
 
+    var wrappedCachedAt: Date? {
+        get { cachedAt }
+        set { cachedAt = newValue }
+    }
+
+    func cacheResult(_ dataPoints: [ChartDataPoint]) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        cachedResultJSON = (try? String(data: encoder.encode(dataPoints), encoding: .utf8)) ?? "[]"
+        cachedAt = Date()
+    }
+
+    var cachedDataPoints: [ChartDataPoint]? {
+        guard let json = cachedResultJSON, !json.isEmpty, let data = json.data(using: .utf8) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode([ChartDataPoint].self, from: data)
+    }
+
     var wrappedCreatedAt: Date {
         get { createdAt ?? Date() }
         set { createdAt = newValue }

@@ -5,6 +5,7 @@ struct WidgetDesignPreviewView: View {
     let sizeType: WidgetSizeType
     let groups: [WidgetRenderGroup]
     let seriesData: [String: [ChartSeries]] // keyed by group id
+    var textScale: CGFloat = 1.0
 
     var body: some View {
         GeometryReader { geo in
@@ -15,7 +16,7 @@ struct WidgetDesignPreviewView: View {
             HStack {
                 if sizeType == .small { Spacer() }
                 canvas
-                    .padding(12)
+                    .padding(16)
                     .frame(width: width, height: height)
                     .background(Color(uiColor: .tertiarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 22))
@@ -48,7 +49,8 @@ struct WidgetDesignPreviewView: View {
             switch sizeType {
             case .small:
                 if let g = visibleGroups.first {
-                    cellView(for: g, compact: false)
+                    cellView(for: g, compact: true)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             case .medium:
                 HStack(spacing: 12) {
@@ -73,6 +75,7 @@ struct WidgetDesignPreviewView: View {
             ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: [])
         }
         let groupUnit = group.items.first?.savedQuery?.wrappedUnit ?? ""
+        let config = group.items.first?.wrappedStyleConfig ?? .default
 
         return Group {
             if groupSeries.count <= 1 {
@@ -81,7 +84,9 @@ struct WidgetDesignPreviewView: View {
                     style: group.style,
                     dataPoints: groupSeries.first?.dataPoints ?? [],
                     compact: compact,
-                    unit: groupUnit
+                    unit: groupUnit,
+                    textScale: textScale,
+                    styleConfig: config
                 )
             } else {
                 PanelRenderer(
@@ -89,7 +94,9 @@ struct WidgetDesignPreviewView: View {
                     style: .chart,
                     series: groupSeries,
                     compact: compact,
-                    unit: groupUnit
+                    unit: groupUnit,
+                    textScale: textScale,
+                    styleConfig: config
                 )
             }
         }
