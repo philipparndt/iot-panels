@@ -19,11 +19,8 @@ struct ContentView: View {
             }
 
             Tab("Data Sources", systemImage: "server.rack", value: .dataSources) {
-                NavigationSplitView {
+                NavigationStack {
                     DataSourceListView()
-                } detail: {
-                    Text("Select a data source")
-                        .foregroundStyle(.secondary)
                 }
             }
         }
