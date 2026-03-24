@@ -7,609 +7,248 @@ struct QueryBuilderView: View {
     let dataSource: DataSource
     let existingQuery: SavedQuery?
 
-    enum Step: Int, CaseIterable {
-        case measurement = 0
-        case fields = 1
-        case filters = 2
-        case timeAggregation = 3
-        case preview = 4
-
-        var title: String {
-            switch self {
-            case .measurement: return "Measurement"
-            case .fields: return "Fields"
-            case .filters: return "Filters"
-            case .timeAggregation: return "Time"
-            case .preview: return "Preview"
-            }
-        }
-
-        var previous: Step? {
-            Step(rawValue: rawValue - 1)
-        }
-
-        var next: Step? {
-            Step(rawValue: rawValue + 1)
-        }
-    }
-
-    @State private var step: Step = .measurement
     @State private var queryName = ""
-
-    // Measurement
-    @State private var measurements: [String] = []
     @State private var selectedMeasurement = ""
+    @State private var measurements: [String] = []
     @State private var isLoadingMeasurements = false
-
-    // Fields
     @State private var availableFields: [String] = []
     @State private var selectedFields: Set<String> = []
     @State private var isLoadingFields = false
-    @State private var fieldsLoadedForMeasurement = ""
-
-    // Tags
     @State private var availableTagKeys: [String] = []
     @State private var tagValues: [String: [String]] = [:]
     @State private var selectedTagValues: [String: Set<String>] = [:]
-    @State private var expandedTag: String?
     @State private var isLoadingTags = false
-    @State private var tagsLoadedForMeasurement = ""
-
-    // Time & Aggregation
     @State private var timeRange: TimeRange = .oneHour
     @State private var aggregateWindow: AggregateWindow = .fiveMinutes
     @State private var aggregateFunction: AggregateFunction = .mean
-
-    // Unit
     @State private var selectedUnit: String = ""
     @State private var customUnit: String = ""
-
-    // Preview
-    @State private var previewResult: QueryResult?
-    @State private var isLoadingPreview = false
     @State private var errorMessage: String?
+    @State private var didInitialLoad = false
 
-    private var service: InfluxDB2Service {
-        InfluxDB2Service(dataSource: dataSource)
-    }
+    private var service: InfluxDB2Service { InfluxDB2Service(dataSource: dataSource) }
+    private var effectiveUnit: String { customUnit.isEmpty ? selectedUnit : customUnit }
+    private var canSave: Bool { !queryName.isEmpty && !selectedMeasurement.isEmpty && !selectedFields.isEmpty }
 
-    private var canGoBack: Bool {
-        step.previous != nil
-    }
-
-    private var canGoForward: Bool {
-        switch step {
-        case .measurement: return !selectedMeasurement.isEmpty
-        case .fields: return !selectedFields.isEmpty
-        case .filters: return true
-        case .timeAggregation: return true
-        case .preview: return false
-        }
+    private var selectedFilterCount: Int {
+        selectedTagValues.values.reduce(0) { $0 + $1.count }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                stepIndicator
-                    .padding(.horizontal)
-                    .padding(.top)
+            List {
+                // Name
+                Section {
+                    TextField("Query name", text: $queryName)
+                }
 
-                Form {
-                    switch step {
-                    case .measurement:
-                        measurementStep
-                    case .fields:
-                        fieldsStep
-                    case .filters:
-                        filtersStep
-                    case .timeAggregation:
-                        timeStep
-                    case .preview:
-                        previewStep
+                // Measurement
+                Section {
+                    NavigationLink {
+                        MeasurementPickerPage(
+                            measurements: measurements,
+                            isLoading: isLoadingMeasurements,
+                            selection: $selectedMeasurement,
+                            onSelect: { m in selectMeasurement(m) }
+                        )
+                    } label: {
+                        summaryRow(
+                            icon: "list.bullet",
+                            title: "Measurement",
+                            value: selectedMeasurement.isEmpty ? nil : selectedMeasurement,
+                            done: !selectedMeasurement.isEmpty
+                        )
+                    }
+                }
+
+                // Fields (only after measurement)
+                if !selectedMeasurement.isEmpty {
+                    Section {
+                        NavigationLink {
+                            FieldPickerPage(
+                                fields: availableFields,
+                                isLoading: isLoadingFields,
+                                selection: $selectedFields
+                            )
+                        } label: {
+                            summaryRow(
+                                icon: "number",
+                                title: "Fields",
+                                value: selectedFields.isEmpty ? nil : selectedFields.sorted().joined(separator: ", "),
+                                done: !selectedFields.isEmpty
+                            )
+                        }
                     }
 
-                    if let errorMessage {
-                        Section {
-                            Label(errorMessage, systemImage: "xmark.circle.fill")
-                                .foregroundStyle(.red)
+                    // Filters
+                    Section {
+                        NavigationLink {
+                            FilterPickerPage(
+                                tagKeys: availableTagKeys,
+                                tagValues: $tagValues,
+                                selectedTagValues: $selectedTagValues,
+                                isLoading: isLoadingTags,
+                                measurement: selectedMeasurement,
+                                service: service
+                            )
+                        } label: {
+                            summaryRow(
+                                icon: "line.3.horizontal.decrease",
+                                title: "Filters",
+                                value: selectedFilterCount > 0 ? "\(selectedFilterCount) active" : nil,
+                                done: true,
+                                optional: true
+                            )
+                        }
+                    }
+
+                    // Time & Aggregation
+                    Section {
+                        NavigationLink {
+                            TimeAggregationPage(
+                                timeRange: $timeRange,
+                                aggregateWindow: $aggregateWindow,
+                                aggregateFunction: $aggregateFunction
+                            )
+                        } label: {
+                            summaryRow(
+                                icon: "clock",
+                                title: "Time & Aggregation",
+                                value: "\(timeRange.displayName) · \(aggregateWindow.displayName)",
+                                done: true
+                            )
+                        }
+                    }
+
+                    // Unit
+                    Section {
+                        NavigationLink {
+                            UnitPickerPage(
+                                selectedUnit: $selectedUnit,
+                                customUnit: $customUnit
+                            )
+                        } label: {
+                            summaryRow(
+                                icon: "textformat.123",
+                                title: "Unit",
+                                value: effectiveUnit.isEmpty ? nil : effectiveUnit,
+                                done: true,
+                                optional: true
+                            )
+                        }
+                    }
+
+                    // Preview
+                    Section {
+                        NavigationLink {
+                            QueryPreviewPage(flux: buildFluxQuery(), service: service)
+                        } label: {
+                            Label("Preview Query", systemImage: "play.circle")
                         }
                     }
                 }
 
-                navigationBar
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
+                }
             }
-            .navigationTitle(step.title)
+            .navigationTitle(existingQuery != nil ? "Edit Query" : "New Query")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save", action: saveQuery)
+                        .fontWeight(.semibold)
+                        .disabled(!canSave)
+                }
             }
             .onAppear {
+                guard !didInitialLoad else { return }
+                didInitialLoad = true
                 loadExistingQuery()
-                if measurements.isEmpty {
-                    loadMeasurements()
-                }
+                loadMeasurements()
             }
         }
     }
 
-    // MARK: - Step Indicator
+    // MARK: - Summary Row
 
-    private var stepIndicator: some View {
-        HStack(spacing: 0) {
-            ForEach(Step.allCases, id: \.rawValue) { s in
-                Button {
-                    if s.rawValue < step.rawValue {
-                        navigateTo(step: s)
-                    }
-                } label: {
-                    VStack(spacing: 4) {
-                        ZStack {
-                            Circle()
-                                .fill(s.rawValue <= step.rawValue ? Color.accentColor : Color.secondary.opacity(0.3))
-                                .frame(width: 24, height: 24)
-                            Text("\(s.rawValue + 1)")
-                                .font(.caption2.bold())
-                                .foregroundStyle(s.rawValue <= step.rawValue ? .white : .secondary)
-                        }
-                        Text(s.title)
-                            .font(.system(size: 9))
-                            .foregroundStyle(s.rawValue <= step.rawValue ? .primary : .secondary)
-                    }
-                }
-                .disabled(s.rawValue > step.rawValue)
+    private func summaryRow(icon: String, title: String, value: String?, done: Bool, optional: Bool = false) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: done ? "checkmark.circle.fill" : (optional ? "circle.dashed" : "circle"))
+                .foregroundStyle(done ? .green : (optional ? .secondary : .orange))
+                .font(.body)
 
-                if s.rawValue < Step.allCases.count - 1 {
-                    Rectangle()
-                        .fill(s.rawValue < step.rawValue ? Color.accentColor : Color.secondary.opacity(0.3))
-                        .frame(height: 2)
-                        .padding(.bottom, 16)
-                }
-            }
-        }
-    }
-
-    // MARK: - Navigation Bar
-
-    private var navigationBar: some View {
-        HStack {
-            if canGoBack {
-                Button {
-                    goBack()
-                } label: {
-                    HStack {
-                        Image(systemName: "chevron.left")
-                        Text("Back")
-                    }
-                }
-            }
-
-            Spacer()
-
-            if step == .preview {
-                Button {
-                    saveQuery()
-                } label: {
-                    Text("Save")
-                        .fontWeight(.semibold)
-                }
-                .disabled(queryName.isEmpty)
-            } else if canGoForward {
-                Button {
-                    goForward()
-                } label: {
-                    HStack {
-                        Text("Next")
-                        Image(systemName: "chevron.right")
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(Color(uiColor: .systemGroupedBackground))
-    }
-
-    // MARK: - Navigation
-
-    private func goBack() {
-        guard let prev = step.previous else { return }
-        withAnimation { step = prev }
-    }
-
-    private func goForward() {
-        guard let next = step.next else { return }
-        errorMessage = nil
-
-        switch step {
-        case .measurement:
-            let measurementChanged = fieldsLoadedForMeasurement != selectedMeasurement && !isLoadingFields
-            if measurementChanged {
-                selectedFields = []
-                availableFields = []
-                availableTagKeys = []
-                tagValues = [:]
-                selectedTagValues = [:]
-                expandedTag = nil
-                tagsLoadedForMeasurement = ""
-                loadFields(measurement: selectedMeasurement)
-            }
-            withAnimation { step = next }
-        case .fields:
-            let tagsNeedLoad = tagsLoadedForMeasurement != selectedMeasurement && !isLoadingTags
-            if tagsNeedLoad {
-                availableTagKeys = []
-                tagValues = [:]
-                selectedTagValues = [:]
-                expandedTag = nil
-                loadTagKeys(measurement: selectedMeasurement)
-            }
-            withAnimation { step = next }
-        case .filters:
-            withAnimation { step = next }
-        case .timeAggregation:
-            if queryName.isEmpty {
-                let fields = selectedFields.sorted().joined(separator: ", ")
-                queryName = "\(selectedMeasurement) — \(fields)"
-            }
-            withAnimation { step = next }
-            runPreview()
-        case .preview:
-            break
-        }
-    }
-
-    private func navigateTo(step target: Step) {
-        withAnimation { step = target }
-    }
-
-    // MARK: - Measurement Step
-
-    @ViewBuilder
-    private var measurementStep: some View {
-        Section("Select Measurement") {
-            if isLoadingMeasurements {
-                ProgressView("Loading measurements...")
-            } else {
-                ForEach(Array(measurements.enumerated()), id: \.element) { _, m in
-                    Button {
-                        selectedMeasurement = m
-                    } label: {
-                        HStack {
-                            Text(m)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            if selectedMeasurement == m {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Fields Step
-
-    @ViewBuilder
-    private var fieldsStep: some View {
-        Section {
-            if isLoadingFields {
-                ProgressView("Loading fields...")
-            } else {
-                ForEach(Array(availableFields.enumerated()), id: \.element) { _, field in
-                    Button {
-                        if selectedFields.contains(field) {
-                            selectedFields.remove(field)
-                        } else {
-                            selectedFields.insert(field)
-                        }
-                    } label: {
-                        HStack {
-                            Text(field)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            if selectedFields.contains(field) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.accentColor)
-                            } else {
-                                Image(systemName: "circle")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-            }
-        } header: {
-            Text("Select Fields")
-        } footer: {
-            Text("Select one or more fields to include in the query.")
-        }
-    }
-
-    // MARK: - Filters Step
-
-    @ViewBuilder
-    private var filtersStep: some View {
-        Section {
-            if isLoadingTags {
-                ProgressView("Loading tags...")
-            } else if availableTagKeys.isEmpty {
-                Text("No tags available")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(Array(availableTagKeys.enumerated()), id: \.element) { _, tagKey in
-                    DisclosureGroup(
-                        isExpanded: Binding(
-                            get: { expandedTag == tagKey },
-                            set: { expanded in
-                                expandedTag = expanded ? tagKey : nil
-                                if expanded && tagValues[tagKey] == nil {
-                                    loadTagValues(measurement: selectedMeasurement, tag: tagKey)
-                                }
-                            }
-                        )
-                    ) {
-                        if let values = tagValues[tagKey] {
-                            ForEach(Array(values.enumerated()), id: \.element) { _, value in
-                                Button {
-                                    toggleTagValue(tagKey: tagKey, value: value)
-                                } label: {
-                                    HStack {
-                                        Text(value)
-                                            .foregroundStyle(.primary)
-                                        Spacer()
-                                        if selectedTagValues[tagKey]?.contains(value) == true {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(Color.accentColor)
-                                        } else {
-                                            Image(systemName: "circle")
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            ProgressView()
-                        }
-                    } label: {
-                        HStack {
-                            Text(tagKey)
-                            Spacer()
-                            if let selected = selectedTagValues[tagKey], !selected.isEmpty {
-                                Text("\(selected.count)")
-                                    .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.accentColor.opacity(0.2))
-                                    .clipShape(Capsule())
-                            }
-                        }
-                    }
-                }
-            }
-        } header: {
-            Text("Filter by Tags (optional)")
-        } footer: {
-            Text("Expand a tag to select filter values. You can skip this step.")
-        }
-    }
-
-    // MARK: - Time & Aggregation Step
-
-    @ViewBuilder
-    private var timeStep: some View {
-        Section("Time Range") {
-            Picker("Range", selection: $timeRange) {
-                ForEach(TimeRange.allCases) { range in
-                    Text(range.displayName).tag(range)
-                }
-            }
-        }
-
-        Section("Aggregation") {
-            Picker("Window", selection: $aggregateWindow) {
-                ForEach(AggregateWindow.allCases) { window in
-                    Text(window.displayName).tag(window)
-                }
-            }
-
-            if aggregateWindow != .none {
-                Picker("Function", selection: $aggregateFunction) {
-                    ForEach(AggregateFunction.allCases) { fn in
-                        Text(fn.displayName).tag(fn)
-                    }
-                }
-            }
-        }
-
-        Section {
-            ForEach(UnitCategory.allCases.filter { $0 != .custom && $0 != .none }) { category in
-                if !category.units.isEmpty {
-                    DisclosureGroup(category.displayName) {
-                        ForEach(category.units, id: \.self) { u in
-                            Button {
-                                selectedUnit = u
-                                customUnit = ""
-                            } label: {
-                                HStack {
-                                    Text(u).foregroundStyle(.primary)
-                                    Spacer()
-                                    if selectedUnit == u && customUnit.isEmpty {
-                                        Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            HStack {
-                TextField("Custom unit", text: $customUnit)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: customUnit) {
-                        if !customUnit.isEmpty { selectedUnit = "" }
-                    }
-                if !customUnit.isEmpty {
-                    Button { customUnit = "" } label: {
-                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if !effectiveUnit.isEmpty {
-                HStack {
-                    Text("Selected:")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                if let value, !value.isEmpty {
+                    Text(value)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(effectiveUnit)
-                        .fontWeight(.medium)
-                    Spacer()
-                    Button("Clear") {
-                        selectedUnit = ""
-                        customUnit = ""
-                    }
-                    .font(.caption)
+                        .lineLimit(1)
                 }
             }
-        } header: {
-            Text("Unit")
-        } footer: {
-            Text("The unit is displayed alongside values in dashboards and widgets.")
         }
     }
 
-    private var effectiveUnit: String {
-        customUnit.isEmpty ? selectedUnit : customUnit
+    // MARK: - Actions
+
+    private func selectMeasurement(_ m: String) {
+        let changed = selectedMeasurement != m
+        selectedMeasurement = m
+        if changed {
+            selectedFields = []
+            availableFields = []
+            availableTagKeys = []
+            tagValues = [:]
+            selectedTagValues = [:]
+            loadFields(measurement: m)
+            loadTagKeys(measurement: m)
+        }
+        if queryName.isEmpty { queryName = m }
     }
-
-    // MARK: - Preview Step
-
-    @ViewBuilder
-    private var previewStep: some View {
-        Section {
-            TextField("Enter a name to save", text: $queryName)
-        } header: {
-            Text("Query Name")
-        } footer: {
-            if queryName.isEmpty {
-                Text("A name is required to save the query.")
-                    .foregroundStyle(.red)
-            }
-        }
-
-        Section("Flux Query") {
-            Text(buildFluxQuery())
-                .font(.system(.caption, design: .monospaced))
-                .textSelection(.enabled)
-        }
-
-        if isLoadingPreview {
-            Section {
-                HStack {
-                    ProgressView()
-                    Text("Running query...")
-                        .padding(.leading, 8)
-                }
-            }
-        } else if let result = previewResult {
-            Section("Results (\(result.rows.count) rows)") {
-                QueryResultTableView(result: result)
-                    .frame(minHeight: 200)
-            }
-        }
-    }
-
-    // MARK: - Data Loading
 
     private func loadMeasurements() {
         isLoadingMeasurements = true
-        errorMessage = nil
         Task {
             do {
                 let result = try await service.fetchMeasurements()
-                await MainActor.run {
-                    measurements = result
-                    isLoadingMeasurements = false
-                }
+                await MainActor.run { measurements = result; isLoadingMeasurements = false }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoadingMeasurements = false
-                }
+                await MainActor.run { errorMessage = error.localizedDescription; isLoadingMeasurements = false }
             }
         }
     }
 
     private func loadFields(measurement: String) {
         isLoadingFields = true
-        errorMessage = nil
         Task {
             do {
                 let result = try await service.fetchFieldKeys(measurement: measurement)
-                await MainActor.run {
-                    availableFields = result
-                    fieldsLoadedForMeasurement = measurement
-                    isLoadingFields = false
-                }
+                await MainActor.run { availableFields = result; isLoadingFields = false }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoadingFields = false
-                }
+                await MainActor.run { errorMessage = error.localizedDescription; isLoadingFields = false }
             }
         }
     }
 
     private func loadTagKeys(measurement: String) {
         isLoadingTags = true
-        errorMessage = nil
         Task {
             do {
                 let result = try await service.fetchTagKeys(measurement: measurement)
-                await MainActor.run {
-                    availableTagKeys = result
-                    tagsLoadedForMeasurement = measurement
-                    isLoadingTags = false
-                }
+                await MainActor.run { availableTagKeys = result; isLoadingTags = false }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoadingTags = false
-                }
+                await MainActor.run { errorMessage = error.localizedDescription; isLoadingTags = false }
             }
         }
     }
-
-    private func loadTagValues(measurement: String, tag: String) {
-        Task {
-            do {
-                let result = try await service.fetchTagValues(measurement: measurement, tag: tag)
-                await MainActor.run {
-                    tagValues[tag] = result
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                }
-            }
-        }
-    }
-
-    private func toggleTagValue(tagKey: String, value: String) {
-        if selectedTagValues[tagKey] == nil {
-            selectedTagValues[tagKey] = []
-        }
-        if selectedTagValues[tagKey]!.contains(value) {
-            selectedTagValues[tagKey]!.remove(value)
-        } else {
-            selectedTagValues[tagKey]!.insert(value)
-        }
-    }
-
-    // MARK: - Query Building
 
     private func buildFluxQuery() -> String {
         var query = """
@@ -617,63 +256,28 @@ struct QueryBuilderView: View {
           |> range(start: \(timeRange.fluxValue))
           |> filter(fn: (r) => r["_measurement"] == "\(selectedMeasurement)")
         """
-
         if !selectedFields.isEmpty {
-            let fieldFilter = selectedFields.sorted()
-                .map { "r[\"_field\"] == \"\($0)\"" }
-                .joined(separator: " or ")
-            query += "\n  |> filter(fn: (r) => \(fieldFilter))"
+            let f = selectedFields.sorted().map { "r[\"_field\"] == \"\($0)\"" }.joined(separator: " or ")
+            query += "\n  |> filter(fn: (r) => \(f))"
         }
-
-        for (tagKey, tagVals) in selectedTagValues where !tagVals.isEmpty {
-            let tagFilter = tagVals.sorted()
-                .map { "r[\"\(tagKey)\"] == \"\($0)\"" }
-                .joined(separator: " or ")
-            query += "\n  |> filter(fn: (r) => \(tagFilter))"
+        for (k, v) in selectedTagValues where !v.isEmpty {
+            let f = v.sorted().map { "r[\"\(k)\"] == \"\($0)\"" }.joined(separator: " or ")
+            query += "\n  |> filter(fn: (r) => \(f))"
         }
-
         if aggregateWindow != .none {
             query += "\n  |> aggregateWindow(every: \(aggregateWindow.rawValue), fn: \(aggregateFunction.rawValue), createEmpty: false)"
         }
-
         query += "\n  |> yield(name: \"results\")"
         return query
     }
 
-    private func runPreview() {
-        isLoadingPreview = true
-        errorMessage = nil
-        let flux = buildFluxQuery().replacingOccurrences(
-            of: "|> yield(name: \"results\")",
-            with: "|> limit(n: 100)\n  |> yield(name: \"results\")"
-        )
-        Task {
-            do {
-                let result = try await service.query(flux)
-                await MainActor.run {
-                    previewResult = result
-                    isLoadingPreview = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoadingPreview = false
-                }
-            }
-        }
-    }
-
-    // MARK: - Save
-
     private func saveQuery() {
         let target = existingQuery ?? SavedQuery(context: viewContext)
-
         if existingQuery == nil {
             target.id = UUID()
             target.createdAt = Date()
             target.dataSource = dataSource
         }
-
         target.name = queryName
         target.measurement = selectedMeasurement
         target.wrappedFields = Array(selectedFields)
@@ -683,13 +287,10 @@ struct QueryBuilderView: View {
         target.aggregateFunction = aggregateFunction.rawValue
         target.unit = effectiveUnit.isEmpty ? nil : effectiveUnit
         target.modifiedAt = Date()
-
         try? viewContext.save()
         WidgetHelper.reloadWidgets()
         dismiss()
     }
-
-    // MARK: - Load Existing
 
     private func loadExistingQuery() {
         guard let q = existingQuery else { return }
@@ -701,17 +302,340 @@ struct QueryBuilderView: View {
         aggregateWindow = q.wrappedAggregateWindow
         aggregateFunction = q.wrappedAggregateFunction
         let u = q.wrappedUnit
-        let allPresets = UnitCategory.allCases.flatMap(\.units)
-        if allPresets.contains(u) {
-            selectedUnit = u
-        } else if !u.isEmpty {
-            customUnit = u
-        }
-
-        // Pre-load fields and tags for the existing measurement so they're not cleared on navigation
+        let presets = ["°C", "°F", "%", "hPa", "W", "kW", "kWh", "V", "A", "m/s", "km/h", "m", "km", "s", "min", "L"]
+        if presets.contains(u) { selectedUnit = u } else if !u.isEmpty { customUnit = u }
         if !selectedMeasurement.isEmpty {
             loadFields(measurement: selectedMeasurement)
             loadTagKeys(measurement: selectedMeasurement)
+        }
+    }
+}
+
+// MARK: - Measurement Picker Page
+
+struct MeasurementPickerPage: View {
+    let measurements: [String]
+    let isLoading: Bool
+    @Binding var selection: String
+    let onSelect: (String) -> Void
+    @State private var search = ""
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            if isLoading {
+                HStack { ProgressView(); Text("Loading...").padding(.leading, 8) }
+            } else {
+                ForEach(filtered, id: \.self) { m in
+                    Button {
+                        onSelect(m)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text(m).foregroundStyle(.primary)
+                            Spacer()
+                            if selection == m {
+                                Image(systemName: "checkmark").fontWeight(.semibold).foregroundStyle(Color.accentColor)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .searchable(text: $search, prompt: "Search measurements")
+        .navigationTitle("Measurement")
+    }
+
+    private var filtered: [String] {
+        search.isEmpty ? measurements : measurements.filter { $0.localizedCaseInsensitiveContains(search) }
+    }
+}
+
+// MARK: - Field Picker Page
+
+struct FieldPickerPage: View {
+    let fields: [String]
+    let isLoading: Bool
+    @Binding var selection: Set<String>
+
+    var body: some View {
+        List {
+            if isLoading {
+                HStack { ProgressView(); Text("Loading...").padding(.leading, 8) }
+            } else {
+                ForEach(fields, id: \.self) { field in
+                    Button {
+                        if selection.contains(field) { selection.remove(field) } else { selection.insert(field) }
+                    } label: {
+                        HStack {
+                            Text(field).foregroundStyle(.primary)
+                            Spacer()
+                            Image(systemName: selection.contains(field) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selection.contains(field) ? Color.accentColor : .secondary)
+                        }
+                    }
+                }
+            }
+
+            if !selection.isEmpty {
+                Section("Selected") {
+                    Text(selection.sorted().joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .navigationTitle("Fields")
+    }
+}
+
+// MARK: - Filter Picker Page
+
+struct FilterPickerPage: View {
+    let tagKeys: [String]
+    @Binding var tagValues: [String: [String]]
+    @Binding var selectedTagValues: [String: Set<String>]
+    let isLoading: Bool
+    let measurement: String
+    let service: InfluxDB2Service
+
+    @State private var expandedTag: String?
+
+    var body: some View {
+        List {
+            if isLoading {
+                HStack { ProgressView(); Text("Loading...").padding(.leading, 8) }
+            } else if tagKeys.isEmpty {
+                Text("No tags available").foregroundStyle(.secondary)
+            } else {
+                ForEach(tagKeys, id: \.self) { tagKey in
+                    DisclosureGroup(
+                        isExpanded: Binding(
+                            get: { expandedTag == tagKey },
+                            set: { expanded in
+                                expandedTag = expanded ? tagKey : nil
+                                if expanded && tagValues[tagKey] == nil {
+                                    loadValues(tag: tagKey)
+                                }
+                            }
+                        )
+                    ) {
+                        if let values = tagValues[tagKey] {
+                            ForEach(values, id: \.self) { value in
+                                Button {
+                                    toggle(tagKey: tagKey, value: value)
+                                } label: {
+                                    HStack {
+                                        Text(value).foregroundStyle(.primary)
+                                        Spacer()
+                                        Image(systemName: selectedTagValues[tagKey]?.contains(value) == true ? "checkmark.circle.fill" : "circle")
+                                            .foregroundStyle(selectedTagValues[tagKey]?.contains(value) == true ? Color.accentColor : .secondary)
+                                    }
+                                }
+                            }
+                        } else {
+                            ProgressView()
+                        }
+                    } label: {
+                        HStack {
+                            Text(tagKey)
+                            Spacer()
+                            if let sel = selectedTagValues[tagKey], !sel.isEmpty {
+                                Text("\(sel.count)")
+                                    .font(.caption2.weight(.semibold))
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentColor.opacity(0.15))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Filters")
+    }
+
+    private func toggle(tagKey: String, value: String) {
+        if selectedTagValues[tagKey] == nil { selectedTagValues[tagKey] = [] }
+        if selectedTagValues[tagKey]!.contains(value) {
+            selectedTagValues[tagKey]!.remove(value)
+        } else {
+            selectedTagValues[tagKey]!.insert(value)
+        }
+    }
+
+    private func loadValues(tag: String) {
+        Task {
+            do {
+                let result = try await service.fetchTagValues(measurement: measurement, tag: tag)
+                await MainActor.run { tagValues[tag] = result }
+            } catch {}
+        }
+    }
+}
+
+// MARK: - Time & Aggregation Page
+
+struct TimeAggregationPage: View {
+    @Binding var timeRange: TimeRange
+    @Binding var aggregateWindow: AggregateWindow
+    @Binding var aggregateFunction: AggregateFunction
+
+    var body: some View {
+        Form {
+            Section("Time Range") {
+                Picker("Range", selection: $timeRange) {
+                    ForEach(TimeRange.allCases) { r in Text(r.displayName).tag(r) }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            }
+
+            Section("Aggregate Window") {
+                Picker("Window", selection: $aggregateWindow) {
+                    ForEach(AggregateWindow.allCases) { w in Text(w.displayName).tag(w) }
+                }
+                .pickerStyle(.inline)
+                .labelsHidden()
+            }
+
+            if aggregateWindow != .none {
+                Section("Aggregate Function") {
+                    Picker("Function", selection: $aggregateFunction) {
+                        ForEach(AggregateFunction.allCases) { fn in Text(fn.displayName).tag(fn) }
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                }
+            }
+        }
+        .navigationTitle("Time & Aggregation")
+    }
+}
+
+// MARK: - Unit Picker Page
+
+struct UnitPickerPage: View {
+    @Binding var selectedUnit: String
+    @Binding var customUnit: String
+    @Environment(\.dismiss) private var dismiss
+
+    private let quickPicks = ["°C", "°F", "%", "W", "kW", "kWh", "V", "A", "hPa", "m/s", "km/h", "m", "km", "s", "min", "h", "L"]
+
+    private var effectiveUnit: String { customUnit.isEmpty ? selectedUnit : customUnit }
+
+    var body: some View {
+        Form {
+            Section("Quick Select") {
+                Button("None") {
+                    selectedUnit = ""
+                    customUnit = ""
+                    dismiss()
+                }
+                .foregroundStyle(effectiveUnit.isEmpty ? Color.accentColor : .primary)
+
+                ForEach(quickPicks, id: \.self) { u in
+                    Button {
+                        selectedUnit = u
+                        customUnit = ""
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text(u).foregroundStyle(.primary)
+                            Spacer()
+                            if selectedUnit == u && customUnit.isEmpty {
+                                Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section("Custom") {
+                TextField("Custom unit", text: $customUnit)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onChange(of: customUnit) {
+                        if !customUnit.isEmpty { selectedUnit = "" }
+                    }
+            }
+
+            if !effectiveUnit.isEmpty {
+                Section {
+                    HStack {
+                        Text("Current unit:")
+                        Spacer()
+                        Text(effectiveUnit).fontWeight(.semibold)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Unit")
+    }
+}
+
+// MARK: - Query Preview Page
+
+struct QueryPreviewPage: View {
+    let flux: String
+    let service: InfluxDB2Service
+
+    @State private var result: QueryResult?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        List {
+            Section("Flux Query") {
+                Text(flux)
+                    .font(.system(.caption2, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+
+            Section {
+                Button(action: runPreview) {
+                    HStack {
+                        Label("Run Preview", systemImage: "play.fill")
+                        Spacer()
+                        if isLoading { ProgressView() }
+                    }
+                }
+                .disabled(isLoading)
+            }
+
+            if let result {
+                Section("\(result.rows.count) rows") {
+                    QueryResultTableView(result: result)
+                        .frame(minHeight: 200)
+                }
+            }
+
+            if let errorMessage {
+                Section {
+                    Label(errorMessage, systemImage: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .navigationTitle("Preview")
+        .onAppear { runPreview() }
+    }
+
+    private func runPreview() {
+        isLoading = true
+        errorMessage = nil
+        let previewFlux = flux.replacingOccurrences(
+            of: "|> yield(name: \"results\")",
+            with: "|> limit(n: 100)\n  |> yield(name: \"results\")"
+        )
+        Task {
+            do {
+                let r = try await service.query(previewFlux)
+                await MainActor.run { result = r; isLoading = false }
+            } catch {
+                await MainActor.run { errorMessage = error.localizedDescription; isLoading = false }
+            }
         }
     }
 }

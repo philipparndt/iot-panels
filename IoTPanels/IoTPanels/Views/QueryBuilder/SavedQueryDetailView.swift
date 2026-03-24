@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SavedQueryDetailView: View {
     let dataSource: DataSource
-    let savedQuery: SavedQuery
+    @ObservedObject var savedQuery: SavedQuery
 
     @State private var result: QueryResult?
     @State private var isLoading = false
@@ -29,6 +29,9 @@ struct SavedQueryDetailView: View {
                 LabeledContent("Time Range", value: savedQuery.wrappedTimeRange.displayName)
                 if savedQuery.wrappedAggregateWindow != .none {
                     LabeledContent("Aggregation", value: "\(savedQuery.wrappedAggregateFunction.displayName) / \(savedQuery.wrappedAggregateWindow.displayName)")
+                }
+                if !savedQuery.wrappedUnit.isEmpty {
+                    LabeledContent("Unit", value: savedQuery.wrappedUnit)
                 }
 
                 let tagFilters = savedQuery.wrappedTagFilters
@@ -76,7 +79,7 @@ struct SavedQueryDetailView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingEditor) {
+        .sheet(isPresented: $showingEditor, onDismiss: runQuery) {
             QueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
                 .environment(\.managedObjectContext, viewContext)
         }
