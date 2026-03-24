@@ -32,6 +32,7 @@
 		C10000030000000000000003 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000030000000000000003 /* DashboardView.swift */; };
 		C10000040000000000000004 /* AddPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000040000000000000004 /* AddPanelView.swift */; };
 		C10000050000000000000005 /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
+		F100003100000000000000B1 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200003100000000000000B1 /* NavigationState.swift */; };
 		D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000010000000000000001 /* IoTPanelsWidget.swift */; };
 		D10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		D10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
@@ -134,6 +135,7 @@
 		F20000050000000000000005 /* WidgetDesignPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDesignPreviewView.swift; sourceTree = "<group>"; };
 		F20000060000000000000006 /* AddWidgetItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWidgetItemView.swift; sourceTree = "<group>"; };
 		F20000070000000000000007 /* WidgetItemConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetItemConfigView.swift; sourceTree = "<group>"; };
+		F200003100000000000000B1 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		F200002100000000000000A1 /* StyleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleConfig.swift; sourceTree = "<group>"; };
 		F200001100000000000000F1 /* UnitType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -212,6 +214,7 @@
 				A20000050000000000000005 /* DataSourceService.swift */,
 				A20000060000000000000006 /* InfluxDB2Service.swift */,
 				E20000010000000000000001 /* WidgetHelper.swift */,
+				F200003100000000000000B1 /* NavigationState.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -444,6 +447,7 @@
 				C10000040000000000000004 /* AddPanelView.swift in Sources */,
 				C10000050000000000000005 /* PanelCardView.swift in Sources */,
 				E10000010000000000000001 /* WidgetHelper.swift in Sources */,
+				F100003100000000000000B1 /* NavigationState.swift in Sources */,
 				F100001100000000000000F1 /* UnitType.swift in Sources */,
 				F100002100000000000000A1 /* StyleConfig.swift in Sources */,
 				F10000010000000000000001 /* WidgetDesign+Wrapped.swift in Sources */,

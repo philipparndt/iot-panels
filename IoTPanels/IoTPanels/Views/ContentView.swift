@@ -1,21 +1,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(NavigationState.self) private var navigationState
+    @Environment(\.managedObjectContext) private var viewContext
+
     var body: some View {
-        TabView {
-            Tab("Widgets", systemImage: "rectangle.on.rectangle.angled") {
-                NavigationStack {
-                    WidgetDesignListView()
-                }
+        @Bindable var nav = navigationState
+
+        TabView(selection: $nav.selectedTab) {
+            Tab("Widgets", systemImage: "rectangle.on.rectangle.angled", value: .widgets) {
+                WidgetDesignListView()
             }
 
-            Tab("Dashboards", systemImage: "square.grid.2x2") {
+            Tab("Dashboards", systemImage: "square.grid.2x2", value: .dashboards) {
                 NavigationStack {
                     DashboardListView()
                 }
             }
 
-            Tab("Data Sources", systemImage: "server.rack") {
+            Tab("Data Sources", systemImage: "server.rack", value: .dataSources) {
                 NavigationSplitView {
                     DataSourceListView()
                 } detail: {
@@ -25,9 +28,11 @@ struct ContentView: View {
             }
         }
     }
+
 }
 
 #Preview {
     ContentView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environment(NavigationState())
 }

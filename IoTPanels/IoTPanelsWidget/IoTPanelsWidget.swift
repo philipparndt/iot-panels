@@ -7,6 +7,7 @@ import AppIntents
 
 struct WidgetDesignEntry: TimelineEntry {
     let date: Date
+    let designId: String?
     let designName: String
     let sizeType: WidgetSizeType
     let textScale: CGFloat
@@ -24,6 +25,7 @@ struct WidgetDesignEntry: TimelineEntry {
     static var placeholder: WidgetDesignEntry {
         WidgetDesignEntry(
             date: Date(),
+            designId: nil,
             designName: "My Widget",
             sizeType: .medium,
             textScale: 1.0,
@@ -45,7 +47,7 @@ struct WidgetDesignEntry: TimelineEntry {
     }
 
     static var empty: WidgetDesignEntry {
-        WidgetDesignEntry(date: Date(), designName: "Select a widget", sizeType: .medium, textScale: 1.0, groups: [], isPlaceholder: false)
+        WidgetDesignEntry(date: Date(), designId: nil, designName: "Select a widget", sizeType: .medium, textScale: 1.0, groups: [], isPlaceholder: false)
     }
 }
 
@@ -144,7 +146,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
             renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
         }
 
-        return WidgetDesignEntry(date: Date(), designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, groups: renderedGroups, isPlaceholder: false)
+        return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, groups: renderedGroups, isPlaceholder: false)
     }
 }
 
@@ -221,6 +223,7 @@ struct IoTPanelsWidget: Widget {
             provider: WidgetDesignTimelineProvider()
         ) { entry in
             DesignWidgetView(entry: entry)
+                .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("IoT Panel")

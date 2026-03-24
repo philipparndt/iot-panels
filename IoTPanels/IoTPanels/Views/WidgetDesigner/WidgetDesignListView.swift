@@ -1,7 +1,9 @@
 import SwiftUI
+import CoreData
 
 struct WidgetDesignListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(NavigationState.self) private var navigationState
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \WidgetDesign.name, ascending: true)],
@@ -10,8 +12,43 @@ struct WidgetDesignListView: View {
     private var designs: FetchedResults<WidgetDesign>
 
     @State private var showingNew = false
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
+        NavigationStack(path: $navigationPath) {
+            listContent
+                .navigationTitle("Widgets")
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: { showingNew = true }) {
+                            Label("Add", systemImage: "plus")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showingNew) {
+                    NewWidgetDesignSheet { name, size in
+                        createDesign(name: name, size: size)
+                    }
+                }
+                .navigationDestination(for: NSManagedObjectID.self) { objectID in
+                    if let design = viewContext.object(with: objectID) as? WidgetDesign {
+                        WidgetDesignEditorView(design: design)
+                    }
+                }
+        }
+        .onChange(of: navigationState.navigateToWidgetDesignId) {
+            guard let targetId = navigationState.navigateToWidgetDesignId else { return }
+            navigationState.navigateToWidgetDesignId = nil
+            if let design = designs.first(where: { $0.id == targetId }) {
+                // Replace entire path with just the target (clears any existing stack)
+                var newPath = NavigationPath()
+                newPath.append(design.objectID)
+                navigationPath = newPath
+            }
+        }
+    }
+
+    private var listContent: some View {
         List {
             if designs.isEmpty {
                 ContentUnavailableView(
@@ -21,9 +58,7 @@ struct WidgetDesignListView: View {
                 )
             } else {
                 ForEach(Array(designs.enumerated()), id: \.element.objectID) { _, design in
-                    NavigationLink {
-                        WidgetDesignEditorView(design: design)
-                    } label: {
+                    NavigationLink(value: design.objectID) {
                         HStack(spacing: 12) {
                             WidgetSizeBadge(size: design.wrappedSizeType)
 
@@ -38,19 +73,6 @@ struct WidgetDesignListView: View {
                     }
                 }
                 .onDelete(perform: deleteDesigns)
-            }
-        }
-        .navigationTitle("Widgets")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingNew = true }) {
-                    Label("Add", systemImage: "plus")
-                }
-            }
-        }
-        .sheet(isPresented: $showingNew) {
-            NewWidgetDesignSheet { name, size in
-                createDesign(name: name, size: size)
             }
         }
     }
