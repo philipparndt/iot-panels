@@ -60,6 +60,10 @@ struct QueryBuilderView: View {
     @State private var aggregateWindow: AggregateWindow = .fiveMinutes
     @State private var aggregateFunction: AggregateFunction = .mean
 
+    // Unit
+    @State private var selectedUnit: String = ""
+    @State private var customUnit: String = ""
+
     // Preview
     @State private var previewResult: QueryResult?
     @State private var isLoadingPreview = false
@@ -219,7 +223,8 @@ struct QueryBuilderView: View {
 
         switch step {
         case .measurement:
-            if fieldsLoadedForMeasurement != selectedMeasurement {
+            let measurementChanged = fieldsLoadedForMeasurement != selectedMeasurement && !isLoadingFields
+            if measurementChanged {
                 selectedFields = []
                 availableFields = []
                 availableTagKeys = []
@@ -231,7 +236,8 @@ struct QueryBuilderView: View {
             }
             withAnimation { step = next }
         case .fields:
-            if tagsLoadedForMeasurement != selectedMeasurement {
+            let tagsNeedLoad = tagsLoadedForMeasurement != selectedMeasurement && !isLoadingTags
+            if tagsNeedLoad {
                 availableTagKeys = []
                 tagValues = [:]
                 selectedTagValues = [:]
@@ -417,6 +423,66 @@ struct QueryBuilderView: View {
                 }
             }
         }
+
+        Section {
+            ForEach(UnitCategory.allCases.filter { $0 != .custom && $0 != .none }) { category in
+                if !category.units.isEmpty {
+                    DisclosureGroup(category.displayName) {
+                        ForEach(category.units, id: \.self) { u in
+                            Button {
+                                selectedUnit = u
+                                customUnit = ""
+                            } label: {
+                                HStack {
+                                    Text(u).foregroundStyle(.primary)
+                                    Spacer()
+                                    if selectedUnit == u && customUnit.isEmpty {
+                                        Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            HStack {
+                TextField("Custom unit", text: $customUnit)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onChange(of: customUnit) {
+                        if !customUnit.isEmpty { selectedUnit = "" }
+                    }
+                if !customUnit.isEmpty {
+                    Button { customUnit = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            if !effectiveUnit.isEmpty {
+                HStack {
+                    Text("Selected:")
+                        .foregroundStyle(.secondary)
+                    Text(effectiveUnit)
+                        .fontWeight(.medium)
+                    Spacer()
+                    Button("Clear") {
+                        selectedUnit = ""
+                        customUnit = ""
+                    }
+                    .font(.caption)
+                }
+            }
+        } header: {
+            Text("Unit")
+        } footer: {
+            Text("The unit is displayed alongside values in dashboards and widgets.")
+        }
+    }
+
+    private var effectiveUnit: String {
+        customUnit.isEmpty ? selectedUnit : customUnit
     }
 
     // MARK: - Preview Step
@@ -615,6 +681,7 @@ struct QueryBuilderView: View {
         target.timeRange = timeRange.rawValue
         target.aggregateWindow = aggregateWindow.rawValue
         target.aggregateFunction = aggregateFunction.rawValue
+        target.unit = effectiveUnit.isEmpty ? nil : effectiveUnit
         target.modifiedAt = Date()
 
         try? viewContext.save()
@@ -633,5 +700,18 @@ struct QueryBuilderView: View {
         timeRange = q.wrappedTimeRange
         aggregateWindow = q.wrappedAggregateWindow
         aggregateFunction = q.wrappedAggregateFunction
+        let u = q.wrappedUnit
+        let allPresets = UnitCategory.allCases.flatMap(\.units)
+        if allPresets.contains(u) {
+            selectedUnit = u
+        } else if !u.isEmpty {
+            customUnit = u
+        }
+
+        // Pre-load fields and tags for the existing measurement so they're not cleared on navigation
+        if !selectedMeasurement.isEmpty {
+            loadFields(measurement: selectedMeasurement)
+            loadTagKeys(measurement: selectedMeasurement)
+        }
     }
 }

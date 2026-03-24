@@ -72,6 +72,7 @@ struct WidgetDesignPreviewView: View {
         let groupSeries = seriesData[group.id] ?? group.items.map { item in
             ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: [])
         }
+        let groupUnit = group.items.first?.savedQuery?.wrappedUnit ?? ""
 
         return Group {
             if groupSeries.count <= 1 {
@@ -79,14 +80,16 @@ struct WidgetDesignPreviewView: View {
                     title: group.title,
                     style: group.style,
                     dataPoints: groupSeries.first?.dataPoints ?? [],
-                    compact: compact
+                    compact: compact,
+                    unit: groupUnit
                 )
             } else {
                 PanelRenderer(
                     title: group.title,
                     style: .chart,
                     series: groupSeries,
-                    compact: compact
+                    compact: compact,
+                    unit: groupUnit
                 )
             }
         }

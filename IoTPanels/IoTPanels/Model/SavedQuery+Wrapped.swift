@@ -53,6 +53,11 @@ extension SavedQuery {
         set { aggregateWindow = newValue.rawValue }
     }
 
+    var wrappedUnit: String {
+        get { unit ?? "" }
+        set { unit = newValue }
+    }
+
     var wrappedCreatedAt: Date {
         get { createdAt ?? Date() }
         set { createdAt = newValue }

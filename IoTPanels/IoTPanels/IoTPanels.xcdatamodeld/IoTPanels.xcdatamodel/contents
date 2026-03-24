@@ -23,6 +23,7 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="tagFiltersJSON" optional="YES" attributeType="String"/>
         <attribute name="timeRange" optional="YES" attributeType="String"/>
+        <attribute name="unit" optional="YES" attributeType="String"/>
         <relationship name="dataSource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DataSource" inverseName="savedQueries" inverseEntity="DataSource"/>
         <relationship name="panels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="DashboardPanel" inverseName="savedQuery" inverseEntity="DashboardPanel"/>
         <relationship name="widgetDesignItems" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WidgetDesignItem" inverseName="savedQuery" inverseEntity="WidgetDesignItem"/>

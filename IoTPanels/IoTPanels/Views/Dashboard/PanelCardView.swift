@@ -16,21 +16,24 @@ struct PanelRenderer: View {
     let style: PanelDisplayStyle
     let series: [ChartSeries]
     let compact: Bool
+    let unit: String
 
     /// Single-series convenience init (backward compatible)
-    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool) {
+    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool, unit: String = "") {
         self.title = title
         self.style = style
         self.series = [ChartSeries(id: "default", label: dataPoints.first?.field ?? "value", color: .accentColor, dataPoints: dataPoints)]
         self.compact = compact
+        self.unit = unit
     }
 
     /// Multi-series init
-    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool) {
+    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool, unit: String = "") {
         self.title = title
         self.style = style
         self.series = series
         self.compact = compact
+        self.unit = unit
     }
 
     private var allDataPoints: [ChartDataPoint] {
@@ -49,7 +52,8 @@ struct PanelRenderer: View {
     }
 
     private var fieldName: String? {
-        series.first?.dataPoints.first?.field
+        if !unit.isEmpty { return unit }
+        return series.first?.dataPoints.first?.field
     }
 
     private var isMultiSeries: Bool { series.count > 1 }
@@ -286,7 +290,8 @@ struct PanelCardView: View {
                     title: panel.wrappedTitle,
                     style: panel.wrappedDisplayStyle,
                     dataPoints: dataPoints,
-                    compact: false
+                    compact: false,
+                    unit: panel.savedQuery?.wrappedUnit ?? ""
                 )
             }
         }
