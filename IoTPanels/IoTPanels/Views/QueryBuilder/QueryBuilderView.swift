@@ -34,12 +34,17 @@ struct QueryBuilderView: View {
         selectedTagValues.values.reduce(0) { $0 + $1.count }
     }
 
+    @FocusState private var nameFieldFocused: Bool
+
     var body: some View {
         NavigationStack {
             List {
                 // Name
                 Section {
                     TextField("Query name", text: $queryName)
+                        .focused($nameFieldFocused)
+                        .submitLabel(.done)
+                        .onSubmit { nameFieldFocused = false }
                 }
 
                 // Measurement
@@ -155,6 +160,7 @@ struct QueryBuilderView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(existingQuery != nil ? "Edit Query" : "New Query")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -588,9 +594,7 @@ struct QueryPreviewPage: View {
     var body: some View {
         List {
             Section("Flux Query") {
-                Text(flux)
-                    .font(.system(.caption2, design: .monospaced))
-                    .textSelection(.enabled)
+                FluxSyntaxView(flux, fontSize: 10)
             }
 
             Section {

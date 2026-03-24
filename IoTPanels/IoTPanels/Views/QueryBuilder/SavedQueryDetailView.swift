@@ -18,9 +18,7 @@ struct SavedQueryDetailView: View {
     var body: some View {
         List {
             Section("Query") {
-                Text(savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket))
-                    .font(.system(.caption, design: .monospaced))
-                    .textSelection(.enabled)
+                FluxSyntaxView(savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket), fontSize: 11)
             }
 
             Section("Parameters") {
