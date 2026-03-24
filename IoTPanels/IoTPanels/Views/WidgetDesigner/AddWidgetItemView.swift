@@ -1,10 +1,10 @@
 import SwiftUI
 
-struct AddPanelView: View {
+struct AddWidgetItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
 
-    let dashboard: Dashboard
+    let design: WidgetDesign
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
@@ -12,33 +12,16 @@ struct AddPanelView: View {
     )
     private var dataSources: FetchedResults<DataSource>
 
-    @State private var panelTitle = ""
-    @State private var selectedStyle: PanelDisplayStyle = .auto
-
     var body: some View {
         NavigationStack {
             Form {
-                Section("Panel Title") {
-                    TextField("Title (optional, defaults to query name)", text: $panelTitle)
-                }
-
-                Section("Display Style") {
-                    Picker("Style", selection: $selectedStyle) {
-                        ForEach(PanelDisplayStyle.allCases) { style in
-                            Label(style.displayName, systemImage: style.icon)
-                                .tag(style)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-
                 ForEach(Array(dataSources.enumerated()), id: \.element.objectID) { _, ds in
                     let queries = fetchQueries(for: ds)
                     if !queries.isEmpty {
                         Section(ds.wrappedName) {
                             ForEach(Array(queries.enumerated()), id: \.element.objectID) { _, query in
                                 Button {
-                                    addPanel(query: query)
+                                    addItem(query: query)
                                 } label: {
                                     HStack {
                                         VStack(alignment: .leading) {
@@ -67,7 +50,7 @@ struct AddPanelView: View {
                     )
                 }
             }
-            .navigationTitle("Add Panel")
+            .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -83,23 +66,22 @@ struct AddPanelView: View {
     }
 
     private func querySummary(_ query: SavedQuery) -> String {
-        let fields = query.wrappedFields
-        let fieldText = fields.isEmpty ? "" : fields.joined(separator: ", ")
-        return "\(query.wrappedMeasurement) · \(fieldText)"
+        "\(query.wrappedMeasurement) · \(query.wrappedFields.joined(separator: ", "))"
     }
 
-    private func addPanel(query: SavedQuery) {
-        let panel = DashboardPanel(context: viewContext)
-        panel.id = UUID()
-        panel.title = panelTitle.isEmpty ? query.wrappedName : panelTitle
-        panel.wrappedDisplayStyle = selectedStyle
-        panel.savedQuery = query
-        panel.dashboard = dashboard
-        panel.sortOrder = Int32(dashboard.sortedPanels.count)
-        panel.createdAt = Date()
-        panel.modifiedAt = Date()
+    private func addItem(query: SavedQuery) {
+        let item = WidgetDesignItem(context: viewContext)
+        item.id = UUID()
+        item.title = query.wrappedName
+        item.displayStyle = PanelDisplayStyle.chart.rawValue
+        item.colorHex = SeriesColors.color(at: design.sortedItems.count)
+        item.sortOrder = Int32(design.sortedItems.count)
+        item.savedQuery = query
+        item.widgetDesign = design
+        item.createdAt = Date()
+        item.modifiedAt = Date()
 
-        dashboard.modifiedAt = Date()
+        design.modifiedAt = Date()
         try? viewContext.save()
         WidgetHelper.reloadWidgets()
         dismiss()

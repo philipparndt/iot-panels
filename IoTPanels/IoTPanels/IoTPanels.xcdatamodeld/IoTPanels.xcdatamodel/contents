@@ -25,6 +25,27 @@
         <attribute name="timeRange" optional="YES" attributeType="String"/>
         <relationship name="dataSource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DataSource" inverseName="savedQueries" inverseEntity="DataSource"/>
         <relationship name="panels" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="DashboardPanel" inverseName="savedQuery" inverseEntity="DashboardPanel"/>
+        <relationship name="widgetDesignItems" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="WidgetDesignItem" inverseName="savedQuery" inverseEntity="WidgetDesignItem"/>
+    </entity>
+    <entity name="WidgetDesign" representedClassName="WidgetDesign" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="sizeType" optional="YES" attributeType="String"/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WidgetDesignItem" inverseName="widgetDesign" inverseEntity="WidgetDesignItem"/>
+    </entity>
+    <entity name="WidgetDesignItem" representedClassName="WidgetDesignItem" syncable="YES" codeGenerationType="class">
+        <attribute name="colorHex" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="displayStyle" optional="YES" attributeType="String"/>
+        <attribute name="groupTag" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="sortOrder" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="widgetDesignItems" inverseEntity="SavedQuery"/>
+        <relationship name="widgetDesign" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WidgetDesign" inverseName="items" inverseEntity="WidgetDesign"/>
     </entity>
     <entity name="Dashboard" representedClassName="Dashboard" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>

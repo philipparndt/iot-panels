@@ -29,6 +29,17 @@
 		C10000040000000000000004 /* AddPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000040000000000000004 /* AddPanelView.swift */; };
 		C10000050000000000000005 /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
 		E10000010000000000000001 /* WidgetHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000010000000000000001 /* WidgetHelper.swift */; };
+		F10000010000000000000001 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
+		F10000020000000000000002 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
+		F10000030000000000000003 /* WidgetDesignListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000030000000000000003 /* WidgetDesignListView.swift */; };
+		F10000040000000000000004 /* WidgetDesignEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000040000000000000004 /* WidgetDesignEditorView.swift */; };
+		F10000050000000000000005 /* WidgetDesignPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000050000000000000005 /* WidgetDesignPreviewView.swift */; };
+		F10000060000000000000006 /* AddWidgetItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000060000000000000006 /* AddWidgetItemView.swift */; };
+		F10000070000000000000007 /* WidgetItemConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000070000000000000007 /* WidgetItemConfigView.swift */; };
+		F10000080000000000000008 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
+		F10000090000000000000009 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
+		F1000010000000000000000A /* WidgetDesignPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000050000000000000005 /* WidgetDesignPreviewView.swift */; };
+		D100001200000000000000FF /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
 		D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000010000000000000001 /* IoTPanelsWidget.swift */; };
 		D10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		D10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
@@ -108,6 +119,13 @@
 		A20000170000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AD0000010000000000000001 /* IoTPanels.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = IoTPanels.xcdatamodel; sourceTree = "<group>"; };
 		E20000010000000000000001 /* WidgetHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetHelper.swift; sourceTree = "<group>"; };
+		F20000010000000000000001 /* WidgetDesign+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WidgetDesign+Wrapped.swift"; sourceTree = "<group>"; };
+		F20000020000000000000002 /* ColorUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorUtilities.swift; sourceTree = "<group>"; };
+		F20000030000000000000003 /* WidgetDesignListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDesignListView.swift; sourceTree = "<group>"; };
+		F20000040000000000000004 /* WidgetDesignEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDesignEditorView.swift; sourceTree = "<group>"; };
+		F20000050000000000000005 /* WidgetDesignPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDesignPreviewView.swift; sourceTree = "<group>"; };
+		F20000060000000000000006 /* AddWidgetItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWidgetItemView.swift; sourceTree = "<group>"; };
+		F20000070000000000000007 /* WidgetItemConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetItemConfigView.swift; sourceTree = "<group>"; };
 		D20000010000000000000001 /* IoTPanelsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWidget.swift; sourceTree = "<group>"; };
 		D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IoTPanelsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D20000030000000000000003 /* IoTPanelsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWidget.entitlements; sourceTree = "<group>"; };
@@ -174,6 +192,8 @@
 				B20000010000000000000001 /* TimeRange.swift */,
 				B20000020000000000000002 /* SavedQuery+Wrapped.swift */,
 				C20000010000000000000001 /* Dashboard+Wrapped.swift */,
+				F20000010000000000000001 /* WidgetDesign+Wrapped.swift */,
+				F20000020000000000000002 /* ColorUtilities.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -195,6 +215,7 @@
 				A70000060000000000000006 /* DataSource */,
 				B70000010000000000000001 /* QueryBuilder */,
 				C70000010000000000000001 /* Dashboard */,
+				F70000010000000000000001 /* WidgetDesigner */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -207,6 +228,18 @@
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
 			);
 			path = DataSource;
+			sourceTree = "<group>";
+		};
+		F70000010000000000000001 /* WidgetDesigner */ = {
+			isa = PBXGroup;
+			children = (
+				F20000030000000000000003 /* WidgetDesignListView.swift */,
+				F20000040000000000000004 /* WidgetDesignEditorView.swift */,
+				F20000050000000000000005 /* WidgetDesignPreviewView.swift */,
+				F20000060000000000000006 /* AddWidgetItemView.swift */,
+				F20000070000000000000007 /* WidgetItemConfigView.swift */,
+			);
+			path = WidgetDesigner;
 			sourceTree = "<group>";
 		};
 		C70000010000000000000001 /* Dashboard */ = {
@@ -403,6 +436,13 @@
 				C10000040000000000000004 /* AddPanelView.swift in Sources */,
 				C10000050000000000000005 /* PanelCardView.swift in Sources */,
 				E10000010000000000000001 /* WidgetHelper.swift in Sources */,
+				F10000010000000000000001 /* WidgetDesign+Wrapped.swift in Sources */,
+				F10000020000000000000002 /* ColorUtilities.swift in Sources */,
+				F10000030000000000000003 /* WidgetDesignListView.swift in Sources */,
+				F10000040000000000000004 /* WidgetDesignEditorView.swift in Sources */,
+				F10000050000000000000005 /* WidgetDesignPreviewView.swift in Sources */,
+				F10000060000000000000006 /* AddWidgetItemView.swift in Sources */,
+				F10000070000000000000007 /* WidgetItemConfigView.swift in Sources */,
 				A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -428,6 +468,10 @@
 				D10000070000000000000007 /* TimeRange.swift in Sources */,
 				D10000080000000000000008 /* SavedQuery+Wrapped.swift in Sources */,
 				D10000090000000000000009 /* Dashboard+Wrapped.swift in Sources */,
+				D100001200000000000000FF /* PanelCardView.swift in Sources */,
+				F10000080000000000000008 /* WidgetDesign+Wrapped.swift in Sources */,
+				F10000090000000000000009 /* ColorUtilities.swift in Sources */,
+				F1000010000000000000000A /* WidgetDesignPreviewView.swift in Sources */,
 				D1000010000000000000000A /* IoTPanels.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

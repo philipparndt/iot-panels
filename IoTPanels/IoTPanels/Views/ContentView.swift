@@ -3,6 +3,12 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         TabView {
+            Tab("Widgets", systemImage: "rectangle.on.rectangle.angled") {
+                NavigationStack {
+                    WidgetDesignListView()
+                }
+            }
+
             Tab("Dashboards", systemImage: "square.grid.2x2") {
                 NavigationStack {
                     DashboardListView()
