@@ -11,8 +11,8 @@ struct SavedQueryDetailView: View {
 
     @Environment(\.managedObjectContext) private var viewContext
 
-    private var service: InfluxDB2Service {
-        InfluxDB2Service(dataSource: dataSource)
+    private var service: any DataSourceServiceProtocol {
+        ServiceFactory.service(for: dataSource)
     }
 
     var body: some View {

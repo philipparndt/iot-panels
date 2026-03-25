@@ -570,7 +570,7 @@ struct PanelCardView: View {
         }
         errorMessage = nil
 
-        let service = InfluxDB2Service(dataSource: dataSource)
+        let service = ServiceFactory.service(for: dataSource)
         let flux = query.buildFluxQuery(bucket: dataSource.wrappedBucket)
 
         Task {

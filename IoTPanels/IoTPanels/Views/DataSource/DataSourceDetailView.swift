@@ -35,6 +35,14 @@ struct DataSourceDetailView: View {
                 }
             }
 
+            if backendType == .demo {
+                Section {
+                    Label("This data source generates realistic demo data for testing. No network connection required.", systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             if backendType == .influxDB2 && !isEditing {
                 Section {
                     Button {
@@ -49,15 +57,15 @@ struct DataSourceDetailView: View {
                 }
             }
 
-            Section("Connection") {
-                TextField("URL", text: $url)
-                    .textContentType(.URL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                SecureField("Token", text: $token)
-            }
-
             if backendType == .influxDB2 {
+                Section("Connection") {
+                    TextField("URL", text: $url)
+                        .textContentType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    SecureField("Token", text: $token)
+                }
+
                 Section("InfluxDB 2") {
                     TextField("Organization", text: $organization)
                         .textInputAutocapitalization(.never)
@@ -86,7 +94,7 @@ struct DataSourceDetailView: View {
                         Text("Test Connection")
                     }
                 }
-                .disabled(url.isEmpty || token.isEmpty || isTesting)
+                .disabled(backendType == .influxDB2 ? (url.isEmpty || token.isEmpty || isTesting) : isTesting)
 
                 if let testResult {
                     switch testResult {
@@ -119,7 +127,7 @@ struct DataSourceDetailView: View {
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save", action: save)
-                            .disabled(name.isEmpty || url.isEmpty)
+                            .disabled(name.isEmpty || (backendType == .influxDB2 && url.isEmpty))
                     }
                 }
                 .onAppear(perform: loadDataSource)
@@ -133,7 +141,7 @@ struct DataSourceDetailView: View {
                         }
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Add", action: save)
-                                .disabled(name.isEmpty || url.isEmpty || token.isEmpty)
+                                .disabled(name.isEmpty || (backendType == .influxDB2 && (url.isEmpty || token.isEmpty)))
                         }
                     }
             }
@@ -174,12 +182,12 @@ struct DataSourceDetailView: View {
         isTesting = true
         testResult = nil
 
-        let service = InfluxDB2Service(
-            url: url,
-            token: token,
-            organization: organization,
-            bucket: bucket
-        )
+        let service: any DataSourceServiceProtocol
+        if backendType == .demo {
+            service = DemoService()
+        } else {
+            service = InfluxDB2Service(url: url, token: token, organization: organization, bucket: bucket)
+        }
 
         Task {
             do {

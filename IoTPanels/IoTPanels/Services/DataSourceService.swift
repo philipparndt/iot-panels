@@ -17,4 +17,20 @@ struct QueryResult {
 protocol DataSourceServiceProtocol {
     func testConnection() async throws -> Bool
     func query(_ queryString: String) async throws -> QueryResult
+    func fetchMeasurements() async throws -> [String]
+    func fetchFieldKeys(measurement: String) async throws -> [String]
+    func fetchTagKeys(measurement: String) async throws -> [String]
+    func fetchTagValues(measurement: String, tag: String) async throws -> [String]
+}
+
+/// Creates the appropriate service for a DataSource based on its backend type.
+enum ServiceFactory {
+    static func service(for dataSource: DataSource) -> any DataSourceServiceProtocol {
+        switch dataSource.wrappedBackendType {
+        case .demo:
+            return DemoService()
+        case .influxDB2:
+            return InfluxDB2Service(dataSource: dataSource)
+        }
+    }
 }

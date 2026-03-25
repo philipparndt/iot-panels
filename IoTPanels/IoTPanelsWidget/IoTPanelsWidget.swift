@@ -11,6 +11,7 @@ struct WidgetDesignEntry: TimelineEntry {
     let designName: String
     let sizeType: WidgetSizeType
     let textScale: CGFloat
+    let refreshMinutes: Int
     let groups: [RenderedGroup]
     let isPlaceholder: Bool
 
@@ -29,6 +30,7 @@ struct WidgetDesignEntry: TimelineEntry {
             designName: "My Widget",
             sizeType: .medium,
             textScale: 1.0,
+            refreshMinutes: 15,
             groups: [
                 RenderedGroup(id: "1", title: "Temperature", style: .chart, series: [
                     ChartSeries(id: "a", label: "Indoor", color: Color(hex: "#4A90D9"), dataPoints:
@@ -47,7 +49,7 @@ struct WidgetDesignEntry: TimelineEntry {
     }
 
     static var empty: WidgetDesignEntry {
-        WidgetDesignEntry(date: Date(), designId: nil, designName: "Select a widget", sizeType: .medium, textScale: 1.0, groups: [], isPlaceholder: false)
+        WidgetDesignEntry(date: Date(), designId: nil, designName: "Select a widget", sizeType: .medium, textScale: 1.0, refreshMinutes: 15, groups: [], isPlaceholder: false)
     }
 }
 
@@ -113,7 +115,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: SelectWidgetDesignIntent, in context: Context) async -> Timeline<WidgetDesignEntry> {
         let entry = await fetchEntry(for: configuration)
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: entry.refreshMinutes, to: Date())!
         return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
 
@@ -135,7 +137,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
             for item in group.items {
                 guard let query = item.savedQuery, let ds = query.dataSource else { continue }
                 do {
-                    let result = try await InfluxDB2Service(dataSource: ds).query(query.buildFluxQuery(bucket: ds.wrappedBucket))
+                    let result = try await ServiceFactory.service(for: ds).query(query.buildFluxQuery(bucket: ds.wrappedBucket))
                     let points = PanelCardView.parseChartData(result: result)
                     groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: points))
                 } catch {
@@ -146,7 +148,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
             renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
         }
 
-        return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, groups: renderedGroups, isPlaceholder: false)
+        return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, refreshMinutes: Int(design.refreshInterval), groups: renderedGroups, isPlaceholder: false)
     }
 }
 

@@ -26,7 +26,7 @@ struct QueryBuilderView: View {
     @State private var errorMessage: String?
     @State private var didInitialLoad = false
 
-    private var service: InfluxDB2Service { InfluxDB2Service(dataSource: dataSource) }
+    private var service: any DataSourceServiceProtocol { ServiceFactory.service(for: dataSource) }
     private var effectiveUnit: String { customUnit.isEmpty ? selectedUnit : customUnit }
     private var canSave: Bool { !queryName.isEmpty && !selectedMeasurement.isEmpty && !selectedFields.isEmpty }
 
@@ -403,7 +403,7 @@ struct FilterPickerPage: View {
     @Binding var selectedTagValues: [String: Set<String>]
     let isLoading: Bool
     let measurement: String
-    let service: InfluxDB2Service
+    let service: any DataSourceServiceProtocol
 
     @State private var expandedTag: String?
 
@@ -527,54 +527,110 @@ struct UnitPickerPage: View {
     @Binding var customUnit: String
     @Environment(\.dismiss) private var dismiss
 
-    private let quickPicks = ["°C", "°F", "%", "W", "kW", "kWh", "V", "A", "hPa", "m/s", "km/h", "m", "km", "s", "min", "h", "L"]
-
     private var effectiveUnit: String { customUnit.isEmpty ? selectedUnit : customUnit }
 
-    var body: some View {
-        Form {
-            Section("Quick Select") {
-                Button("None") {
-                    selectedUnit = ""
-                    customUnit = ""
-                    dismiss()
-                }
-                .foregroundStyle(effectiveUnit.isEmpty ? Color.accentColor : .primary)
+    private struct UnitGroup: Identifiable {
+        let id: String
+        let name: String
+        let icon: String
+        let units: [(symbol: String, label: String)]
+    }
 
-                ForEach(quickPicks, id: \.self) { u in
-                    Button {
-                        selectedUnit = u
+    private let groups: [UnitGroup] = [
+        UnitGroup(id: "temp", name: "Temperature", icon: "thermometer", units: [
+            ("°C", "Celsius"), ("°F", "Fahrenheit"), ("K", "Kelvin")
+        ]),
+        UnitGroup(id: "humidity", name: "Humidity", icon: "humidity", units: [
+            ("%RH", "Relative Humidity"), ("%", "Percent")
+        ]),
+        UnitGroup(id: "pressure", name: "Pressure", icon: "gauge.with.dots.needle.bottom.50percent", units: [
+            ("hPa", "Hectopascal"), ("mbar", "Millibar"), ("Pa", "Pascal"),
+            ("mmHg", "mm Mercury"), ("psi", "Pounds/sq inch")
+        ]),
+        UnitGroup(id: "power", name: "Power & Energy", icon: "bolt", units: [
+            ("W", "Watt"), ("kW", "Kilowatt"), ("MW", "Megawatt"),
+            ("Wh", "Watt-hour"), ("kWh", "Kilowatt-hour"), ("MWh", "Megawatt-hour")
+        ]),
+        UnitGroup(id: "electrical", name: "Electrical", icon: "powerplug", units: [
+            ("V", "Volt"), ("mV", "Millivolt"),
+            ("A", "Ampere"), ("mA", "Milliampere")
+        ]),
+        UnitGroup(id: "speed", name: "Speed", icon: "speedometer", units: [
+            ("m/s", "Meters/second"), ("km/h", "Kilometers/hour"), ("mph", "Miles/hour"), ("kn", "Knots")
+        ]),
+        UnitGroup(id: "distance", name: "Distance", icon: "ruler", units: [
+            ("m", "Meter"), ("km", "Kilometer"), ("cm", "Centimeter"), ("mm", "Millimeter"),
+            ("mi", "Mile"), ("ft", "Foot"), ("in", "Inch")
+        ]),
+        UnitGroup(id: "time", name: "Time", icon: "clock", units: [
+            ("s", "Seconds"), ("ms", "Milliseconds"), ("min", "Minutes"), ("h", "Hours"), ("d", "Days")
+        ]),
+        UnitGroup(id: "volume", name: "Volume", icon: "drop", units: [
+            ("L", "Liter"), ("mL", "Milliliter"), ("m³", "Cubic meter"), ("gal", "Gallon")
+        ]),
+        UnitGroup(id: "other", name: "Other", icon: "number", units: [
+            ("%", "Percent"), ("dB", "Decibel"), ("ppm", "Parts per million"), ("lx", "Lux"), ("µg/m³", "Microgram/m³")
+        ]),
+    ]
+
+    var body: some View {
+        List {
+            // Current
+            if !effectiveUnit.isEmpty {
+                Section {
+                    HStack {
+                        Text("Current unit")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(effectiveUnit)
+                            .fontWeight(.semibold)
+                    }
+                    Button("Clear unit", role: .destructive) {
+                        selectedUnit = ""
                         customUnit = ""
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Text(u).foregroundStyle(.primary)
-                            Spacer()
-                            if selectedUnit == u && customUnit.isEmpty {
-                                Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
-                            }
-                        }
                     }
                 }
             }
 
-            Section("Custom") {
-                TextField("Custom unit", text: $customUnit)
+            // Groups
+            ForEach(groups) { group in
+                Section {
+                    ForEach(group.units, id: \.symbol) { unit in
+                        Button {
+                            selectedUnit = unit.symbol
+                            customUnit = ""
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text(unit.symbol)
+                                    .font(.body.weight(.medium).monospacedDigit())
+                                    .frame(width: 50, alignment: .leading)
+                                Text(unit.label)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if selectedUnit == unit.symbol && customUnit.isEmpty {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                            .foregroundStyle(.primary)
+                        }
+                    }
+                } header: {
+                    Label(group.name, systemImage: group.icon)
+                }
+            }
+
+            // Custom
+            Section {
+                TextField("Custom unit (e.g. rpm, bar)", text: $customUnit)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .onChange(of: customUnit) {
                         if !customUnit.isEmpty { selectedUnit = "" }
                     }
-            }
-
-            if !effectiveUnit.isEmpty {
-                Section {
-                    HStack {
-                        Text("Current unit:")
-                        Spacer()
-                        Text(effectiveUnit).fontWeight(.semibold)
-                    }
-                }
+            } header: {
+                Label("Custom", systemImage: "pencil")
             }
         }
         .navigationTitle("Unit")
@@ -585,7 +641,7 @@ struct UnitPickerPage: View {
 
 struct QueryPreviewPage: View {
     let flux: String
-    let service: InfluxDB2Service
+    let service: any DataSourceServiceProtocol
 
     @State private var result: QueryResult?
     @State private var isLoading = false

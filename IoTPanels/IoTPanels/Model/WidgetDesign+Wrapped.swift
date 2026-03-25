@@ -76,6 +76,45 @@ enum TextScale: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Refresh Interval
+
+enum RefreshInterval: CaseIterable, Identifiable {
+    case fiveMinutes
+    case fifteenMinutes
+    case thirtyMinutes
+    case oneHour
+    case twoHours
+    case sixHours
+
+    var id: Int { minutes }
+
+    var minutes: Int {
+        switch self {
+        case .fiveMinutes: return 5
+        case .fifteenMinutes: return 15
+        case .thirtyMinutes: return 30
+        case .oneHour: return 60
+        case .twoHours: return 120
+        case .sixHours: return 360
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .fiveMinutes: return "5 min"
+        case .fifteenMinutes: return "15 min"
+        case .thirtyMinutes: return "30 min"
+        case .oneHour: return "1 hour"
+        case .twoHours: return "2 hours"
+        case .sixHours: return "6 hours"
+        }
+    }
+
+    static func from(minutes: Int) -> RefreshInterval {
+        allCases.first { $0.minutes == minutes } ?? .fifteenMinutes
+    }
+}
+
 // MARK: - Chart Series (multi-series rendering)
 
 struct ChartSeries: Identifiable {
@@ -115,6 +154,11 @@ extension WidgetDesign {
     var wrappedTextScale: TextScale {
         get { TextScale(rawValue: textScale ?? "") ?? .medium }
         set { textScale = newValue.rawValue }
+    }
+
+    var wrappedRefreshInterval: RefreshInterval {
+        get { RefreshInterval.from(minutes: Int(refreshInterval)) }
+        set { refreshInterval = Int32(newValue.minutes) }
     }
 
     var wrappedCreatedAt: Date {

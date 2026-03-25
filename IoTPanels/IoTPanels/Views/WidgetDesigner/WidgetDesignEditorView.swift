@@ -18,6 +18,9 @@ struct WidgetDesignEditorView: View {
                 // Text scale
                 textScalePicker
 
+                // Refresh rate
+                refreshPicker
+
                 // Live preview
                 previewSection
 
@@ -89,6 +92,31 @@ struct WidgetDesignEditorView: View {
             )) {
                 ForEach(TextScale.allCases) { s in
                     Text(s.displayName).tag(s)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    // MARK: - Refresh Picker
+
+    private var refreshPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Refresh Rate")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            Picker("Refresh", selection: Binding(
+                get: { design.wrappedRefreshInterval },
+                set: {
+                    design.wrappedRefreshInterval = $0
+                    design.modifiedAt = Date()
+                    try? viewContext.save()
+                    WidgetHelper.reloadWidgets()
+                }
+            )) {
+                ForEach(RefreshInterval.allCases) { r in
+                    Text(r.displayName).tag(r)
                 }
             }
             .pickerStyle(.segmented)
@@ -255,7 +283,7 @@ struct WidgetDesignEditorView: View {
                 var groupSeries: [ChartSeries] = []
                 for item in group.items {
                     guard let query = item.savedQuery, let ds = query.dataSource else { continue }
-                    let service = InfluxDB2Service(dataSource: ds)
+                    let service = ServiceFactory.service(for: ds)
                     let flux = query.buildFluxQuery(bucket: ds.wrappedBucket)
                     do {
                         let result = try await service.query(flux)
