@@ -137,7 +137,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
             for item in group.items {
                 guard let query = item.savedQuery, let ds = query.dataSource else { continue }
                 do {
-                    let result = try await ServiceFactory.service(for: ds).query(query.buildFluxQuery(bucket: ds.wrappedBucket))
+                    let result = try await ServiceFactory.service(for: ds).query(query.buildQuery(for: ds))
                     let points = PanelCardView.parseChartData(result: result)
                     groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: points))
                 } catch {

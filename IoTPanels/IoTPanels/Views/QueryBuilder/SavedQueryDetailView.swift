@@ -15,27 +15,41 @@ struct SavedQueryDetailView: View {
         ServiceFactory.service(for: dataSource)
     }
 
+    private var isMQTT: Bool {
+        dataSource.wrappedBackendType == .mqtt
+    }
+
     var body: some View {
         List {
-            Section("Query") {
-                FluxSyntaxView(savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket), fontSize: 11)
-            }
-
-            Section("Parameters") {
-                LabeledContent("Measurement", value: savedQuery.wrappedMeasurement)
-                LabeledContent("Fields", value: savedQuery.wrappedFields.joined(separator: ", "))
-                LabeledContent("Time Range", value: savedQuery.wrappedTimeRange.displayName)
-                if savedQuery.wrappedAggregateWindow != .none {
-                    LabeledContent("Aggregation", value: "\(savedQuery.wrappedAggregateFunction.displayName) / \(savedQuery.wrappedAggregateWindow.displayName)")
+            if isMQTT {
+                Section("MQTT Query") {
+                    LabeledContent("Topic", value: savedQuery.wrappedMeasurement)
+                    LabeledContent("Fields", value: savedQuery.wrappedFields.joined(separator: ", "))
+                    if !savedQuery.wrappedUnit.isEmpty {
+                        LabeledContent("Unit", value: savedQuery.wrappedUnit)
+                    }
                 }
-                if !savedQuery.wrappedUnit.isEmpty {
-                    LabeledContent("Unit", value: savedQuery.wrappedUnit)
+            } else {
+                Section("Query") {
+                    FluxSyntaxView(savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket), fontSize: 11)
                 }
 
-                let tagFilters = savedQuery.wrappedTagFilters
-                if !tagFilters.isEmpty {
-                    ForEach(Array(tagFilters.keys.sorted().enumerated()), id: \.element) { _, key in
-                        LabeledContent(key, value: tagFilters[key]?.joined(separator: ", ") ?? "")
+                Section("Parameters") {
+                    LabeledContent("Measurement", value: savedQuery.wrappedMeasurement)
+                    LabeledContent("Fields", value: savedQuery.wrappedFields.joined(separator: ", "))
+                    LabeledContent("Time Range", value: savedQuery.wrappedTimeRange.displayName)
+                    if savedQuery.wrappedAggregateWindow != .none {
+                        LabeledContent("Aggregation", value: "\(savedQuery.wrappedAggregateFunction.displayName) / \(savedQuery.wrappedAggregateWindow.displayName)")
+                    }
+                    if !savedQuery.wrappedUnit.isEmpty {
+                        LabeledContent("Unit", value: savedQuery.wrappedUnit)
+                    }
+
+                    let tagFilters = savedQuery.wrappedTagFilters
+                    if !tagFilters.isEmpty {
+                        ForEach(Array(tagFilters.keys.sorted().enumerated()), id: \.element) { _, key in
+                            LabeledContent(key, value: tagFilters[key]?.joined(separator: ", ") ?? "")
+                        }
                     }
                 }
             }
@@ -44,7 +58,7 @@ struct SavedQueryDetailView: View {
                 Section {
                     HStack {
                         ProgressView()
-                        Text("Running query...")
+                        Text(isMQTT ? "Collecting messages..." : "Running query...")
                             .padding(.leading, 8)
                     }
                 }
@@ -67,7 +81,7 @@ struct SavedQueryDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button(action: runQuery) {
-                        Label("Run Query", systemImage: "play.fill")
+                        Label(isMQTT ? "Collect Data" : "Run Query", systemImage: "play.fill")
                     }
                     Button(action: { showingEditor = true }) {
                         Label("Edit", systemImage: "pencil")
@@ -78,19 +92,28 @@ struct SavedQueryDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditor, onDismiss: runQuery) {
-            QueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
+            queryEditorSheet
                 .environment(\.managedObjectContext, viewContext)
         }
         .onAppear { runQuery() }
     }
 
+    @ViewBuilder
+    private var queryEditorSheet: some View {
+        if isMQTT {
+            MQTTQueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
+        } else {
+            QueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
+        }
+    }
+
     private func runQuery() {
         isLoading = true
         errorMessage = nil
-        let flux = savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket)
+        let queryStr = savedQuery.buildQuery(for: dataSource)
         Task {
             do {
-                let queryResult = try await service.query(flux)
+                let queryResult = try await service.query(queryStr)
                 await MainActor.run {
                     result = queryResult
                     isLoading = false

@@ -87,6 +87,31 @@ extension SavedQuery {
         set { modifiedAt = newValue }
     }
 
+    /// Builds the appropriate query string based on the data source backend type.
+    func buildQuery(for dataSource: DataSource) -> String {
+        switch dataSource.wrappedBackendType {
+        case .influxDB2:
+            return buildFluxQuery(bucket: dataSource.wrappedBucket)
+        case .mqtt:
+            return buildMQTTQuery()
+        case .demo:
+            return buildFluxQuery(bucket: "demo")
+        }
+    }
+
+    func buildMQTTQuery() -> String {
+        let fields = wrappedFields
+        let rangeSeconds: Int
+        switch wrappedTimeRange {
+        case .oneHour: rangeSeconds = 10
+        case .sixHours: rangeSeconds = 15
+        case .twentyFourHours: rangeSeconds = 20
+        case .sevenDays: rangeSeconds = 25
+        case .thirtyDays: rangeSeconds = 30
+        }
+        return MQTTQueryParser.build(topic: wrappedMeasurement, fields: fields, rangeSeconds: TimeInterval(rangeSeconds))
+    }
+
     func buildFluxQuery(bucket: String) -> String {
         var query = """
         from(bucket: "\(bucket)")

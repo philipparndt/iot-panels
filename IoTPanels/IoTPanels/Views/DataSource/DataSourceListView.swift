@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DataSourceListView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -10,6 +11,10 @@ struct DataSourceListView: View {
     private var dataSources: FetchedResults<DataSource>
 
     @State private var showingAddSheet = false
+    @State private var showingImportPicker = false
+    @State private var importAlertMessage: String?
+    @State private var showImportAlert = false
+    @State private var isEditing = false
 
     var body: some View {
         List {
@@ -25,19 +30,93 @@ struct DataSourceListView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .contextMenu {
+                    if dataSource.wrappedBackendType == .mqtt {
+                        Button {
+                            exportBroker(dataSource, includeSecrets: true)
+                        } label: {
+                            Label("Share (with credentials)", systemImage: "square.and.arrow.up")
+                        }
+                        Button {
+                            exportBroker(dataSource, includeSecrets: false)
+                        } label: {
+                            Label("Share (without credentials)", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                }
             }
             .onDelete(perform: deleteDataSources)
         }
         .navigationTitle("Data Sources")
+        .environment(\.editMode, isEditing ? .constant(.active) : .constant(.inactive))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingAddSheet = true }) {
-                    Label("Add", systemImage: "plus")
+                Menu {
+                    Button(action: { showingAddSheet = true }) {
+                        Label("Add Data Source", systemImage: "plus")
+                    }
+                    Button(action: { showingImportPicker = true }) {
+                        Label("Import .mqttbroker", systemImage: "square.and.arrow.down")
+                    }
+                    Button(action: { isEditing.toggle() }) {
+                        Label(isEditing ? "Done" : "Edit", systemImage: isEditing ? "checkmark" : "pencil")
+                    }
+                } label: {
+                    Label("Menu", systemImage: "ellipsis.circle")
                 }
             }
         }
         .sheet(isPresented: $showingAddSheet) {
             DataSourceDetailView(dataSource: nil)
+        }
+        .fileImporter(
+            isPresented: $showingImportPicker,
+            allowedContentTypes: [.mqttBroker],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImportResult(result)
+        }
+        .alert("Import", isPresented: $showImportAlert) {
+            Button("OK") {}
+        } message: {
+            Text(importAlertMessage ?? "")
+        }
+        .sheet(isPresented: $showExportShare) {
+            if let url = exportFileURL {
+                ShareSheetView(activityItems: [url])
+            }
+        }
+    }
+
+    private func handleImportResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            do {
+                let ds = try BrokerImportExport.importBroker(from: url, context: viewContext)
+                importAlertMessage = "Broker '\(ds.wrappedName)' was imported successfully."
+                showImportAlert = true
+            } catch {
+                importAlertMessage = "Failed to import broker: \(error.localizedDescription)"
+                showImportAlert = true
+            }
+        case .failure(let error):
+            importAlertMessage = "Failed to open file: \(error.localizedDescription)"
+            showImportAlert = true
+        }
+    }
+
+    @State private var exportFileURL: URL?
+    @State private var showExportShare = false
+
+    private func exportBroker(_ dataSource: DataSource, includeSecrets: Bool) {
+        do {
+            let url = try BrokerImportExport.exportBroker(dataSource, includeSecrets: includeSecrets)
+            exportFileURL = url
+            showExportShare = true
+        } catch {
+            importAlertMessage = "Failed to export: \(error.localizedDescription)"
+            showImportAlert = true
         }
     }
 
@@ -47,6 +126,18 @@ struct DataSourceListView: View {
             try? viewContext.save()
         }
     }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheetView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

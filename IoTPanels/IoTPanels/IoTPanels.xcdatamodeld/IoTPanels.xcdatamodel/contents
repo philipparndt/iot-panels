@@ -10,6 +10,20 @@
         <attribute name="organization" optional="YES" attributeType="String"/>
         <attribute name="token" optional="YES" attributeType="String"/>
         <attribute name="url" optional="YES" attributeType="String"/>
+        <attribute name="hostname" optional="YES" attributeType="String"/>
+        <attribute name="port" optional="YES" attributeType="Integer 32" defaultValueString="1883" usesScalarValueType="YES"/>
+        <attribute name="clientID" optional="YES" attributeType="String"/>
+        <attribute name="username" optional="YES" attributeType="String"/>
+        <attribute name="password" optional="YES" attributeType="String"/>
+        <attribute name="ssl" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="untrustedSSL" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="protocolMethod" optional="YES" attributeType="String"/>
+        <attribute name="protocolVersion" optional="YES" attributeType="String"/>
+        <attribute name="basePath" optional="YES" attributeType="String"/>
+        <attribute name="subscriptionsJSON" optional="YES" attributeType="String"/>
+        <attribute name="certificatesJSON" optional="YES" attributeType="String"/>
+        <attribute name="certClientKeyPassword" optional="YES" attributeType="String"/>
+        <attribute name="alpn" optional="YES" attributeType="String"/>
         <relationship name="savedQueries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="SavedQuery" inverseName="dataSource" inverseEntity="SavedQuery"/>
     </entity>
     <entity name="SavedQuery" representedClassName="SavedQuery" syncable="YES" codeGenerationType="class">

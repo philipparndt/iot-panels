@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import Combine
 
 // MARK: - Data Types
 
@@ -439,13 +440,15 @@ struct PanelRenderer: View {
 
                 ForEach(dots) { dot in
                     let progress = range > 0 ? (dot.value - minVal) / range : 0.5
-                    let xPos = max(0, min(geo.size.width - dotSize, geo.size.width * progress - dotSize / 2))
+                    let clampedProgress = max(0, min(1, progress))
+                    let xPos = geo.size.width * clampedProgress - dotSize / 2
                     Circle()
                         .fill(dot.color)
                         .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
                         .frame(width: dotSize, height: dotSize)
                         .shadow(color: dot.color.opacity(0.5), radius: 3)
                         .offset(x: xPos)
+                        .animation(.easeInOut(duration: 0.4), value: dot.value)
                 }
             }
             .frame(height: dotSize)
@@ -496,11 +499,28 @@ struct PanelRenderer: View {
 
 struct PanelCardView: View {
     @ObservedObject var panel: DashboardPanel
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var dataPoints: [ChartDataPoint] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isCachedData = false
+    @State private var mqttSubscription: AnyCancellable?
+
+    /// Whether this panel's data source is MQTT (push-based, needs live refresh).
+    private var isMQTT: Bool {
+        panel.savedQuery?.dataSource?.wrappedBackendType == .mqtt
+    }
+
+    private var mqttConnectionKey: String? {
+        guard let ds = panel.savedQuery?.dataSource, ds.wrappedBackendType == .mqtt else { return nil }
+        return MQTTService(dataSource: ds).connectionKey
+    }
+
+    private var mqttTopicPattern: String? {
+        guard let query = panel.savedQuery else { return nil }
+        return MQTTQueryParser.parse(query.buildQuery(for: query.dataSource!)).topic
+    }
 
     var body: some View {
         Group {
@@ -522,6 +542,16 @@ struct PanelCardView: View {
                         .font(.caption)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+            } else if dataPoints.isEmpty {
+                VStack(spacing: 8) {
+                    Text(panel.wrappedTitle)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Label("Waiting for data…", systemImage: "antenna.radiowaves.left.and.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 100)
             } else {
                 VStack(spacing: 0) {
                     PanelRenderer(
@@ -533,25 +563,66 @@ struct PanelCardView: View {
                         styleConfig: panel.wrappedStyleConfig
                     )
 
-                    if isCachedData, let cachedAt = panel.savedQuery?.wrappedCachedAt {
-                        HStack(spacing: 4) {
-                            Image(systemName: "icloud.slash")
-                                .font(.system(size: 8))
-                            Text("Cached \(cachedAt, style: .relative) ago")
-                                .font(.system(size: 9))
-                        }
-                        .foregroundStyle(.tertiary)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.top, 4)
+                    HStack(spacing: 4) {
+                        Image(systemName: "icloud.slash")
+                            .font(.system(size: 8))
+                        Text("Cached \(panel.savedQuery?.wrappedCachedAt ?? Date(), style: .relative) ago")
+                            .font(.system(size: 9))
                     }
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, 4)
+                    .opacity(isCachedData ? 1 : 0)
                 }
             }
         }
+        .frame(minHeight: 100)
         .padding()
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
-        .onAppear { loadData() }
+        .animation(.none, value: dataPoints.count)
+        .onAppear {
+            loadData()
+            subscribeMQTTUpdates()
+        }
+        .onDisappear {
+            mqttSubscription?.cancel()
+            mqttSubscription = nil
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                loadData()
+                subscribeMQTTUpdates()
+            } else {
+                mqttSubscription?.cancel()
+                mqttSubscription = nil
+            }
+        }
+    }
+
+    private func subscribeMQTTUpdates() {
+        guard isMQTT, mqttSubscription == nil,
+              let connKey = mqttConnectionKey else { return }
+
+        mqttSubscription = MQTTConnectionManager.shared.messageReceived
+            .filter { $0.connectionKey == connKey }
+            .throttle(for: .milliseconds(500), scheduler: DispatchQueue.main, latest: true)
+            .sink { [panel] _ in
+                guard let query = panel.savedQuery,
+                      let dataSource = query.dataSource else { return }
+                let service = ServiceFactory.service(for: dataSource)
+                let queryString = query.buildQuery(for: dataSource)
+                Task {
+                    guard let result = try? await service.query(queryString) else { return }
+                    let parsed = Self.parseChartData(result: result)
+                    guard !parsed.isEmpty else { return }
+                    await MainActor.run {
+                        dataPoints = parsed
+                        isCachedData = false
+                    }
+                }
+            }
     }
 
     private func loadData() {
@@ -561,37 +632,41 @@ struct PanelCardView: View {
             return
         }
 
-        // Show cached data immediately while loading
+        // Show cached data immediately while loading fresh data
         if let cached = query.cachedDataPoints, !cached.isEmpty {
             dataPoints = cached
             isCachedData = true
-        } else {
+        }
+
+        // Only show spinner if we have nothing to display at all
+        if dataPoints.isEmpty {
             isLoading = true
         }
         errorMessage = nil
 
         let service = ServiceFactory.service(for: dataSource)
-        let flux = query.buildFluxQuery(bucket: dataSource.wrappedBucket)
+        let flux = query.buildQuery(for: dataSource)
 
         Task {
             do {
                 let result = try await service.query(flux)
                 let parsed = Self.parseChartData(result: result)
                 await MainActor.run {
-                    dataPoints = parsed
+                    if !parsed.isEmpty {
+                        dataPoints = parsed
+                        isCachedData = false
+                        // Cache the result
+                        query.cacheResult(parsed)
+                        try? query.managedObjectContext?.save()
+                    }
                     isLoading = false
-                    isCachedData = false
-                    // Cache the result
-                    query.cacheResult(parsed)
-                    try? query.managedObjectContext?.save()
                 }
             } catch {
                 await MainActor.run {
-                    // If we have cached data, show it with a subtle indicator
-                    if !dataPoints.isEmpty {
-                        isCachedData = true
-                    } else {
+                    if dataPoints.isEmpty {
                         errorMessage = error.localizedDescription
+                    } else {
+                        isCachedData = true
                     }
                     isLoading = false
                 }

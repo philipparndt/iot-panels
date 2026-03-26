@@ -31,6 +31,8 @@ enum ServiceFactory {
             return DemoService()
         case .influxDB2:
             return InfluxDB2Service(dataSource: dataSource)
+        case .mqtt:
+            return MQTTService(dataSource: dataSource)
         }
     }
 }

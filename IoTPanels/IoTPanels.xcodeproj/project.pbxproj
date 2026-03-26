@@ -63,6 +63,21 @@
 		F100002200000000000000A2 /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
 		F100001100000000000000F1 /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
 		F100001200000000000000F2 /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
+		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
+		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
+		M10000030000000000000003 /* MQTTFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000030000000000000003 /* MQTTFormView.swift */; };
+		M10000040000000000000004 /* MQTTQueryBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000040000000000000004 /* MQTTQueryBuilderView.swift */; };
+		M10000050000000000000005 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
+		M10000060000000000000006 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
+		M50000010000000000000001 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = M40000010000000000000001 /* CocoaMQTT */; };
+		M50000020000000000000002 /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = M40000020000000000000002 /* CocoaMQTTWebSocket */; };
+		M50000030000000000000003 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = M40000030000000000000003 /* CocoaMQTT */; };
+		M50000040000000000000004 /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = M40000040000000000000004 /* CocoaMQTTWebSocket */; };
+		M80000010000000000000001 /* MQTTBrokerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M80000020000000000000002 /* MQTTBrokerFormView.swift */; };
+		M60000010000000000000001 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
+		M60000020000000000000002 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
+		M60000030000000000000003 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
+		M60000040000000000000004 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -143,6 +158,13 @@
 		F200003100000000000000B1 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
 		F200002100000000000000A1 /* StyleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleConfig.swift; sourceTree = "<group>"; };
 		F200001100000000000000F1 /* UnitType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitType.swift; sourceTree = "<group>"; };
+		M20000010000000000000001 /* MQTTModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTModels.swift; sourceTree = "<group>"; };
+		M20000020000000000000002 /* MQTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTService.swift; sourceTree = "<group>"; };
+		M20000030000000000000003 /* MQTTFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTFormView.swift; sourceTree = "<group>"; };
+		M20000040000000000000004 /* MQTTQueryBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTQueryBuilderView.swift; sourceTree = "<group>"; };
+		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
+		M70000010000000000000001 /* BrokerFileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerFileType.swift; sourceTree = "<group>"; };
+		M70000020000000000000002 /* BrokerImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerImportExport.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +172,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				M50000010000000000000001 /* CocoaMQTT in Frameworks */,
+				M50000020000000000000002 /* CocoaMQTTWebSocket in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -164,6 +188,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				M50000030000000000000003 /* CocoaMQTT in Frameworks */,
+				M50000040000000000000004 /* CocoaMQTTWebSocket in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,6 +235,8 @@
 				F20000020000000000000002 /* ColorUtilities.swift */,
 				F200001100000000000000F1 /* UnitType.swift */,
 				F200002100000000000000A1 /* StyleConfig.swift */,
+				M20000010000000000000001 /* MQTTModels.swift */,
+				M70000010000000000000001 /* BrokerFileType.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -221,6 +249,8 @@
 				E20000010000000000000001 /* WidgetHelper.swift */,
 				F200003100000000000000B1 /* NavigationState.swift */,
 				F200005100000000000000D1 /* DemoService.swift */,
+				M20000020000000000000002 /* MQTTService.swift */,
+				M70000020000000000000002 /* BrokerImportExport.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -243,6 +273,8 @@
 				A20000080000000000000008 /* DataSourceListView.swift */,
 				A20000090000000000000009 /* DataSourceDetailView.swift */,
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
+				M20000030000000000000003 /* MQTTFormView.swift */,
+				M80000020000000000000002 /* MQTTBrokerFormView.swift */,
 			);
 			path = DataSource;
 			sourceTree = "<group>";
@@ -281,6 +313,7 @@
 				B20000050000000000000005 /* SavedQueryListView.swift */,
 				B20000060000000000000006 /* SavedQueryDetailView.swift */,
 				F200004100000000000000C1 /* FluxSyntaxView.swift */,
+				M20000040000000000000004 /* MQTTQueryBuilderView.swift */,
 			);
 			path = QueryBuilder;
 			sourceTree = "<group>";
@@ -336,6 +369,10 @@
 				DB0000010000000000000001 /* PBXTargetDependency */,
 			);
 			name = IoTPanels;
+			packageProductDependencies = (
+				M40000010000000000000001 /* CocoaMQTT */,
+				M40000020000000000000002 /* CocoaMQTTWebSocket */,
+			);
 			productName = IoTPanels;
 			productReference = A2000014000000000000000E /* IoTPanels.app */;
 			productType = "com.apple.product-type.application";
@@ -369,6 +406,10 @@
 			dependencies = (
 			);
 			name = IoTPanelsWidgetExtension;
+			packageProductDependencies = (
+				M40000030000000000000003 /* CocoaMQTT */,
+				M40000040000000000000004 /* CocoaMQTTWebSocket */,
+			);
 			productName = IoTPanelsWidgetExtension;
 			productReference = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -404,6 +445,9 @@
 				Base,
 			);
 			mainGroup = A70000010000000000000001;
+			packageReferences = (
+				M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
+			);
 			productRefGroup = A70000090000000000000009 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -467,6 +511,13 @@
 				F10000060000000000000006 /* AddWidgetItemView.swift in Sources */,
 				F10000070000000000000007 /* WidgetItemConfigView.swift in Sources */,
 				A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
+				M10000010000000000000001 /* MQTTModels.swift in Sources */,
+				M10000020000000000000002 /* MQTTService.swift in Sources */,
+				M10000030000000000000003 /* MQTTFormView.swift in Sources */,
+				M80000010000000000000001 /* MQTTBrokerFormView.swift in Sources */,
+				M10000040000000000000004 /* MQTTQueryBuilderView.swift in Sources */,
+				M60000010000000000000001 /* BrokerFileType.swift in Sources */,
+				M60000020000000000000002 /* BrokerImportExport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -499,6 +550,10 @@
 				F10000090000000000000009 /* ColorUtilities.swift in Sources */,
 				F1000010000000000000000A /* WidgetDesignPreviewView.swift in Sources */,
 				D1000010000000000000000A /* IoTPanels.xcdatamodeld in Sources */,
+				M10000050000000000000005 /* MQTTModels.swift in Sources */,
+				M10000060000000000000006 /* MQTTService.swift in Sources */,
+				M60000030000000000000003 /* BrokerFileType.swift in Sources */,
+				M60000040000000000000004 /* BrokerImportExport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -850,6 +905,40 @@
 			versionGroupType = wrapper.xcdatamodel;
 		};
 /* End XCVersionGroup section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/philipparndt/CocoaMQTT.git";
+			requirement = {
+				kind = revision;
+				revision = 38f197a7545bc923d0b01df6ca684e96350e616a;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		M40000010000000000000001 /* CocoaMQTT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTT;
+		};
+		M40000020000000000000002 /* CocoaMQTTWebSocket */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTTWebSocket;
+		};
+		M40000030000000000000003 /* CocoaMQTT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTT;
+		};
+		M40000040000000000000004 /* CocoaMQTTWebSocket */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */;
+			productName = CocoaMQTTWebSocket;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A50000010000000000000001 /* Project object */;
 }

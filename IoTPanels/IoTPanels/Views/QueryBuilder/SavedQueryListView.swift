@@ -53,7 +53,7 @@ struct SavedQueryListView: View {
             }
         }
         .sheet(isPresented: $showingQueryBuilder) {
-            QueryBuilderView(dataSource: dataSource, existingQuery: nil)
+            queryBuilderSheet(existingQuery: nil)
                 .environment(\.managedObjectContext, viewContext)
         }
     }
@@ -62,6 +62,15 @@ struct SavedQueryListView: View {
         let fields = query.wrappedFields
         let fieldText = fields.isEmpty ? "" : fields.joined(separator: ", ")
         return "\(query.wrappedMeasurement) · \(fieldText) · \(query.wrappedTimeRange.displayName)"
+    }
+
+    @ViewBuilder
+    private func queryBuilderSheet(existingQuery: SavedQuery?) -> some View {
+        if dataSource.wrappedBackendType == .mqtt {
+            MQTTQueryBuilderView(dataSource: dataSource, existingQuery: existingQuery)
+        } else {
+            QueryBuilderView(dataSource: dataSource, existingQuery: existingQuery)
+        }
     }
 
     private func deleteQueries(offsets: IndexSet) {
