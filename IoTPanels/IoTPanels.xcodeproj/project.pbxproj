@@ -78,6 +78,7 @@
 		M60000020000000000000002 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
 		M60000030000000000000003 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
 		M60000040000000000000004 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
+		D10000130000000000000013 /* SingleValueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000050000000000000005 /* SingleValueWidget.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -142,6 +143,7 @@
 		C20000040000000000000004 /* AddPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPanelView.swift; sourceTree = "<group>"; };
 		C20000050000000000000005 /* PanelCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelCardView.swift; sourceTree = "<group>"; };
 		D20000010000000000000001 /* IoTPanelsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWidget.swift; sourceTree = "<group>"; };
+		D20000050000000000000005 /* SingleValueWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleValueWidget.swift; sourceTree = "<group>"; };
 		D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IoTPanelsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D20000030000000000000003 /* IoTPanelsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWidget.entitlements; sourceTree = "<group>"; };
 		D20000040000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -333,6 +335,7 @@
 			isa = PBXGroup;
 			children = (
 				D20000010000000000000001 /* IoTPanelsWidget.swift */,
+				D20000050000000000000005 /* SingleValueWidget.swift */,
 				D20000030000000000000003 /* IoTPanelsWidget.entitlements */,
 				D20000040000000000000004 /* Info.plist */,
 			);
@@ -554,6 +557,7 @@
 				M10000060000000000000006 /* MQTTService.swift in Sources */,
 				M60000030000000000000003 /* BrokerFileType.swift in Sources */,
 				M60000040000000000000004 /* BrokerImportExport.swift in Sources */,
+				D10000130000000000000013 /* SingleValueWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

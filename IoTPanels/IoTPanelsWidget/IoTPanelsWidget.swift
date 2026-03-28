@@ -238,5 +238,7 @@ struct IoTPanelsWidget: Widget {
 struct IoTPanelsWidgetBundle: WidgetBundle {
     var body: some Widget {
         IoTPanelsWidget()
+        SingleValueWidget()
+        CountdownValueWidget()
     }
 }

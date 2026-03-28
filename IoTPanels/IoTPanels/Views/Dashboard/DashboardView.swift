@@ -6,10 +6,77 @@ struct DashboardView: View {
 
     @State private var showingAddPanel = false
     @State private var editingPanel: DashboardPanel?
-    @State private var isEditMode = false
     @State private var refreshID = UUID()
+    @State private var showingRename = false
+    @State private var renameText = ""
+    @State private var isWiggling = false
+    @State private var draggedPanel: DashboardPanel?
 
     var body: some View {
+        Group {
+            if isWiggling {
+                editModeContent
+            } else {
+                normalContent
+            }
+        }
+        .navigationTitle(dashboard.wrappedName)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                if isWiggling {
+                    Button("Done") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isWiggling = false
+                        }
+                    }
+                    .fontWeight(.semibold)
+                } else {
+                    Menu {
+                        Button(action: { showingAddPanel = true }) {
+                            Label("Add Panel", systemImage: "plus")
+                        }
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isWiggling = true
+                            }
+                        } label: {
+                            Label("Rearrange Panels", systemImage: "arrow.up.arrow.down")
+                        }
+                        Button {
+                            renameText = dashboard.wrappedName
+                            showingRename = true
+                        } label: {
+                            Label("Rename", systemImage: "pencil")
+                        }
+                    } label: {
+                        Label("Menu", systemImage: "ellipsis.circle")
+                    }
+                }
+            }
+        }
+        .alert("Rename Dashboard", isPresented: $showingRename) {
+            TextField("Name", text: $renameText)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                guard !renameText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+                dashboard.name = renameText
+                dashboard.modifiedAt = Date()
+                try? viewContext.save()
+            }
+        }
+        .sheet(isPresented: $showingAddPanel, onDismiss: { refreshID = UUID() }) {
+            AddPanelView(dashboard: dashboard)
+                .environment(\.managedObjectContext, viewContext)
+        }
+        .sheet(item: $editingPanel, onDismiss: { refreshID = UUID() }) { panel in
+            EditPanelView(panel: panel)
+                .environment(\.managedObjectContext, viewContext)
+        }
+    }
+
+    // MARK: - Normal Mode
+
+    private var normalContent: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 let panels = dashboard.sortedPanels
@@ -20,8 +87,10 @@ struct DashboardView: View {
                         description: Text("Tap + to add a panel from your saved queries.")
                     )
                     .padding(.top, 60)
-                } else {
-                    ForEach(Array(panels.enumerated()), id: \.element.objectID) { index, panel in
+                }
+
+                if !panels.isEmpty {
+                    ForEach(panels, id: \.objectID) { panel in
                         PanelCardView(panel: panel)
                             .id("\(panel.objectID)-\(refreshID)")
                             .contextMenu {
@@ -51,20 +120,10 @@ struct DashboardView: View {
 
                                 Divider()
 
-                                if index > 0 {
-                                    Button {
-                                        movePanel(panel, direction: -1)
-                                    } label: {
-                                        Label("Move Up", systemImage: "arrow.up")
-                                    }
-                                }
-
-                                if index < panels.count - 1 {
-                                    Button {
-                                        movePanel(panel, direction: 1)
-                                    } label: {
-                                        Label("Move Down", systemImage: "arrow.down")
-                                    }
+                                Button {
+                                    withAnimation { isWiggling = true }
+                                } label: {
+                                    Label("Rearrange Panels", systemImage: "arrow.up.arrow.down")
                                 }
 
                                 Divider()
@@ -83,28 +142,84 @@ struct DashboardView: View {
                             }
                     }
                 }
+
+                // Add panel card
+                Button {
+                    showingAddPanel = true
+                } label: {
+                    VStack {
+                        Image(systemName: "plus")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 100)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [8, 6]))
+                            .foregroundStyle(.quaternary)
+                    )
+                }
+                .buttonStyle(.plain)
             }
             .padding()
         }
         .refreshable {
+            // Give panels a moment to reload, then update the view
+            try? await Task.sleep(for: .milliseconds(300))
             refreshID = UUID()
         }
-        .navigationTitle(dashboard.wrappedName)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingAddPanel = true }) {
-                    Label("Add Panel", systemImage: "plus")
+    }
+
+    // MARK: - Edit / Rearrange Mode
+
+    @State private var editPanels: [DashboardPanel] = []
+
+    private var editModeContent: some View {
+        List {
+            ForEach(editPanels, id: \.objectID) { panel in
+                HStack(spacing: 12) {
+                    Button {
+                        withAnimation {
+                            if let idx = editPanels.firstIndex(of: panel) {
+                                editPanels.remove(at: idx)
+                            }
+                            viewContext.delete(panel)
+                            dashboard.modifiedAt = Date()
+                            try? viewContext.save()
+                            WidgetHelper.reloadWidgets()
+                        }
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+
+                    PanelCardView(panel: panel)
+                        .id("\(panel.objectID)-\(refreshID)")
+                        .allowsHitTesting(false)
                 }
+                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            }
+            .onMove { from, to in
+                editPanels.move(fromOffsets: from, toOffset: to)
+                savePanelOrder()
             }
         }
-        .sheet(isPresented: $showingAddPanel, onDismiss: { refreshID = UUID() }) {
-            AddPanelView(dashboard: dashboard)
-                .environment(\.managedObjectContext, viewContext)
+        .environment(\.editMode, .constant(.active))
+        .onAppear {
+            editPanels = dashboard.sortedPanels
         }
-        .sheet(item: $editingPanel, onDismiss: { refreshID = UUID() }) { panel in
-            EditPanelView(panel: panel)
-                .environment(\.managedObjectContext, viewContext)
+    }
+
+    private func savePanelOrder() {
+        for (i, panel) in editPanels.enumerated() {
+            panel.sortOrder = Int32(i)
         }
+        dashboard.modifiedAt = Date()
+        try? viewContext.save()
+        WidgetHelper.reloadWidgets()
+        refreshID = UUID()
     }
 
     private func movePanel(_ panel: DashboardPanel, direction: Int) {
@@ -113,15 +228,18 @@ struct DashboardView: View {
         let newIdx = idx + direction
         guard newIdx >= 0, newIdx < panels.count else { return }
 
-        panels.swapAt(idx, newIdx)
-        for (i, p) in panels.enumerated() {
-            p.sortOrder = Int32(i)
+        withAnimation(.easeInOut(duration: 0.25)) {
+            panels.swapAt(idx, newIdx)
+            for (i, p) in panels.enumerated() {
+                p.sortOrder = Int32(i)
+            }
+            dashboard.modifiedAt = Date()
+            try? viewContext.save()
+            WidgetHelper.reloadWidgets()
+            refreshID = UUID()
         }
-        dashboard.modifiedAt = Date()
-        try? viewContext.save()
-        WidgetHelper.reloadWidgets()
-        refreshID = UUID()
     }
+
 }
 
 // MARK: - Edit Panel Sheet

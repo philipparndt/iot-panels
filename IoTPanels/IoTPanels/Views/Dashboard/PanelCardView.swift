@@ -4,6 +4,20 @@ import Combine
 
 // MARK: - Data Types
 
+struct PanelCardBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Group {
+            if colorScheme == .dark {
+                Color(white: 0.12)
+            } else {
+                Color(uiColor: .secondarySystemGroupedBackground)
+            }
+        }
+    }
+}
+
 struct ChartDataPoint: Codable {
     let time: Date
     let value: Double
@@ -43,6 +57,8 @@ struct PanelRenderer: View {
         self.styleConfig = styleConfig
     }
 
+    @State private var selectedTime: Date?
+
     // Scaled font size helper
     private func sz(_ base: CGFloat) -> CGFloat { base * textScale }
 
@@ -71,7 +87,13 @@ struct PanelRenderer: View {
     var body: some View {
         switch effectiveStyle {
         case .auto, .chart:
-            chartBody
+            chartBody(chartType: .line)
+        case .barChart:
+            chartBody(chartType: .bar)
+        case .scatterChart:
+            chartBody(chartType: .scatter)
+        case .linePointChart:
+            chartBody(chartType: .linePoint)
         case .singleValue:
             singleValueBody
         case .gauge:
@@ -79,12 +101,69 @@ struct PanelRenderer: View {
         }
     }
 
+    private enum ChartType {
+        case line, bar, scatter, linePoint
+    }
+
+    /// Finds the closest data point to a given date across all series.
+    private func closestPoint(to date: Date) -> ChartDataPoint? {
+        allDataPoints.min(by: { abs($0.time.timeIntervalSince(date)) < abs($1.time.timeIntervalSince(date)) })
+    }
+
+    /// Selection overlay tooltip shown above the chart.
+    @ViewBuilder
+    private var selectionTooltip: some View {
+        if let selectedTime, let point = closestPoint(to: selectedTime) {
+            let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+            HStack(spacing: 6) {
+                Text(formatTime(point.time))
+                    .font(.system(size: sz(10)).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                Text(formatValue(point.value) + unitSuffix)
+                    .font(.system(size: sz(12), weight: .semibold).monospacedDigit())
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+    }
+
+    /// Adds a selection RuleMark inside the chart.
+    @ChartContentBuilder
+    private var selectionRuleMark: some ChartContent {
+        if let selectedTime {
+            RuleMark(x: .value("Selected", selectedTime))
+                .foregroundStyle(.secondary.opacity(0.5))
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+        }
+    }
+
+
     // MARK: - Chart
 
-    private var chartBody: some View {
+    private func chartBody(chartType: ChartType) -> some View {
         VStack(spacing: compact ? 4 : 8) {
-            // Title: centered for multi-series, left-aligned with value for single
-            if isMultiSeries {
+            // Title row — shows selection tooltip when dragging, otherwise title + last value
+            if let selectedTime, !compact, let point = closestPoint(to: selectedTime) {
+                let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(formatTime(point.time))
+                            .font(.system(size: sz(12)).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Text(formatValue(point.value) + unitSuffix)
+                            .font(.system(size: sz(compact ? 14 : 22), weight: .semibold, design: .default).monospacedDigit())
+                    }
+                }
+            } else if isMultiSeries {
                 Text(title)
                     .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
                     .foregroundStyle(.secondary)
@@ -115,9 +194,9 @@ struct PanelRenderer: View {
 
             if allDataPoints.count > 2 {
                 if isMultiSeries {
-                    multiSeriesChart
+                    multiSeriesChartView(chartType: chartType)
                 } else {
-                    singleSeriesChart
+                    singleSeriesChartView(chartType: chartType)
                 }
             } else if allDataPoints.isEmpty {
                 Text("No data")
@@ -144,23 +223,43 @@ struct PanelRenderer: View {
         return (min: minPt, max: maxPt)
     }
 
-    private var singleSeriesChart: some View {
+    private func singleSeriesChartView(chartType: ChartType) -> some View {
         let points = series.first?.dataPoints ?? []
-        let minMax = minMaxPoints(for: points)
+        let minMax = chartType == .line ? minMaxPoints(for: points) : nil
 
         return VStack(spacing: 2) {
             Chart {
                 ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                    AreaMark(x: .value("T", point.time), y: .value("V", point.value))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.accentColor.opacity(0.25), Color.accentColor.opacity(0.02)],
-                                startPoint: .top, endPoint: .bottom
+                    switch chartType {
+                    case .line:
+                        AreaMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color.accentColor.opacity(0.25), Color.accentColor.opacity(0.02)],
+                                    startPoint: .top, endPoint: .bottom
+                                )
                             )
-                        )
-                    LineMark(x: .value("T", point.time), y: .value("V", point.value))
-                        .foregroundStyle(Color.accentColor)
-                        .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                        LineMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(Color.accentColor)
+                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+
+                    case .bar:
+                        BarMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(Color.accentColor.gradient)
+
+                    case .scatter:
+                        PointMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(Color.accentColor)
+                            .symbolSize(compact ? 20 : 40)
+
+                    case .linePoint:
+                        LineMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(Color.accentColor)
+                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                        PointMark(x: .value("T", point.time), y: .value("V", point.value))
+                            .foregroundStyle(Color.accentColor)
+                            .symbolSize(compact ? 15 : 30)
+                    }
                 }
 
                 if !compact, let minMax {
@@ -181,16 +280,19 @@ struct PanelRenderer: View {
                                 .foregroundStyle(.red)
                         }
                 }
+
+                selectionRuleMark
             }
             .chartXAxis(compact ? .hidden : .automatic)
             .chartYAxis(compact ? .hidden : .automatic)
+            .chartXSelection(value: $selectedTime)
             .frame(height: compact ? 40 : 160)
 
             chartFooter(for: points)
         }
     }
 
-    private var multiSeriesChart: some View {
+    private func multiSeriesChartView(chartType: ChartType) -> some View {
         let seriesLabels = series.map(\.label)
         let seriesColors = series.map(\.color)
 
@@ -198,20 +300,56 @@ struct PanelRenderer: View {
             Chart {
                 ForEach(Array(series.enumerated()), id: \.offset) { _, s in
                     ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
-                        LineMark(
-                            x: .value("Time", point.time),
-                            y: .value("Value", point.value),
-                            series: .value("Series", s.label)
-                        )
-                        .foregroundStyle(by: .value("Series", s.label))
-                        .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                        switch chartType {
+                        case .line:
+                            LineMark(
+                                x: .value("Time", point.time),
+                                y: .value("Value", point.value),
+                                series: .value("Series", s.label)
+                            )
+                            .foregroundStyle(by: .value("Series", s.label))
+                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+
+                        case .bar:
+                            BarMark(
+                                x: .value("Time", point.time),
+                                y: .value("Value", point.value)
+                            )
+                            .foregroundStyle(by: .value("Series", s.label))
+
+                        case .scatter:
+                            PointMark(
+                                x: .value("Time", point.time),
+                                y: .value("Value", point.value)
+                            )
+                            .foregroundStyle(by: .value("Series", s.label))
+                            .symbolSize(compact ? 20 : 40)
+
+                        case .linePoint:
+                            LineMark(
+                                x: .value("Time", point.time),
+                                y: .value("Value", point.value),
+                                series: .value("Series", s.label)
+                            )
+                            .foregroundStyle(by: .value("Series", s.label))
+                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                            PointMark(
+                                x: .value("Time", point.time),
+                                y: .value("Value", point.value)
+                            )
+                            .foregroundStyle(by: .value("Series", s.label))
+                            .symbolSize(compact ? 15 : 30)
+                        }
                     }
                 }
+
+                selectionRuleMark
             }
             .chartForegroundStyleScale(domain: seriesLabels, range: seriesColors)
             .chartXAxis(compact ? .hidden : .automatic)
             .chartYAxis(compact ? .hidden : .automatic)
             .chartLegend(.hidden)
+            .chartXSelection(value: $selectedTime)
             .frame(height: compact ? 40 : 160)
 
             chartFooter(for: allDataPoints)
@@ -578,7 +716,7 @@ struct PanelCardView: View {
         }
         .frame(minHeight: 100)
         .padding()
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(PanelCardBackground())
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
         .animation(.none, value: dataPoints.count)
@@ -649,15 +787,27 @@ struct PanelCardView: View {
 
         Task {
             do {
-                let result = try await service.query(flux)
+                let result = try await withThrowingTaskGroup(of: QueryResult.self) { group in
+                    group.addTask {
+                        try await service.query(flux)
+                    }
+                    group.addTask {
+                        try await Task.sleep(for: .seconds(10))
+                        throw MQTTError.timeout
+                    }
+                    let first = try await group.next()!
+                    group.cancelAll()
+                    return first
+                }
                 let parsed = Self.parseChartData(result: result)
                 await MainActor.run {
                     if !parsed.isEmpty {
                         dataPoints = parsed
                         isCachedData = false
-                        // Cache the result
                         query.cacheResult(parsed)
                         try? query.managedObjectContext?.save()
+                    } else if !dataPoints.isEmpty {
+                        isCachedData = true
                     }
                     isLoading = false
                 }

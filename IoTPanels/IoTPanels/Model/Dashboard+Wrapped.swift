@@ -4,6 +4,9 @@ import CoreData
 enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case auto
     case chart
+    case barChart
+    case scatterChart
+    case linePointChart
     case singleValue
     case gauge
 
@@ -12,7 +15,10 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .auto: return "Auto"
-        case .chart: return "Curve"
+        case .chart: return "Line"
+        case .barChart: return "Bar"
+        case .scatterChart: return "Scatter"
+        case .linePointChart: return "Line + Points"
         case .singleValue: return "Value"
         case .gauge: return "Gauge"
         }
@@ -22,6 +28,9 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         switch self {
         case .auto: return "sparkles"
         case .chart: return "chart.xyaxis.line"
+        case .barChart: return "chart.bar.fill"
+        case .scatterChart: return "chart.dots.scatter"
+        case .linePointChart: return "point.topleft.down.to.point.bottomright.curvepath"
         case .singleValue: return "number"
         case .gauge: return "gauge.medium"
         }
