@@ -21,6 +21,11 @@ extension DataSource {
         set { url = newValue }
     }
 
+    var wrappedInfluxAuthMethod: InfluxAuthMethod {
+        get { InfluxAuthMethod(rawValue: influxAuthMethod ?? "") ?? .token }
+        set { influxAuthMethod = newValue.rawValue }
+    }
+
     var wrappedToken: String {
         get { token ?? "" }
         set { token = newValue }

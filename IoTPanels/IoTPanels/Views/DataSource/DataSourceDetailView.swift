@@ -11,7 +11,10 @@ struct DataSourceDetailView: View {
 
     // InfluxDB fields
     @State private var url = ""
+    @State private var influxAuthMethod: InfluxAuthMethod = .token
     @State private var token = ""
+    @State private var influxUsername = ""
+    @State private var influxPassword = ""
     @State private var organization = ""
     @State private var bucket = ""
 
@@ -51,7 +54,13 @@ struct DataSourceDetailView: View {
         guard !name.isEmpty else { return false }
         switch backendType {
         case .influxDB2:
-            return !url.isEmpty && (isEditing || !token.isEmpty)
+            guard !url.isEmpty else { return false }
+            switch influxAuthMethod {
+            case .token:
+                return isEditing || !token.isEmpty
+            case .usernamePassword:
+                return !influxUsername.isEmpty && (isEditing || !influxPassword.isEmpty)
+            }
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -63,7 +72,13 @@ struct DataSourceDetailView: View {
         guard !isTesting else { return false }
         switch backendType {
         case .influxDB2:
-            return !url.isEmpty && !token.isEmpty
+            guard !url.isEmpty else { return false }
+            switch influxAuthMethod {
+            case .token:
+                return !token.isEmpty
+            case .usernamePassword:
+                return !influxUsername.isEmpty && !influxPassword.isEmpty
+            }
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -110,7 +125,26 @@ struct DataSourceDetailView: View {
                         .textContentType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    SecureField("Token", text: $token)
+                    Picker("Authentication", selection: $influxAuthMethod) {
+                        ForEach(InfluxAuthMethod.allCases) { method in
+                            Text(method.displayName).tag(method)
+                        }
+                    }
+                }
+
+                if influxAuthMethod == .token {
+                    Section("Token Authentication") {
+                        SecureField("Token", text: $token)
+                    }
+                } else {
+                    Section("Username & Password Authentication") {
+                        TextField("Username", text: $influxUsername)
+                            .textContentType(.username)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        SecureField("Password", text: $influxPassword)
+                            .textContentType(.password)
+                    }
                 }
 
                 Section("InfluxDB 2") {
@@ -196,6 +230,7 @@ struct DataSourceDetailView: View {
         .sheet(isPresented: $showingGuidedSetup) {
             InfluxDB2SetupView { result in
                 url = result.url
+                influxAuthMethod = .token
                 token = result.token
                 organization = result.organization
                 bucket = result.bucket
@@ -263,7 +298,10 @@ struct DataSourceDetailView: View {
 
         // InfluxDB
         url = dataSource.wrappedUrl
+        influxAuthMethod = dataSource.wrappedInfluxAuthMethod
         token = dataSource.wrappedToken
+        influxUsername = dataSource.wrappedUsername
+        influxPassword = dataSource.wrappedPassword
         organization = dataSource.wrappedOrganization
         bucket = dataSource.wrappedBucket
 
@@ -304,7 +342,8 @@ struct DataSourceDetailView: View {
 
         // InfluxDB fields
         target.url = url
-        target.token = token
+        target.influxAuthMethod = influxAuthMethod.rawValue
+        target.token = influxAuthMethod == .token ? token : nil
         target.organization = organization
         target.bucket = bucket
 
@@ -317,8 +356,13 @@ struct DataSourceDetailView: View {
         target.ssl = mqttSsl
         target.untrustedSSL = mqttSsl && mqttUntrustedSSL
         target.wrappedAlpn = mqttAlpn
-        target.username = mqttUsernamePasswordAuth ? mqttUsername : nil
-        target.password = mqttUsernamePasswordAuth ? mqttPassword : nil
+        if backendType == .influxDB2 && influxAuthMethod == .usernamePassword {
+            target.username = influxUsername
+            target.password = influxPassword
+        } else {
+            target.username = mqttUsernamePasswordAuth ? mqttUsername : nil
+            target.password = mqttUsernamePasswordAuth ? mqttPassword : nil
+        }
         target.clientID = mqttClientID.isEmpty ? nil : mqttClientID
         target.certClientKeyPassword = mqttCertificateAuth ? mqttCertClientKeyPassword : nil
         target.wrappedSubscriptions = mqttSubscriptions.filter { !$0.topic.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -343,18 +387,62 @@ struct DataSourceDetailView: View {
         }
     }
 
+    private func normalizedInfluxUrl() -> String {
+        let trimmed = url.hasSuffix("/") ? String(url.dropLast()) : url
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return trimmed
+        }
+        return "https://\(trimmed)"
+    }
+
     private func testConnection() {
         isTesting = true
         testResult = nil
 
-        let service: any DataSourceServiceProtocol
         switch backendType {
         case .demo:
-            service = DemoService()
+            let service = DemoService()
+            Task {
+                do {
+                    let success = try await service.testConnection()
+                    await MainActor.run {
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
+                }
+            }
+
         case .influxDB2:
-            service = InfluxDB2Service(url: url, token: token, organization: organization, bucket: bucket)
+            let resolvedUrl = normalizedInfluxUrl()
+            let service: InfluxDB2Service
+            if influxAuthMethod == .usernamePassword {
+                service = InfluxDB2Service(url: resolvedUrl, username: influxUsername, password: influxPassword, organization: organization, bucket: bucket)
+            } else {
+                service = InfluxDB2Service(url: resolvedUrl, token: token, organization: organization, bucket: bucket)
+            }
+            Task {
+                do {
+                    let success = try await service.testConnection()
+                    await MainActor.run {
+                        url = resolvedUrl
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
+                }
+            }
+
         case .mqtt:
-            service = MQTTService(
+            let service = MQTTService(
                 hostname: mqttHostname,
                 port: UInt16(mqttPort) ?? 1883,
                 username: mqttUsernamePasswordAuth ? mqttUsername : nil,
@@ -366,19 +454,18 @@ struct DataSourceDetailView: View {
                 basePath: mqttBasePath,
                 subscriptions: mqttSubscriptions
             )
-        }
-
-        Task {
-            do {
-                let success = try await service.testConnection()
-                await MainActor.run {
-                    testResult = success ? .success : .failure("Connection refused")
-                    isTesting = false
-                }
-            } catch {
-                await MainActor.run {
-                    testResult = .failure(error.localizedDescription)
-                    isTesting = false
+            Task {
+                do {
+                    let success = try await service.testConnection()
+                    await MainActor.run {
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
                 }
             }
         }

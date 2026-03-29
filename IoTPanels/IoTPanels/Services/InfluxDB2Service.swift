@@ -16,12 +16,21 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
     let token: String
     let organization: String
     let bucket: String
+    let authMethod: InfluxAuthMethod
+    let username: String
+    let password: String
+
+    private let sessionService: InfluxDB2SessionService?
 
     init(dataSource: DataSource) {
         self.url = dataSource.wrappedUrl
         self.token = dataSource.wrappedToken
         self.organization = dataSource.wrappedOrganization
         self.bucket = dataSource.wrappedBucket
+        self.authMethod = dataSource.wrappedInfluxAuthMethod
+        self.username = dataSource.wrappedUsername
+        self.password = dataSource.wrappedPassword
+        self.sessionService = authMethod == .usernamePassword ? InfluxDB2SessionService(url: url) : nil
     }
 
     init(url: String, token: String, organization: String, bucket: String) {
@@ -29,13 +38,40 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
         self.token = token
         self.organization = organization
         self.bucket = bucket
+        self.authMethod = .token
+        self.username = ""
+        self.password = ""
+        self.sessionService = nil
+    }
+
+    init(url: String, username: String, password: String, organization: String, bucket: String) {
+        self.url = url
+        self.token = ""
+        self.organization = organization
+        self.bucket = bucket
+        self.authMethod = .usernamePassword
+        self.username = username
+        self.password = password
+        self.sessionService = InfluxDB2SessionService(url: url)
+    }
+
+    private func ensureSession() async throws {
+        guard authMethod == .usernamePassword, let sessionService else { return }
+        try await sessionService.signIn(username: username, password: password)
     }
 
     func testConnection() async throws -> Bool {
-        // Use /api/v2/buckets to verify both connectivity and token validity
         let endpoint = "\(url)/api/v2/buckets?limit=1"
         guard let requestUrl = URL(string: endpoint) else {
             throw InfluxError.invalidURL
+        }
+
+        if authMethod == .usernamePassword {
+            try await ensureSession()
+            let data = try await sessionService!.authenticatedGet("/api/v2/buckets?limit=1")
+            // If we got here without throwing, connection is good
+            _ = data
+            return true
         }
 
         var request = URLRequest(url: requestUrl)
@@ -64,6 +100,25 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
         let endpoint = "\(url)/api/v2/query?org=\(encodedOrg)"
         guard let requestUrl = URL(string: endpoint) else {
             throw InfluxError.invalidURL
+        }
+
+        if authMethod == .usernamePassword, let sessionService {
+            try await ensureSession()
+            let (data, response) = try await sessionService.authenticatedPost(
+                "/api/v2/query?org=\(encodedOrg)",
+                contentType: "application/vnd.flux",
+                accept: "text/csv",
+                body: queryString.data(using: .utf8)
+            )
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw InfluxError.invalidResponse
+            }
+            guard httpResponse.statusCode == 200 else {
+                let body = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw InfluxError.queryFailed(statusCode: httpResponse.statusCode, message: body)
+            }
+            let csv = String(data: data, encoding: .utf8) ?? ""
+            return parseCSV(csv)
         }
 
         var request = URLRequest(url: requestUrl)
@@ -319,7 +374,7 @@ struct InfluxDB2SessionService {
         }
     }
 
-    private func authenticatedGet(_ path: String) async throws -> Data {
+    func authenticatedGet(_ path: String) async throws -> Data {
         guard let requestUrl = URL(string: "\(url)\(path)") else {
             throw InfluxError.invalidURL
         }
@@ -338,6 +393,20 @@ struct InfluxDB2SessionService {
         }
 
         return data
+    }
+
+    func authenticatedPost(_ path: String, contentType: String, accept: String, body: Data?) async throws -> (Data, URLResponse) {
+        guard let requestUrl = URL(string: "\(url)\(path)") else {
+            throw InfluxError.invalidURL
+        }
+
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "POST"
+        request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
+        request.httpBody = body
+
+        return try await session.data(for: request)
     }
 }
 

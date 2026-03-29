@@ -241,8 +241,16 @@ struct InfluxDB2SetupView: View {
         errorMessage = nil
 
         let normalizedUrl = url.hasSuffix("/") ? String(url.dropLast()) : url
-        let service = InfluxDB2SessionService(url: normalizedUrl)
-        self.url = normalizedUrl
+
+        let resolvedUrl: String
+        if normalizedUrl.hasPrefix("http://") || normalizedUrl.hasPrefix("https://") {
+            resolvedUrl = normalizedUrl
+        } else {
+            resolvedUrl = "https://\(normalizedUrl)"
+        }
+
+        let service = InfluxDB2SessionService(url: resolvedUrl)
+        self.url = resolvedUrl
 
         Task {
             do {

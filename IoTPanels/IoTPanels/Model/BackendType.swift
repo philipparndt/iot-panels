@@ -15,3 +15,17 @@ enum BackendType: String, CaseIterable, Identifiable {
         }
     }
 }
+
+enum InfluxAuthMethod: String, CaseIterable, Identifiable {
+    case token
+    case usernamePassword
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .token: return "Token"
+        case .usernamePassword: return "Username & Password"
+        }
+    }
+}
