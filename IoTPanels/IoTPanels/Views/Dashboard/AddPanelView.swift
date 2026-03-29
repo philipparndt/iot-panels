@@ -14,6 +14,7 @@ struct AddPanelView: View {
 
     @State private var panelTitle = ""
     @State private var selectedStyle: PanelDisplayStyle = .auto
+    @State private var queryBuilderDataSource: DataSource?
 
     var body: some View {
         NavigationStack {
@@ -34,45 +35,49 @@ struct AddPanelView: View {
 
                 ForEach(Array(dataSources.enumerated()), id: \.element.objectID) { _, ds in
                     let queries = fetchQueries(for: ds)
-                    if !queries.isEmpty {
-                        Section(header: HStack {
-                            Text(ds.wrappedName)
-                            Spacer()
-                            Text(ds.wrappedBackendType.displayName)
-                                .font(.caption2)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1)
-                                .background(Color.secondary.opacity(0.2))
-                                .clipShape(Capsule())
-                        }) {
-                            ForEach(Array(queries.enumerated()), id: \.element.objectID) { _, query in
-                                Button {
-                                    addPanel(query: query)
-                                } label: {
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(query.wrappedName)
-                                                .font(.headline)
-                                                .foregroundStyle(.primary)
-                                            Text(querySummary(query))
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Image(systemName: "plus.circle.fill")
-                                            .foregroundStyle(Color.accentColor)
+                    Section(header: HStack {
+                        Text(ds.wrappedName)
+                        Spacer()
+                        Text(ds.wrappedBackendType.displayName)
+                            .font(.caption2)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.secondary.opacity(0.2))
+                            .clipShape(Capsule())
+                    }) {
+                        ForEach(Array(queries.enumerated()), id: \.element.objectID) { _, query in
+                            Button {
+                                addPanel(query: query)
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(query.wrappedName)
+                                            .font(.headline)
+                                            .foregroundStyle(.primary)
+                                        Text(querySummary(query))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
                                     }
+                                    Spacer()
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundStyle(Color.accentColor)
                                 }
                             }
+                        }
+
+                        Button {
+                            queryBuilderDataSource = ds
+                        } label: {
+                            Label("New Query", systemImage: "magnifyingglass.circle")
                         }
                     }
                 }
 
-                if dataSources.allSatisfy({ fetchQueries(for: $0).isEmpty }) {
+                if dataSources.isEmpty {
                     ContentUnavailableView(
-                        "No Saved Queries",
-                        systemImage: "magnifyingglass",
-                        description: Text("Create queries in the Data Sources tab first.")
+                        "No Data Sources",
+                        systemImage: "server.rack",
+                        description: Text("Add a data source first.")
                     )
                 }
             }
@@ -83,6 +88,19 @@ struct AddPanelView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .sheet(item: $queryBuilderDataSource) { ds in
+                queryBuilderSheet(for: ds)
+                    .environment(\.managedObjectContext, viewContext)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func queryBuilderSheet(for dataSource: DataSource) -> some View {
+        if dataSource.wrappedBackendType == .mqtt {
+            MQTTQueryBuilderView(dataSource: dataSource, existingQuery: nil)
+        } else {
+            QueryBuilderView(dataSource: dataSource, existingQuery: nil)
         }
     }
 

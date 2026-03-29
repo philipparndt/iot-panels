@@ -137,7 +137,7 @@ struct QueryBuilderView: View {
                                 icon: "textformat.123",
                                 title: "Unit",
                                 value: effectiveUnit.isEmpty ? nil : effectiveUnit,
-                                done: true,
+                                done: !effectiveUnit.isEmpty,
                                 optional: true
                             )
                         }
@@ -526,6 +526,7 @@ struct UnitPickerPage: View {
     @Binding var selectedUnit: String
     @Binding var customUnit: String
     @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
 
     private var effectiveUnit: String { customUnit.isEmpty ? selectedUnit : customUnit }
 
@@ -573,10 +574,23 @@ struct UnitPickerPage: View {
         ]),
     ]
 
+    private var filteredGroups: [UnitGroup] {
+        guard !searchText.isEmpty else { return groups }
+        let query = searchText.lowercased()
+        return groups.compactMap { group in
+            let matched = group.units.filter {
+                $0.symbol.lowercased().contains(query) || $0.label.lowercased().contains(query)
+            }
+            if matched.isEmpty && !group.name.lowercased().contains(query) { return nil }
+            let units = matched.isEmpty ? group.units : matched
+            return UnitGroup(id: group.id, name: group.name, icon: group.icon, units: units)
+        }
+    }
+
     var body: some View {
         List {
             // Current
-            if !effectiveUnit.isEmpty {
+            if !effectiveUnit.isEmpty && searchText.isEmpty {
                 Section {
                     HStack {
                         Text("Current unit")
@@ -593,7 +607,7 @@ struct UnitPickerPage: View {
             }
 
             // Groups
-            ForEach(groups) { group in
+            ForEach(filteredGroups) { group in
                 Section {
                     ForEach(group.units, id: \.symbol) { unit in
                         Button {
@@ -622,17 +636,20 @@ struct UnitPickerPage: View {
             }
 
             // Custom
-            Section {
-                TextField("Custom unit (e.g. rpm, bar)", text: $customUnit)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: customUnit) {
-                        if !customUnit.isEmpty { selectedUnit = "" }
-                    }
-            } header: {
-                Label("Custom", systemImage: "pencil")
+            if searchText.isEmpty {
+                Section {
+                    TextField("Custom unit (e.g. rpm, bar)", text: $customUnit)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: customUnit) {
+                            if !customUnit.isEmpty { selectedUnit = "" }
+                        }
+                } header: {
+                    Label("Custom", systemImage: "pencil")
+                }
             }
         }
+        .searchable(text: $searchText, prompt: "Search units")
         .navigationTitle("Unit")
     }
 }

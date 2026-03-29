@@ -113,7 +113,7 @@ struct MQTTQueryBuilderView: View {
                                 icon: "textformat.123",
                                 title: "Unit",
                                 value: effectiveUnit.isEmpty ? nil : effectiveUnit,
-                                done: true,
+                                done: !effectiveUnit.isEmpty,
                                 optional: true
                             )
                         }

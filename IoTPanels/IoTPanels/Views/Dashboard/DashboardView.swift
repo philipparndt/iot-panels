@@ -147,13 +147,20 @@ struct DashboardView: View {
                 Button {
                     showingAddPanel = true
                 } label: {
-                    VStack {
-                        Image(systemName: "plus")
-                            .font(.title2)
+                    VStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.secondary)
+                        Text("Add Panel")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.secondarySystemGroupedBackground))
+                    )
+                    .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [8, 6]))
                             .foregroundStyle(.quaternary)
