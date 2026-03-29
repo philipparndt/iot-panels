@@ -12,7 +12,11 @@ struct PanelCardBackground: View {
             if colorScheme == .dark {
                 Color(white: 0.12)
             } else {
+                #if os(watchOS)
+                Color(white: 0.2)
+                #else
                 Color(uiColor: .secondarySystemGroupedBackground)
+                #endif
             }
         }
     }
@@ -647,17 +651,29 @@ struct PanelCardView: View {
 
     /// Whether this panel's data source is MQTT (push-based, needs live refresh).
     private var isMQTT: Bool {
-        panel.savedQuery?.dataSource?.wrappedBackendType == .mqtt
+        #if canImport(CocoaMQTT)
+        return panel.savedQuery?.dataSource?.wrappedBackendType == .mqtt
+        #else
+        return false
+        #endif
     }
 
     private var mqttConnectionKey: String? {
+        #if canImport(CocoaMQTT)
         guard let ds = panel.savedQuery?.dataSource, ds.wrappedBackendType == .mqtt else { return nil }
         return MQTTService(dataSource: ds).connectionKey
+        #else
+        return nil
+        #endif
     }
 
     private var mqttTopicPattern: String? {
+        #if canImport(CocoaMQTT)
         guard let query = panel.savedQuery else { return nil }
         return MQTTQueryParser.parse(query.buildQuery(for: query.dataSource!)).topic
+        #else
+        return nil
+        #endif
     }
 
     var body: some View {
@@ -743,6 +759,7 @@ struct PanelCardView: View {
         guard isMQTT, mqttSubscription == nil,
               let connKey = mqttConnectionKey else { return }
 
+        #if canImport(CocoaMQTT)
         mqttSubscription = MQTTConnectionManager.shared.messageReceived
             .filter { $0.connectionKey == connKey }
             .throttle(for: .milliseconds(500), scheduler: DispatchQueue.main, latest: true)
@@ -761,6 +778,7 @@ struct PanelCardView: View {
                     }
                 }
             }
+        #endif
     }
 
     private func loadData() {
@@ -793,7 +811,7 @@ struct PanelCardView: View {
                     }
                     group.addTask {
                         try await Task.sleep(for: .seconds(10))
-                        throw MQTTError.timeout
+                        throw CancellationError()
                     }
                     let first = try await group.next()!
                     group.cancelAll()
@@ -825,6 +843,12 @@ struct PanelCardView: View {
     }
 
     static func parseChartData(result: QueryResult) -> [ChartDataPoint] {
+        ChartDataParser.parse(result: result)
+    }
+}
+
+enum ChartDataParser {
+    nonisolated static func parse(result: QueryResult) -> [ChartDataPoint] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let fallback = ISO8601DateFormatter()

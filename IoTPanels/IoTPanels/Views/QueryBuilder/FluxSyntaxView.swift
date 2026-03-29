@@ -17,11 +17,9 @@ struct FluxSyntaxView: View {
 
     private var highlightedText: Text {
         let tokens = tokenize(code)
-        var result = Text("")
+        var result = Text(verbatim: "")
         for token in tokens {
-            result = result + Text(token.text)
-                .font(.system(size: fontSize, design: .monospaced))
-                .foregroundColor(token.color)
+            result = Text("\(result)\(Text(token.text).font(.system(size: fontSize, design: .monospaced)).foregroundColor(token.color))")
         }
         return result
     }

@@ -287,7 +287,7 @@ struct WidgetDesignEditorView: View {
                     let flux = query.buildFluxQuery(bucket: ds.wrappedBucket)
                     do {
                         let result = try await service.query(flux)
-                        let points = PanelCardView.parseChartData(result: result)
+                        let points = ChartDataParser.parse(result: result)
                         groupSeries.append(ChartSeries(
                             id: item.wrappedId.uuidString,
                             label: item.wrappedTitle,

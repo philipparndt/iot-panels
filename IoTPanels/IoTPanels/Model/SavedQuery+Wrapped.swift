@@ -93,12 +93,17 @@ extension SavedQuery {
         case .influxDB2:
             return buildFluxQuery(bucket: dataSource.wrappedBucket)
         case .mqtt:
+            #if canImport(CocoaMQTT)
             return buildMQTTQuery()
+            #else
+            return ""
+            #endif
         case .demo:
             return buildFluxQuery(bucket: "demo")
         }
     }
 
+    #if canImport(CocoaMQTT)
     func buildMQTTQuery() -> String {
         let fields = wrappedFields
         let rangeSeconds: Int
@@ -111,6 +116,7 @@ extension SavedQuery {
         }
         return MQTTQueryParser.build(topic: wrappedMeasurement, fields: fields, rangeSeconds: TimeInterval(rangeSeconds))
     }
+    #endif
 
     func buildFluxQuery(bucket: String) -> String {
         var query = """

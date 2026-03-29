@@ -184,7 +184,7 @@ extension WidgetDesign {
         for item in sortedItems {
             let tag = item.groupTag ?? ""
             if !tag.isEmpty, let existingIdx = seenGroups[tag] {
-                var existing = groups[existingIdx]
+                let existing = groups[existingIdx]
                 var updatedItems = existing.items
                 updatedItems.append(item)
                 groups[existingIdx] = WidgetRenderGroup(

@@ -79,6 +79,27 @@
 		M60000030000000000000003 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
 		M60000040000000000000004 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
 		D10000130000000000000013 /* SingleValueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000050000000000000005 /* SingleValueWidget.swift */; };
+		W10000010000000000000001 /* IoTPanelsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20000010000000000000001 /* IoTPanelsWatchApp.swift */; };
+		W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20000020000000000000002 /* IoTPanelsWatchWidget.swift */; };
+		W10000030000000000000003 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
+		W10000040000000000000004 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
+		W10000050000000000000005 /* DataSource+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000040000000000000004 /* DataSource+Wrapped.swift */; };
+		W10000060000000000000006 /* DataSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000050000000000000005 /* DataSourceService.swift */; };
+		W10000070000000000000007 /* InfluxDB2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000060000000000000006 /* InfluxDB2Service.swift */; };
+		W10000080000000000000008 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* TimeRange.swift */; };
+		W10000090000000000000009 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
+		W1000010000000000000000A /* Dashboard+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000010000000000000001 /* Dashboard+Wrapped.swift */; };
+		W1000011000000000000000B /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
+		W1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
+		W1000013000000000000000D /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
+		W1000014000000000000000E /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
+		W1000015000000000000000F /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
+		W10000160000000000000010 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
+		W10000170000000000000011 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
+		W10000180000000000000012 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
+		W1000020000000000000001A /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
+		W1000021000000000000001B /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
+		W30000010000000000000001 /* IoTPanelsWatchWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +117,13 @@
 			remoteGlobalIDString = D40000010000000000000001;
 			remoteInfo = IoTPanelsWidgetExtension;
 		};
+		W50000010000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A50000010000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = W60000020000000000000002;
+			remoteInfo = IoTPanelsWatchWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -106,6 +134,17 @@
 			dstSubfolderSpec = 13;
 			files = (
 				D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		WA0000010000000000000001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				W30000010000000000000001 /* IoTPanelsWatchWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -167,6 +206,12 @@
 		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
 		M70000010000000000000001 /* BrokerFileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerFileType.swift; sourceTree = "<group>"; };
 		M70000020000000000000002 /* BrokerImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerImportExport.swift; sourceTree = "<group>"; };
+		W20000010000000000000001 /* IoTPanelsWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchApp.swift; sourceTree = "<group>"; };
+		W20000020000000000000002 /* IoTPanelsWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchWidget.swift; sourceTree = "<group>"; };
+		W20000030000000000000003 /* IoTPanelsWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWatch.entitlements; sourceTree = "<group>"; };
+		W20000040000000000000004 /* IoTPanelsWatchWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWatchWidget.entitlements; sourceTree = "<group>"; };
+		W40000010000000000000001 /* IoTPanelsWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IoTPanelsWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IoTPanelsWatchWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +240,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		W70000010000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W70000020000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -204,6 +263,8 @@
 				A70000020000000000000002 /* IoTPanels */,
 				A70000080000000000000008 /* IoTPanelsTests */,
 				D70000010000000000000001 /* IoTPanelsWidget */,
+				W80000010000000000000001 /* IoTPanelsWatch */,
+				W80000020000000000000002 /* IoTPanelsWatchWidget */,
 				A70000090000000000000009 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -303,6 +364,8 @@
 				A2000014000000000000000E /* IoTPanels.app */,
 				A2000015000000000000000F /* IoTPanelsTests.xctest */,
 				D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */,
+				W40000010000000000000001 /* IoTPanelsWatch.app */,
+				W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -352,6 +415,24 @@
 				F20000070000000000000007 /* WidgetItemConfigView.swift */,
 			);
 			path = WidgetDesigner;
+			sourceTree = "<group>";
+		};
+		W80000010000000000000001 /* IoTPanelsWatch */ = {
+			isa = PBXGroup;
+			children = (
+				W20000010000000000000001 /* IoTPanelsWatchApp.swift */,
+				W20000030000000000000003 /* IoTPanelsWatch.entitlements */,
+			);
+			path = IoTPanelsWatch;
+			sourceTree = "<group>";
+		};
+		W80000020000000000000002 /* IoTPanelsWatchWidget */ = {
+			isa = PBXGroup;
+			children = (
+				W20000020000000000000002 /* IoTPanelsWatchWidget.swift */,
+				W20000040000000000000004 /* IoTPanelsWatchWidget.entitlements */,
+			);
+			path = IoTPanelsWatchWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -417,6 +498,40 @@
 			productReference = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		W60000010000000000000001 /* IoTPanelsWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = W90000010000000000000001 /* Build configuration list for PBXNativeTarget "IoTPanelsWatch" */;
+			buildPhases = (
+				WB0000010000000000000001 /* Sources */,
+				W70000010000000000000001 /* Frameworks */,
+				WA0000010000000000000001 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				WC0000010000000000000001 /* PBXTargetDependency */,
+			);
+			name = IoTPanelsWatch;
+			productName = IoTPanelsWatch;
+			productReference = W40000010000000000000001 /* IoTPanelsWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		W60000020000000000000002 /* IoTPanelsWatchWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = W90000020000000000000002 /* Build configuration list for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */;
+			buildPhases = (
+				WB0000020000000000000002 /* Sources */,
+				W70000020000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IoTPanelsWatchWidgetExtension;
+			productName = IoTPanelsWatchWidgetExtension;
+			productReference = W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -435,6 +550,12 @@
 						TestTargetID = A40000010000000000000001;
 					};
 					D40000010000000000000001 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					W60000010000000000000001 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					W60000020000000000000002 = {
 						CreatedOnToolsVersion = 15.4;
 					};
 				};
@@ -458,6 +579,8 @@
 				A40000010000000000000001 /* IoTPanels */,
 				A40000020000000000000002 /* IoTPanelsTests */,
 				D40000010000000000000001 /* IoTPanelsWidgetExtension */,
+				W60000010000000000000001 /* IoTPanelsWatch */,
+				W60000020000000000000002 /* IoTPanelsWatchWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -561,6 +684,40 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		WB0000010000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				W10000010000000000000001 /* IoTPanelsWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		WB0000020000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */,
+				W10000030000000000000003 /* Persistence.swift in Sources */,
+				W10000040000000000000004 /* BackendType.swift in Sources */,
+				W10000050000000000000005 /* DataSource+Wrapped.swift in Sources */,
+				W10000060000000000000006 /* DataSourceService.swift in Sources */,
+				W10000070000000000000007 /* InfluxDB2Service.swift in Sources */,
+				W10000080000000000000008 /* TimeRange.swift in Sources */,
+				W10000090000000000000009 /* SavedQuery+Wrapped.swift in Sources */,
+				W1000010000000000000000A /* Dashboard+Wrapped.swift in Sources */,
+				W1000011000000000000000B /* PanelCardView.swift in Sources */,
+				W1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
+				W1000013000000000000000D /* UnitType.swift in Sources */,
+				W1000014000000000000000E /* DemoService.swift in Sources */,
+				W1000015000000000000000F /* StyleConfig.swift in Sources */,
+				W10000160000000000000010 /* WidgetDesign+Wrapped.swift in Sources */,
+				W10000170000000000000011 /* ColorUtilities.swift in Sources */,
+				W10000180000000000000012 /* MQTTModels.swift in Sources */,
+				W1000020000000000000001A /* BrokerFileType.swift in Sources */,
+				W1000021000000000000001B /* BrokerImportExport.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -573,6 +730,11 @@
 			isa = PBXTargetDependency;
 			target = D40000010000000000000001 /* IoTPanelsWidgetExtension */;
 			targetProxy = D30000010000000000000001 /* PBXContainerItemProxy */;
+		};
+		WC0000010000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = W60000020000000000000002 /* IoTPanelsWatchWidgetExtension */;
+			targetProxy = W50000010000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -856,6 +1018,118 @@
 			};
 			name = Release;
 		};
+		WD0000010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatch/IoTPanelsWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "IoT Panels";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = de.rnd7.iotpanels;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		WD0000020000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatch/IoTPanelsWatch.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "IoT Panels";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = de.rnd7.iotpanels;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		WD0000030000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatchWidget/IoTPanelsWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "IoT Panels Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		WD0000040000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatchWidget/IoTPanelsWatchWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "IoT Panels Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.watchkitapp.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -891,6 +1165,24 @@
 			buildConfigurations = (
 				DC0000010000000000000001 /* Debug */,
 				DC0000020000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		W90000010000000000000001 /* Build configuration list for PBXNativeTarget "IoTPanelsWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				WD0000010000000000000001 /* Debug */,
+				WD0000020000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		W90000020000000000000002 /* Build configuration list for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				WD0000030000000000000003 /* Debug */,
+				WD0000040000000000000004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

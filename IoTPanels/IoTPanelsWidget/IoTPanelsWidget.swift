@@ -138,7 +138,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
                 guard let query = item.savedQuery, let ds = query.dataSource else { continue }
                 do {
                     let result = try await ServiceFactory.service(for: ds).query(query.buildQuery(for: ds))
-                    let points = PanelCardView.parseChartData(result: result)
+                    let points = ChartDataParser.parse(result: result)
                     groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: points))
                 } catch {
                     groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: []))
@@ -226,7 +226,7 @@ struct IoTPanelsWidget: Widget {
         ) { entry in
             DesignWidgetView(entry: entry)
                 .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(for: .widget) { ContainerRelativeShape().fill(.tertiary) }
         }
         .configurationDisplayName("IoT Panel")
         .description("Display a designed widget with live IoT data.")
@@ -240,5 +240,6 @@ struct IoTPanelsWidgetBundle: WidgetBundle {
         IoTPanelsWidget()
         SingleValueWidget()
         CountdownValueWidget()
+        CountdownTransparentWidget()
     }
 }

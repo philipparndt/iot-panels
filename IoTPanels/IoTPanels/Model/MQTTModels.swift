@@ -32,7 +32,7 @@ enum MQTTProtocolVersion: String, CaseIterable, Identifiable {
 
 // MARK: - Topic Subscription
 
-struct MQTTTopicSubscription: Codable, Identifiable, Equatable {
+struct MQTTTopicSubscription: Codable, Identifiable, Equatable, Sendable {
     var id = UUID()
     var topic: String
     var qos: Int
@@ -58,7 +58,7 @@ enum MQTTCertificateLocation: String, Codable {
     case cloud
 }
 
-struct MQTTCertificateFile: Codable, Equatable {
+struct MQTTCertificateFile: Codable, Equatable, Sendable {
     let name: String
     var type: MQTTCertificateFileType
     var location: MQTTCertificateLocation

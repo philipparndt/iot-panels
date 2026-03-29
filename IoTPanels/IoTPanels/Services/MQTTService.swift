@@ -8,7 +8,7 @@ import CocoaMQTTWebSocket
 /// MQTT data source service implementing DataSourceServiceProtocol.
 /// Uses a shared persistent connection manager so dashboard panels receive
 /// values immediately instead of waiting for a fresh subscribe/collect cycle.
-class MQTTService: DataSourceServiceProtocol {
+final class MQTTService: Sendable, DataSourceServiceProtocol {
     let hostname: String
     let port: UInt16
     let clientID: String
@@ -73,7 +73,7 @@ class MQTTService: DataSourceServiceProtocol {
 
     func testConnection() async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
                 let handler = MQTTConnectionHandler(service: self)
                 handler.testConnection { result in
                     switch result {
@@ -93,7 +93,7 @@ class MQTTService: DataSourceServiceProtocol {
 
     func fetchFieldKeys(measurement topic: String) async throws -> [String] {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
                 let handler = MQTTConnectionHandler(service: self)
                 handler.discoverFields(topic: topic, timeout: 5.0) { result in
                     switch result {
