@@ -2,8 +2,9 @@ import SwiftUI
 
 @Observable
 class NavigationState {
-    var selectedTab: AppTab = .widgets
+    var selectedTab: AppTab = .dashboards
     var navigateToWidgetDesignId: UUID?
+    var showAddDataSource = false
 
     enum AppTab: Hashable {
         case widgets

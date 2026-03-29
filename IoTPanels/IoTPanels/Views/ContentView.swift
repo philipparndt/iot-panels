@@ -8,14 +8,14 @@ struct ContentView: View {
         @Bindable var nav = navigationState
 
         TabView(selection: $nav.selectedTab) {
-            Tab("Widgets", systemImage: "rectangle.on.rectangle.angled", value: .widgets) {
-                WidgetDesignListView()
-            }
-
             Tab("Dashboards", systemImage: "square.grid.2x2", value: .dashboards) {
                 NavigationStack {
                     DashboardListView()
                 }
+            }
+
+            Tab("Widgets", systemImage: "rectangle.on.rectangle.angled", value: .widgets) {
+                WidgetDesignListView()
             }
 
             Tab("Data Sources", systemImage: "server.rack", value: .dataSources) {

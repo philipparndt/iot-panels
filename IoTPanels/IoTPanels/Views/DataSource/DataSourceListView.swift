@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct DataSourceListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(NavigationState.self) private var navigationState
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
@@ -18,6 +19,18 @@ struct DataSourceListView: View {
 
     var body: some View {
         List {
+            if dataSources.isEmpty {
+                ContentUnavailableView {
+                    Label("No Data Sources", systemImage: "server.rack")
+                } description: {
+                    Text("Add a data source to connect to InfluxDB, MQTT, or use the built-in demo data.")
+                } actions: {
+                    Button("Add Data Source") {
+                        showingAddSheet = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
             ForEach(dataSources) { dataSource in
                 NavigationLink {
                     DataSourceDetailView(dataSource: dataSource)
@@ -84,6 +97,12 @@ struct DataSourceListView: View {
         .sheet(isPresented: $showExportShare) {
             if let url = exportFileURL {
                 ShareSheetView(activityItems: [url])
+            }
+        }
+        .onAppear {
+            if navigationState.showAddDataSource {
+                navigationState.showAddDataSource = false
+                showingAddSheet = true
             }
         }
     }

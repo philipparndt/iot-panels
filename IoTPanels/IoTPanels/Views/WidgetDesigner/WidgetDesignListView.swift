@@ -11,6 +11,12 @@ struct WidgetDesignListView: View {
     )
     private var designs: FetchedResults<WidgetDesign>
 
+    @FetchRequest(
+        sortDescriptors: [],
+        animation: .default
+    )
+    private var dataSources: FetchedResults<DataSource>
+
     @State private var showingNew = false
     @State private var navigationPath = NavigationPath()
 
@@ -50,7 +56,19 @@ struct WidgetDesignListView: View {
 
     private var listContent: some View {
         List {
-            if designs.isEmpty {
+            if dataSources.isEmpty {
+                ContentUnavailableView {
+                    Label("No Data Sources", systemImage: "server.rack")
+                } description: {
+                    Text("Connect a data source first to start designing widgets.")
+                } actions: {
+                    Button("Add Data Source") {
+                        navigationState.showAddDataSource = true
+                        navigationState.selectedTab = .dataSources
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            } else if designs.isEmpty {
                 ContentUnavailableView(
                     "No Widget Designs",
                     systemImage: "rectangle.on.rectangle.angled",

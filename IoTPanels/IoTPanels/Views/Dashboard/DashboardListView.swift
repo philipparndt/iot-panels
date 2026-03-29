@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(NavigationState.self) private var navigationState
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Dashboard.name, ascending: true)],
@@ -9,11 +10,29 @@ struct DashboardListView: View {
     )
     private var dashboards: FetchedResults<Dashboard>
 
+    @FetchRequest(
+        sortDescriptors: [],
+        animation: .default
+    )
+    private var dataSources: FetchedResults<DataSource>
+
     @State private var showingAdd = false
 
     var body: some View {
         List {
-            if dashboards.isEmpty {
+            if dataSources.isEmpty {
+                ContentUnavailableView {
+                    Label("No Data Sources", systemImage: "server.rack")
+                } description: {
+                    Text("Connect a data source first to start building dashboards.")
+                } actions: {
+                    Button("Add Data Source") {
+                        navigationState.showAddDataSource = true
+                        navigationState.selectedTab = .dataSources
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            } else if dashboards.isEmpty {
                 ContentUnavailableView(
                     "No Dashboards",
                     systemImage: "square.grid.2x2",
