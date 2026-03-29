@@ -142,6 +142,96 @@ struct InfluxDB2Service: DataSourceServiceProtocol {
         return parseCSV(csv)
     }
 
+    // MARK: - Organization & Bucket Discovery
+
+    func fetchOrganizations() async throws -> [InfluxOrganization] {
+        if authMethod == .usernamePassword, let sessionService {
+            try await ensureSession()
+            let data = try await sessionService.authenticatedGet("/api/v2/orgs")
+            return try parseOrganizations(data)
+        }
+
+        // Token auth: scoped tokens often can't list /api/v2/orgs.
+        // Instead, fetch all accessible buckets and derive unique orgs.
+        let data = try await tokenGet("/api/v2/buckets")
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let buckets = json["buckets"] as? [[String: Any]] else {
+            throw InfluxError.invalidResponse
+        }
+
+        var seen = Set<String>()
+        var orgs: [InfluxOrganization] = []
+        for bucket in buckets {
+            guard let orgID = bucket["orgID"] as? String, !seen.contains(orgID) else { continue }
+            seen.insert(orgID)
+            // Try to get org name from bucket's labels or use orgID as fallback
+            let orgName = bucket["orgName"] as? String ?? orgID
+            orgs.append(InfluxOrganization(id: orgID, name: orgName))
+        }
+        return orgs
+    }
+
+    func fetchBuckets(orgID: String) async throws -> [InfluxBucket] {
+        let data: Data
+        if authMethod == .usernamePassword, let sessionService {
+            try await ensureSession()
+            data = try await sessionService.authenticatedGet("/api/v2/buckets?orgID=\(orgID)")
+        } else {
+            data = try await tokenGet("/api/v2/buckets?orgID=\(orgID)")
+        }
+
+        return try parseBuckets(data)
+    }
+
+    private func parseOrganizations(_ data: Data) throws -> [InfluxOrganization] {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let orgs = json["orgs"] as? [[String: Any]] else {
+            throw InfluxError.invalidResponse
+        }
+
+        return orgs.compactMap { org in
+            guard let id = org["id"] as? String,
+                  let name = org["name"] as? String else { return nil }
+            return InfluxOrganization(id: id, name: name)
+        }
+    }
+
+    private func parseBuckets(_ data: Data) throws -> [InfluxBucket] {
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let buckets = json["buckets"] as? [[String: Any]] else {
+            throw InfluxError.invalidResponse
+        }
+
+        return buckets.compactMap { bucket in
+            guard let id = bucket["id"] as? String,
+                  let name = bucket["name"] as? String,
+                  let orgID = bucket["orgID"] as? String else { return nil }
+            return InfluxBucket(id: id, name: name, orgID: orgID)
+        }.filter { !$0.name.hasPrefix("_") }
+    }
+
+    private func tokenGet(_ path: String) async throws -> Data {
+        guard let requestUrl = URL(string: "\(url)\(path)") else {
+            throw InfluxError.invalidURL
+        }
+
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "GET"
+        request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw InfluxError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let msg = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw InfluxError.queryFailed(statusCode: httpResponse.statusCode, message: msg)
+        }
+
+        return data
+    }
+
     // MARK: - Schema Discovery
 
     func fetchMeasurements() async throws -> [String] {
@@ -299,14 +389,6 @@ struct InfluxDB2SessionService {
             "permissions": [
                 [
                     "action": "read",
-                    "resource": [
-                        "type": "buckets",
-                        "id": bucketID,
-                        "orgID": orgID
-                    ]
-                ],
-                [
-                    "action": "write",
                     "resource": [
                         "type": "buckets",
                         "id": bucketID,

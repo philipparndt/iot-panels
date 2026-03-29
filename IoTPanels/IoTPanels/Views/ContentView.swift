@@ -23,6 +23,12 @@ struct ContentView: View {
                     DataSourceListView()
                 }
             }
+
+            Tab("About", systemImage: "info.circle", value: .about) {
+                NavigationStack {
+                    AboutView()
+                }
+            }
         }
     }
 

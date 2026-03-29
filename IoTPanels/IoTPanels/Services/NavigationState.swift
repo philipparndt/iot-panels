@@ -10,6 +10,7 @@ class NavigationState {
         case widgets
         case dashboards
         case dataSources
+        case about
     }
 
     func handleURL(_ url: URL) {

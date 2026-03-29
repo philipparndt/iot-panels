@@ -17,6 +17,8 @@
 		A10000080000000000000008 /* DataSourceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000080000000000000008 /* DataSourceListView.swift */; };
 		A10000090000000000000009 /* DataSourceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000090000000000000009 /* DataSourceDetailView.swift */; };
 		A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A0000000000000010 /* InfluxDB2SetupView.swift */; };
+		A100000B0000000000000011 /* InfluxDBSettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */; };
+		A100000C0000000000000012 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000C0000000000000012 /* AboutView.swift */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
 		A1000011000000000000000B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B /* Preview Assets.xcassets */; };
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
@@ -162,6 +164,8 @@
 		A20000080000000000000008 /* DataSourceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceListView.swift; sourceTree = "<group>"; };
 		A20000090000000000000009 /* DataSourceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceDetailView.swift; sourceTree = "<group>"; };
 		A200000A0000000000000010 /* InfluxDB2SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB2SetupView.swift; sourceTree = "<group>"; };
+		A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDBSettingsFormView.swift; sourceTree = "<group>"; };
+		A200000C0000000000000012 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000011000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
@@ -322,6 +326,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000070000000000000007 /* ContentView.swift */,
+				A200000C0000000000000012 /* AboutView.swift */,
 				A70000060000000000000006 /* DataSource */,
 				B70000010000000000000001 /* QueryBuilder */,
 				C70000010000000000000001 /* Dashboard */,
@@ -336,6 +341,7 @@
 				A20000080000000000000008 /* DataSourceListView.swift */,
 				A20000090000000000000009 /* DataSourceDetailView.swift */,
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
+				A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */,
 				M20000030000000000000003 /* MQTTFormView.swift */,
 				M80000020000000000000002 /* MQTTBrokerFormView.swift */,
 			);
@@ -612,6 +618,8 @@
 				A10000080000000000000008 /* DataSourceListView.swift in Sources */,
 				A10000090000000000000009 /* DataSourceDetailView.swift in Sources */,
 				A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */,
+				A100000B0000000000000011 /* InfluxDBSettingsFormView.swift in Sources */,
+				A100000C0000000000000012 /* AboutView.swift in Sources */,
 				B10000010000000000000001 /* TimeRange.swift in Sources */,
 				B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */,
 				B10000030000000000000003 /* QueryBuilderView.swift in Sources */,

@@ -2,7 +2,10 @@ import SwiftUI
 
 struct InfluxDB2SetupResult {
     let url: String
+    let authMethod: InfluxAuthMethod
     let token: String
+    let username: String
+    let password: String
     let organization: String
     let bucket: String
 }
@@ -20,7 +23,7 @@ struct InfluxDB2SetupView: View {
 
         var title: String {
             switch self {
-            case .connect: return "Sign In"
+            case .connect: return "Connect"
             case .organization: return "Organization"
             case .bucket: return "Bucket"
             case .finish: return "Done"
@@ -32,13 +35,18 @@ struct InfluxDB2SetupView: View {
 
     // Connection
     @State private var url = ""
+    @State private var authMethod: InfluxAuthMethod = .token
+    @State private var token = ""
     @State private var username = ""
     @State private var password = ""
-    @State private var isSigningIn = false
+    @State private var isConnecting = false
     @State private var errorMessage: String?
 
-    // Session
+    // Session (username/password flow)
     @State private var sessionService: InfluxDB2SessionService?
+
+    // Token-based discovery service
+    @State private var tokenService: InfluxDB2Service?
 
     // Organization
     @State private var organizations: [InfluxOrganization] = []
@@ -51,6 +59,26 @@ struct InfluxDB2SetupView: View {
     // Result
     @State private var createdToken: String?
     @State private var isCreatingToken = false
+    @State private var isTesting = false
+    @State private var testPassed: Bool?
+
+    private var resolvedUrl: String {
+        let trimmed = url.hasSuffix("/") ? String(url.dropLast()) : url
+        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+            return trimmed
+        }
+        return "https://\(trimmed)"
+    }
+
+    private var canConnect: Bool {
+        guard !url.isEmpty, !isConnecting else { return false }
+        switch authMethod {
+        case .token:
+            return !token.isEmpty
+        case .usernamePassword:
+            return !username.isEmpty && !password.isEmpty
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -80,6 +108,7 @@ struct InfluxDB2SetupView: View {
             }
             .navigationTitle("InfluxDB 2 Setup")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { focusedField = .url }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -111,38 +140,74 @@ struct InfluxDB2SetupView: View {
         .padding(.horizontal)
     }
 
+    private enum ConnectField: Hashable {
+        case url, token, username, password
+    }
+
     // MARK: - Steps
+
+    @FocusState private var focusedField: ConnectField?
 
     @ViewBuilder
     private var connectStep: some View {
         Section {
             TextField("Server URL", text: $url)
+                .focused($focusedField, equals: .url)
                 .textContentType(.URL)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-            TextField("Username", text: $username)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            SecureField("Password", text: $password)
-                .textContentType(.password)
+                .submitLabel(.next)
+                .onSubmit {
+                    focusedField = authMethod == .token ? .token : .username
+                }
+            Picker("Authentication", selection: $authMethod) {
+                ForEach(InfluxAuthMethod.allCases) { method in
+                    Text(method.displayName).tag(method)
+                }
+            }
         } header: {
             Text("Connection")
-        } footer: {
-            Text("Your password is only used to sign in and create an API token. It will not be stored.")
+        }
+
+        if authMethod == .token {
+            Section {
+                SecureField("API Token", text: $token)
+                    .focused($focusedField, equals: .token)
+                    .submitLabel(.go)
+                    .onSubmit { if canConnect { connect() } }
+            } footer: {
+                Text("Enter an existing API token. Organizations and buckets will be discovered automatically.")
+            }
+        } else {
+            Section {
+                TextField("Username", text: $username)
+                    .focused($focusedField, equals: .username)
+                    .textContentType(.username)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .password }
+                SecureField("Password", text: $password)
+                    .focused($focusedField, equals: .password)
+                    .textContentType(.password)
+                    .submitLabel(.go)
+                    .onSubmit { if canConnect { connect() } }
+            } footer: {
+                Text("Your password is only used to sign in and create an API token. It will not be stored.")
+            }
         }
 
         Section {
-            Button(action: signIn) {
+            Button(action: connect) {
                 HStack {
-                    Text("Sign In")
+                    Text("Connect")
                     Spacer()
-                    if isSigningIn {
+                    if isConnecting {
                         ProgressView()
                     }
                 }
             }
-            .disabled(url.isEmpty || username.isEmpty || password.isEmpty || isSigningIn)
+            .disabled(!canConnect)
         }
     }
 
@@ -151,6 +216,7 @@ struct InfluxDB2SetupView: View {
         Section("Select Organization") {
             if organizations.isEmpty {
                 ProgressView("Loading organizations...")
+                    .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 ForEach(Array(organizations.enumerated()), id: \.element.id) { _, org in
                     Button {
@@ -177,11 +243,12 @@ struct InfluxDB2SetupView: View {
         Section("Select Bucket") {
             if buckets.isEmpty {
                 ProgressView("Loading buckets...")
+                    .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 ForEach(Array(buckets.enumerated()), id: \.element.id) { _, bucket in
                     Button {
                         selectedBucket = bucket
-                        createToken()
+                        finalize()
                     } label: {
                         HStack {
                             Text(bucket.name)
@@ -202,95 +269,144 @@ struct InfluxDB2SetupView: View {
     private var finishStep: some View {
         if isCreatingToken {
             Section {
-                HStack {
-                    ProgressView()
-                    Text("Creating API token...")
-                        .padding(.leading, 8)
-                }
+                ProgressView("Creating API token...")
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
-        } else if let token = createdToken, let org = selectedOrg, let bucket = selectedBucket {
+        } else if isTesting {
+            Section {
+                ProgressView("Testing connection...")
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+        } else if let org = selectedOrg, let bucket = selectedBucket {
             Section("Configuration Summary") {
                 LabeledContent("Server", value: url)
                 LabeledContent("Organization", value: org.name)
                 LabeledContent("Bucket", value: bucket.name)
-                LabeledContent("Token") {
-                    Text(String(token.prefix(12)) + "...")
-                        .foregroundStyle(.secondary)
-                }
             }
 
             Section {
-                Button("Use This Configuration") {
-                    Task { await sessionService?.signOut() }
-                    onComplete(InfluxDB2SetupResult(
-                        url: url,
-                        token: token,
-                        organization: org.name,
-                        bucket: bucket.name
-                    ))
+                if let testPassed {
+                    if testPassed {
+                        Label("Connection successful", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    } else {
+                        Label(errorMessage ?? "Connection failed", systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                    }
                 }
-                .font(.headline)
+            }
+
+            if testPassed == true {
+                Section {
+                    Button("Finish") {
+                        Task { await sessionService?.signOut() }
+                        onComplete(InfluxDB2SetupResult(
+                            url: url,
+                            authMethod: authMethod,
+                            token: authMethod == .token ? token : (createdToken ?? ""),
+                            username: authMethod == .usernamePassword ? username : "",
+                            password: authMethod == .usernamePassword ? password : "",
+                            organization: org.name,
+                            bucket: bucket.name
+                        ))
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+            } else {
+                Section {
+                    Button("Retry") {
+                        runConnectionTest()
+                    }
+                }
             }
         }
     }
 
     // MARK: - Actions
 
-    private func signIn() {
-        isSigningIn = true
+    private func connect() {
+        isConnecting = true
         errorMessage = nil
 
-        let normalizedUrl = url.hasSuffix("/") ? String(url.dropLast()) : url
+        let resolved = resolvedUrl
 
-        let resolvedUrl: String
-        if normalizedUrl.hasPrefix("http://") || normalizedUrl.hasPrefix("https://") {
-            resolvedUrl = normalizedUrl
-        } else {
-            resolvedUrl = "https://\(normalizedUrl)"
-        }
-
-        let service = InfluxDB2SessionService(url: resolvedUrl)
-        self.url = resolvedUrl
-
-        Task {
-            do {
-                try await service.signIn(username: username, password: password)
-                let orgs = try await service.fetchOrganizations()
-                await MainActor.run {
-                    sessionService = service
-                    organizations = orgs
-                    isSigningIn = false
-                    if orgs.count == 1 {
-                        selectedOrg = orgs[0]
-                        step = .organization
-                        loadBuckets(orgID: orgs[0].id)
-                    } else {
-                        step = .organization
+        if authMethod == .token {
+            let service = InfluxDB2Service(url: resolved, token: token, organization: "", bucket: "")
+            Task {
+                do {
+                    let orgs = try await service.fetchOrganizations()
+                    await MainActor.run {
+                        self.url = resolved
+                        tokenService = service
+                        organizations = orgs
+                        isConnecting = false
+                        if orgs.count == 1 {
+                            selectedOrg = orgs[0]
+                            step = .organization
+                            loadBuckets(orgID: orgs[0].id, service: service)
+                        } else {
+                            step = .organization
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        errorMessage = error.localizedDescription
+                        isConnecting = false
                     }
                 }
-            } catch {
-                print("InfluxDB sign-in error: \(error)")
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isSigningIn = false
+            }
+        } else {
+            let service = InfluxDB2SessionService(url: resolved)
+            Task {
+                do {
+                    try await service.signIn(username: username, password: password)
+                    let orgs = try await service.fetchOrganizations()
+                    await MainActor.run {
+                        self.url = resolved
+                        sessionService = service
+                        organizations = orgs
+                        isConnecting = false
+                        if orgs.count == 1 {
+                            selectedOrg = orgs[0]
+                            step = .organization
+                            loadBuckets(orgID: orgs[0].id, session: service)
+                        } else {
+                            step = .organization
+                        }
+                    }
+                } catch {
+                    print("InfluxDB sign-in error: \(error)")
+                    await MainActor.run {
+                        errorMessage = error.localizedDescription
+                        isConnecting = false
+                    }
                 }
             }
         }
     }
 
-    private func loadBuckets(orgID: String) {
+    private func loadBuckets(orgID: String, service: InfluxDB2Service? = nil, session: InfluxDB2SessionService? = nil) {
         errorMessage = nil
         step = .bucket
         buckets = []
 
+        let tokenSvc = service ?? tokenService
+        let sessionSvc = session ?? sessionService
+
         Task {
             do {
-                let result = try await sessionService?.fetchBuckets(orgID: orgID) ?? []
+                let result: [InfluxBucket]
+                if authMethod == .token, let svc = tokenSvc {
+                    result = try await svc.fetchBuckets(orgID: orgID)
+                } else {
+                    result = try await sessionSvc?.fetchBuckets(orgID: orgID) ?? []
+                }
                 await MainActor.run {
                     buckets = result
                     if result.count == 1 {
                         selectedBucket = result[0]
-                        createToken()
+                        finalize()
                     }
                 }
             } catch {
@@ -301,11 +417,21 @@ struct InfluxDB2SetupView: View {
         }
     }
 
-    private func createToken() {
-        guard let org = selectedOrg, let bucket = selectedBucket else { return }
-        errorMessage = nil
-        isCreatingToken = true
+    private func finalize() {
         step = .finish
+        errorMessage = nil
+        testPassed = nil
+
+        if authMethod == .token {
+            runConnectionTest()
+        } else {
+            createTokenThenTest()
+        }
+    }
+
+    private func createTokenThenTest() {
+        guard let org = selectedOrg, let bucket = selectedBucket else { return }
+        isCreatingToken = true
 
         Task {
             do {
@@ -319,11 +445,42 @@ struct InfluxDB2SetupView: View {
                 await MainActor.run {
                     createdToken = token
                     isCreatingToken = false
+                    runConnectionTest()
                 }
             } catch {
                 await MainActor.run {
                     errorMessage = error.localizedDescription
                     isCreatingToken = false
+                    testPassed = false
+                }
+            }
+        }
+    }
+
+    private func runConnectionTest() {
+        guard let org = selectedOrg, let bucket = selectedBucket else { return }
+        isTesting = true
+        errorMessage = nil
+        testPassed = nil
+
+        let finalToken = authMethod == .token ? token : (createdToken ?? "")
+        let service = InfluxDB2Service(url: url, token: finalToken, organization: org.name, bucket: bucket.name)
+
+        Task {
+            do {
+                let success = try await service.testConnection()
+                await MainActor.run {
+                    testPassed = success
+                    isTesting = false
+                    if !success {
+                        errorMessage = "Connection refused"
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    testPassed = false
+                    errorMessage = error.localizedDescription
+                    isTesting = false
                 }
             }
         }

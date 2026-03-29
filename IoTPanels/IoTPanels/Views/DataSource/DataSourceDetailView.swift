@@ -42,6 +42,7 @@ struct DataSourceDetailView: View {
     @State private var showingGuidedSetup = false
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
+    @FocusState private var nameFieldFocused: Bool
 
     enum TestResult {
         case success
@@ -90,6 +91,7 @@ struct DataSourceDetailView: View {
         let form = Form {
             Section("General") {
                 TextField("Name", text: $name)
+                    .focused($nameFieldFocused)
                 Picker("Type", selection: $backendType) {
                     ForEach(BackendType.allCases) { type in
                         Text(type.displayName).tag(type)
@@ -110,50 +112,39 @@ struct DataSourceDetailView: View {
                     Button {
                         showingGuidedSetup = true
                     } label: {
-                        Label("Setup with Login", systemImage: "wand.and.stars")
+                        Label("Setup Wizard", systemImage: "wand.and.stars")
                     }
                 } header: {
                     Text("Guided Setup")
                 } footer: {
-                    Text("Sign in with username and password to auto-discover organizations and buckets. An API token will be created automatically.")
+                    Text("Connect to your InfluxDB server and select an organization and bucket.")
                 }
             }
 
             if backendType == .influxDB2 {
-                Section("Connection") {
-                    TextField("URL", text: $url)
-                        .textContentType(.URL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                    Picker("Authentication", selection: $influxAuthMethod) {
-                        ForEach(InfluxAuthMethod.allCases) { method in
-                            Text(method.displayName).tag(method)
+                Section("InfluxDB 2") {
+                    NavigationLink {
+                        InfluxDBSettingsFormView(
+                            url: $url,
+                            authMethod: $influxAuthMethod,
+                            token: $token,
+                            username: $influxUsername,
+                            password: $influxPassword,
+                            organization: $organization,
+                            bucket: $bucket
+                        )
+                    } label: {
+                        HStack {
+                            Label("Connection Settings", systemImage: "server.rack")
+                            Spacer()
+                            if !url.isEmpty {
+                                Text(url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
                         }
                     }
-                }
-
-                if influxAuthMethod == .token {
-                    Section("Token Authentication") {
-                        SecureField("Token", text: $token)
-                    }
-                } else {
-                    Section("Username & Password Authentication") {
-                        TextField("Username", text: $influxUsername)
-                            .textContentType(.username)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                        SecureField("Password", text: $influxPassword)
-                            .textContentType(.password)
-                    }
-                }
-
-                Section("InfluxDB 2") {
-                    TextField("Organization", text: $organization)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                    TextField("Bucket", text: $bucket)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
                 }
             }
 
@@ -230,8 +221,10 @@ struct DataSourceDetailView: View {
         .sheet(isPresented: $showingGuidedSetup) {
             InfluxDB2SetupView { result in
                 url = result.url
-                influxAuthMethod = .token
+                influxAuthMethod = result.authMethod
                 token = result.token
+                influxUsername = result.username
+                influxPassword = result.password
                 organization = result.organization
                 bucket = result.bucket
                 showingGuidedSetup = false
@@ -287,6 +280,7 @@ struct DataSourceDetailView: View {
                                 .disabled(!canSave)
                         }
                     }
+                    .onAppear { nameFieldFocused = true }
             }
         }
     }
@@ -470,6 +464,7 @@ struct DataSourceDetailView: View {
             }
         }
     }
+
 }
 
 #Preview("New") {
