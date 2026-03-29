@@ -8,6 +8,7 @@ struct MQTTQueryBuilderView: View {
 
     let dataSource: DataSource
     let existingQuery: SavedQuery?
+    var defaultName: String = ""
 
     @State private var queryName = ""
     @State private var selectedTopic = ""
@@ -245,6 +246,9 @@ struct MQTTQueryBuilderView: View {
     }
 
     private func loadExistingQuery() {
+        if existingQuery == nil && !defaultName.isEmpty {
+            queryName = defaultName
+        }
         guard let q = existingQuery else { return }
         queryName = q.wrappedName
         selectedTopic = q.wrappedMeasurement

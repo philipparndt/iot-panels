@@ -6,11 +6,22 @@ struct AddPanelView: View {
 
     let dashboard: Dashboard
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
-        animation: .default
-    )
-    private var dataSources: FetchedResults<DataSource>
+    @FetchRequest private var dataSources: FetchedResults<DataSource>
+
+    init(dashboard: Dashboard) {
+        self.dashboard = dashboard
+        let predicate: NSPredicate
+        if let home = dashboard.home {
+            predicate = NSPredicate(format: "home == %@", home)
+        } else {
+            predicate = NSPredicate(format: "home == nil")
+        }
+        _dataSources = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
+            predicate: predicate,
+            animation: .default
+        )
+    }
 
     @State private var panelTitle = ""
     @State private var selectedStyle: PanelDisplayStyle = .auto
@@ -98,9 +109,9 @@ struct AddPanelView: View {
     @ViewBuilder
     private func queryBuilderSheet(for dataSource: DataSource) -> some View {
         if dataSource.wrappedBackendType == .mqtt {
-            MQTTQueryBuilderView(dataSource: dataSource, existingQuery: nil)
+            MQTTQueryBuilderView(dataSource: dataSource, existingQuery: nil, defaultName: panelTitle)
         } else {
-            QueryBuilderView(dataSource: dataSource, existingQuery: nil)
+            QueryBuilderView(dataSource: dataSource, existingQuery: nil, defaultName: panelTitle)
         }
     }
 

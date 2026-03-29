@@ -6,6 +6,7 @@ struct QueryBuilderView: View {
 
     let dataSource: DataSource
     let existingQuery: SavedQuery?
+    var defaultName: String = ""
 
     @State private var queryName = ""
     @State private var selectedMeasurement = ""
@@ -237,7 +238,13 @@ struct QueryBuilderView: View {
         Task {
             do {
                 let result = try await service.fetchFieldKeys(measurement: measurement)
-                await MainActor.run { availableFields = result; isLoadingFields = false }
+                await MainActor.run {
+                    availableFields = result
+                    isLoadingFields = false
+                    if result.count == 1 {
+                        selectedFields = Set(result)
+                    }
+                }
             } catch {
                 await MainActor.run { errorMessage = error.localizedDescription; isLoadingFields = false }
             }
@@ -299,6 +306,9 @@ struct QueryBuilderView: View {
     }
 
     private func loadExistingQuery() {
+        if existingQuery == nil && !defaultName.isEmpty {
+            queryName = defaultName
+        }
         guard let q = existingQuery else { return }
         queryName = q.wrappedName
         selectedMeasurement = q.wrappedMeasurement

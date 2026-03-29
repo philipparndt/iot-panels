@@ -19,6 +19,9 @@
 		A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A0000000000000010 /* InfluxDB2SetupView.swift */; };
 		A100000B0000000000000011 /* InfluxDBSettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */; };
 		A100000C0000000000000012 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000C0000000000000012 /* AboutView.swift */; };
+		A100000D0000000000000013 /* DemoSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000D0000000000000013 /* DemoSetup.swift */; };
+		A100000E0000000000000014 /* HomeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000E0000000000000014 /* HomeManager.swift */; };
+		A100000F0000000000000015 /* Home+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000F0000000000000015 /* Home+Wrapped.swift */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
 		A1000011000000000000000B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B /* Preview Assets.xcassets */; };
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
@@ -166,6 +169,9 @@
 		A200000A0000000000000010 /* InfluxDB2SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB2SetupView.swift; sourceTree = "<group>"; };
 		A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDBSettingsFormView.swift; sourceTree = "<group>"; };
 		A200000C0000000000000012 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		A200000D0000000000000013 /* DemoSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSetup.swift; sourceTree = "<group>"; };
+		A200000E0000000000000014 /* HomeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeManager.swift; sourceTree = "<group>"; };
+		A200000F0000000000000015 /* Home+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Home+Wrapped.swift"; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000011000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
@@ -304,6 +310,7 @@
 				F200002100000000000000A1 /* StyleConfig.swift */,
 				M20000010000000000000001 /* MQTTModels.swift */,
 				M70000010000000000000001 /* BrokerFileType.swift */,
+				A200000F0000000000000015 /* Home+Wrapped.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -318,6 +325,8 @@
 				F200005100000000000000D1 /* DemoService.swift */,
 				M20000020000000000000002 /* MQTTService.swift */,
 				M70000020000000000000002 /* BrokerImportExport.swift */,
+				A200000D0000000000000013 /* DemoSetup.swift */,
+				A200000E0000000000000014 /* HomeManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -620,6 +629,9 @@
 				A100000A0000000000000010 /* InfluxDB2SetupView.swift in Sources */,
 				A100000B0000000000000011 /* InfluxDBSettingsFormView.swift in Sources */,
 				A100000C0000000000000012 /* AboutView.swift in Sources */,
+				A100000D0000000000000013 /* DemoSetup.swift in Sources */,
+				A100000E0000000000000014 /* HomeManager.swift in Sources */,
+				A100000F0000000000000015 /* Home+Wrapped.swift in Sources */,
 				B10000010000000000000001 /* TimeRange.swift in Sources */,
 				B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */,
 				B10000030000000000000003 /* QueryBuilderView.swift in Sources */,

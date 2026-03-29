@@ -1,6 +1,6 @@
 import CoreData
 
-struct PersistenceController {
+class PersistenceController: ObservableObject {
     static let shared = PersistenceController()
 
     static let appGroupIdentifier = "group.de.rnd7.iotpanels"
@@ -28,7 +28,9 @@ struct PersistenceController {
         return result
     }()
 
-    let container: NSPersistentCloudKitContainer
+    @Published var isLoaded = false
+
+    private(set) var container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "IoTPanels")
@@ -39,13 +41,12 @@ struct PersistenceController {
 
         if inMemory {
             description.url = URL(fileURLWithPath: "/dev/null")
+            description.shouldAddStoreAsynchronously = false
         } else if let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Self.appGroupIdentifier) {
             let appGroupStoreURL = containerURL.appendingPathComponent("IoTPanels.sqlite")
-
-            // Migrate old store to App Group if needed
             Self.migrateStoreIfNeeded(to: appGroupStoreURL)
-
             description.url = appGroupStoreURL
+            description.shouldAddStoreAsynchronously = true
         }
 
         // Only enable CloudKit sync in the main app, not in extensions
@@ -59,15 +60,24 @@ struct PersistenceController {
         description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
 
-        container.loadPersistentStores { storeDescription, error in
+        container.loadPersistentStores { [weak self] storeDescription, error in
             if let error = error as NSError? {
                 fatalError("Core Data load error: \(error), \(error.userInfo)")
             }
             print("Core Data store loaded at: \(storeDescription.url?.absoluteString ?? "unknown")")
+
+            DispatchQueue.main.async {
+                self?.container.viewContext.automaticallyMergesChangesFromParent = true
+                self?.container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+                self?.isLoaded = true
+            }
         }
 
-        container.viewContext.automaticallyMergesChangesFromParent = true
-        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        if inMemory {
+            container.viewContext.automaticallyMergesChangesFromParent = true
+            container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+            isLoaded = true
+        }
     }
 
     /// Migrate the default Core Data store to the App Group container if the App Group store doesn't exist yet.

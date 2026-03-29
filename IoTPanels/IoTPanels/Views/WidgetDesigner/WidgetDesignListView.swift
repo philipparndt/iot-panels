@@ -5,20 +5,33 @@ struct WidgetDesignListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(NavigationState.self) private var navigationState
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \WidgetDesign.name, ascending: true)],
-        animation: .default
-    )
-    private var designs: FetchedResults<WidgetDesign>
+    let home: Home?
 
-    @FetchRequest(
-        sortDescriptors: [],
-        animation: .default
-    )
-    private var dataSources: FetchedResults<DataSource>
+    @FetchRequest private var designs: FetchedResults<WidgetDesign>
+    @FetchRequest private var dataSources: FetchedResults<DataSource>
 
     @State private var showingNew = false
     @State private var navigationPath = NavigationPath()
+
+    init(home: Home?) {
+        self.home = home
+        let predicate: NSPredicate
+        if let home {
+            predicate = NSPredicate(format: "home == %@", home)
+        } else {
+            predicate = NSPredicate(format: "home == nil")
+        }
+        _designs = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \WidgetDesign.name, ascending: true)],
+            predicate: predicate,
+            animation: .default
+        )
+        _dataSources = FetchRequest(
+            sortDescriptors: [],
+            predicate: predicate,
+            animation: .default
+        )
+    }
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -100,6 +113,7 @@ struct WidgetDesignListView: View {
         design.id = UUID()
         design.name = name
         design.sizeType = size.rawValue
+        design.home = navigationState.selectedHome
         design.createdAt = Date()
         design.modifiedAt = Date()
         try? viewContext.save()

@@ -6,11 +6,22 @@ struct AddWidgetItemView: View {
 
     let design: WidgetDesign
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
-        animation: .default
-    )
-    private var dataSources: FetchedResults<DataSource>
+    @FetchRequest private var dataSources: FetchedResults<DataSource>
+
+    init(design: WidgetDesign) {
+        self.design = design
+        let predicate: NSPredicate
+        if let home = design.home {
+            predicate = NSPredicate(format: "home == %@", home)
+        } else {
+            predicate = NSPredicate(format: "home == nil")
+        }
+        _dataSources = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
+            predicate: predicate,
+            animation: .default
+        )
+    }
 
     var body: some View {
         NavigationStack {

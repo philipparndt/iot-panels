@@ -2,28 +2,38 @@ import SwiftUI
 
 @main
 struct IoTPanelsApp: App {
-    let persistenceController = PersistenceController.shared
+    @StateObject private var persistenceController = PersistenceController.shared
     @State private var navigationState = NavigationState()
     @State private var importAlertMessage: String?
     @State private var showImportAlert = false
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
-                .environment(navigationState)
-                .onOpenURL { url in
-                    if url.pathExtension == "mqttbroker" {
-                        handleBrokerImport(url)
-                    } else {
-                        navigationState.handleURL(url)
+            if persistenceController.isLoaded {
+                ContentView()
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    .environment(navigationState)
+                    .onAppear {
+                        if navigationState.selectedHome == nil {
+                            let home = HomeManager.bootstrap(context: persistenceController.container.viewContext)
+                            navigationState.selectedHome = home
+                        }
                     }
-                }
-                .alert("Import", isPresented: $showImportAlert) {
-                    Button("OK") {}
-                } message: {
-                    Text(importAlertMessage ?? "")
-                }
+                    .onOpenURL { url in
+                        if url.pathExtension == "mqttbroker" {
+                            handleBrokerImport(url)
+                        } else {
+                            navigationState.handleURL(url)
+                        }
+                    }
+                    .alert("Import", isPresented: $showImportAlert) {
+                        Button("OK") {}
+                    } message: {
+                        Text(importAlertMessage ?? "")
+                    }
+            } else {
+                ProgressView("Loading...")
+            }
         }
     }
 

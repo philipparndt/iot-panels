@@ -3,6 +3,7 @@ import SwiftUI
 struct DataSourceDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(NavigationState.self) private var navigationState
 
     let dataSource: DataSource?
 
@@ -328,6 +329,7 @@ struct DataSourceDetailView: View {
         if dataSource == nil {
             target.id = UUID()
             target.createdAt = Date()
+            target.home = navigationState.selectedHome
         }
 
         target.name = name

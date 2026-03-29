@@ -25,6 +25,8 @@
         <attribute name="certificatesJSON" optional="YES" attributeType="String"/>
         <attribute name="certClientKeyPassword" optional="YES" attributeType="String"/>
         <attribute name="alpn" optional="YES" attributeType="String"/>
+        <attribute name="isDemo" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <relationship name="home" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Home" inverseName="dataSources" inverseEntity="Home"/>
         <relationship name="savedQueries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="SavedQuery" inverseName="dataSource" inverseEntity="SavedQuery"/>
     </entity>
     <entity name="SavedQuery" representedClassName="SavedQuery" syncable="YES" codeGenerationType="class">
@@ -48,11 +50,13 @@
     <entity name="WidgetDesign" representedClassName="WidgetDesign" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDemo" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="refreshInterval" optional="YES" attributeType="Integer 32" defaultValueString="15" usesScalarValueType="YES"/>
         <attribute name="sizeType" optional="YES" attributeType="String"/>
         <attribute name="textScale" optional="YES" attributeType="String"/>
+        <relationship name="home" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Home" inverseName="widgetDesigns" inverseEntity="Home"/>
         <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WidgetDesignItem" inverseName="widgetDesign" inverseEntity="WidgetDesignItem"/>
     </entity>
     <entity name="WidgetDesignItem" representedClassName="WidgetDesignItem" syncable="YES" codeGenerationType="class">
@@ -71,8 +75,10 @@
     <entity name="Dashboard" representedClassName="Dashboard" syncable="YES" codeGenerationType="class">
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDemo" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="home" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Home" inverseName="dashboards" inverseEntity="Home"/>
         <relationship name="panels" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DashboardPanel" inverseName="dashboard" inverseEntity="DashboardPanel"/>
     </entity>
     <entity name="DashboardPanel" representedClassName="DashboardPanel" syncable="YES" codeGenerationType="class">
@@ -85,5 +91,16 @@
         <attribute name="title" optional="YES" attributeType="String"/>
         <relationship name="dashboard" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dashboard" inverseName="panels" inverseEntity="Dashboard"/>
         <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="panels" inverseEntity="SavedQuery"/>
+    </entity>
+    <entity name="Home" representedClassName="Home" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="icon" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDemo" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="sortOrder" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="dashboards" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Dashboard" inverseName="home" inverseEntity="Dashboard"/>
+        <relationship name="dataSources" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DataSource" inverseName="home" inverseEntity="DataSource"/>
+        <relationship name="widgetDesigns" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WidgetDesign" inverseName="home" inverseEntity="WidgetDesign"/>
     </entity>
 </model>

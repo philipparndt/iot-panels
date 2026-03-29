@@ -5,11 +5,24 @@ struct DataSourceListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(NavigationState.self) private var navigationState
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
-        animation: .default
-    )
-    private var dataSources: FetchedResults<DataSource>
+    let home: Home?
+
+    @FetchRequest private var dataSources: FetchedResults<DataSource>
+
+    init(home: Home?) {
+        self.home = home
+        let predicate: NSPredicate
+        if let home {
+            predicate = NSPredicate(format: "home == %@", home)
+        } else {
+            predicate = NSPredicate(format: "home == nil")
+        }
+        _dataSources = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)],
+            predicate: predicate,
+            animation: .default
+        )
+    }
 
     @State private var showingAddSheet = false
     @State private var showingImportPicker = false
@@ -161,7 +174,8 @@ struct ShareSheetView: UIViewControllerRepresentable {
 
 #Preview {
     NavigationStack {
-        DataSourceListView()
+        DataSourceListView(home: nil)
     }
     .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    .environment(NavigationState())
 }

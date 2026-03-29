@@ -48,7 +48,7 @@ struct DemoService: DataSourceServiceProtocol {
     // MARK: - Schema Discovery
 
     func fetchMeasurements() async throws -> [String] {
-        ["temperature", "humidity", "energy", "solar", "battery", "air_quality", "appliance", "motion", "water"]
+        ["temperature", "humidity", "energy", "solar", "battery", "air_quality", "appliance", "motion", "water", "weather"]
     }
 
     func fetchFieldKeys(measurement: String) async throws -> [String] {
@@ -64,6 +64,7 @@ struct DemoService: DataSourceServiceProtocol {
         case "appliance": return ["name"]
         case "motion": return ["zone"]
         case "water": return ["meter"]
+        case "weather": return ["station"]
         default: return ["tag"]
         }
     }
@@ -78,6 +79,7 @@ struct DemoService: DataSourceServiceProtocol {
         case "name": return ["dishwasher", "washing_machine", "dryer", "oven"]
         case "zone": return ["entrance", "garden", "driveway"]
         case "meter": return ["main", "garden"]
+        case "station": return ["garden"]
         default: return ["value_1", "value_2"]
         }
     }
@@ -95,6 +97,7 @@ struct DemoService: DataSourceServiceProtocol {
         case "appliance": return ["remaining_min", "power", "state"]
         case "motion": return ["detected", "count"]
         case "water": return ["flow_rate", "total"]
+        case "weather": return ["temperature", "wind_speed", "wind_gust", "rain", "humidity", "pressure"]
         default: return ["value"]
         }
     }
@@ -187,6 +190,25 @@ struct DemoService: DataSourceServiceProtocol {
             return { _, _ in Double.random(in: 0...1) > 0.6 ? Double.random(in: 5...15) : 0 }
         case ("water", "total"):
             return { progress, _ in 1234.5 + progress * 2.5 }
+
+        // Weather
+        case ("weather", "temperature"):
+            let base = Double.random(in: 8...18)
+            return { progress, date in
+                let hour = Calendar.current.component(.hour, from: date)
+                let dayWave = sin(Double(hour) / 24.0 * .pi * 2 - .pi / 2) * 5
+                return base + dayWave + Double.random(in: -0.5...0.5)
+            }
+        case ("weather", "wind_speed"):
+            return { progress, _ in max(0, 5 + sin(progress * .pi * 6) * 8 + Double.random(in: -2...2)) }
+        case ("weather", "wind_gust"):
+            return { progress, _ in max(0, 10 + sin(progress * .pi * 6) * 15 + Double.random(in: -3...5)) }
+        case ("weather", "rain"):
+            return { _, _ in Double.random(in: 0...1) > 0.7 ? Double.random(in: 0.1...4.0) : 0 }
+        case ("weather", "humidity"):
+            return { progress, _ in 60 + sin(progress * .pi * 3) * 20 + Double.random(in: -3...3) }
+        case ("weather", "pressure"):
+            return { progress, _ in 1013 + sin(progress * .pi * 2) * 8 + Double.random(in: -1...1) }
 
         default:
             return { progress, _ in sin(progress * .pi * 4) * 50 + 50 + Double.random(in: -5...5) }
