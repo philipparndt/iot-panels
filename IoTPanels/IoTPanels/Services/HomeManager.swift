@@ -4,16 +4,47 @@ import CoreData
 /// Manages the creation and bootstrapping of Home entities.
 enum HomeManager {
 
+    private static var hasBootstrapped = false
+
     /// Ensures default homes exist. Returns the "My Home" instance.
     @discardableResult
     static func bootstrap(context: NSManagedObjectContext) -> Home {
+        guard !hasBootstrapped else {
+            // Already bootstrapped this session — just return existing My Home
+            let request: NSFetchRequest<Home> = Home.fetchRequest()
+            request.predicate = NSPredicate(format: "isDemo == NO")
+            request.sortDescriptors = [NSSortDescriptor(keyPath: \Home.sortOrder, ascending: true)]
+            request.fetchLimit = 1
+            if let home = (try? context.fetch(request))?.first {
+                return home
+            }
+            hasBootstrapped = false // fallthrough to create
+            return bootstrap(context: context)
+        }
+        hasBootstrapped = true
+
         let request: NSFetchRequest<Home> = Home.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Home.sortOrder, ascending: true)]
         let existing = (try? context.fetch(request)) ?? []
 
+        // Deduplicate: keep the oldest of each type, delete extras
+        let nonDemoHomes = existing.filter { !$0.isDemo }
+        let demoHomes = existing.filter { $0.isDemo }
+
+        if nonDemoHomes.count > 1 {
+            for home in nonDemoHomes.dropFirst() {
+                context.delete(home)
+            }
+        }
+        if demoHomes.count > 1 {
+            for home in demoHomes.dropFirst() {
+                context.delete(home)
+            }
+        }
+
         // Create "My Home" if missing
         let myHome: Home
-        if let found = existing.first(where: { !$0.isDemo }) {
+        if let found = nonDemoHomes.first {
             myHome = found
         } else {
             myHome = Home(context: context)
@@ -26,7 +57,7 @@ enum HomeManager {
         }
 
         // Create "Demo Home" if missing
-        if !existing.contains(where: { $0.isDemo }) {
+        if demoHomes.isEmpty {
             let demo = Home(context: context)
             demo.id = UUID()
             demo.name = "Demo Home"
@@ -45,7 +76,7 @@ enum HomeManager {
         let request: NSFetchRequest<Home> = Home.fetchRequest()
         request.predicate = NSPredicate(format: "isDemo == YES")
         request.fetchLimit = 1
-        if let existing = try? context.fetch(request), let home = existing.first {
+        if let home = (try? context.fetch(request))?.first {
             return home
         }
         let home = Home(context: context)
