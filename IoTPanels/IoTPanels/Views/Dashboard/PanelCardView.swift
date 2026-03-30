@@ -698,6 +698,20 @@ private struct CalendarHeatmapView: View {
         abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
     }
 
+    /// Map a drag position within the grid to the corresponding date.
+    private func dateAt(location: CGPoint, weekCount: Int, cellSize: CGFloat, spacing: CGFloat, startDate: Date, today: Date) -> Date? {
+        let calendar = Calendar.current
+        let step = cellSize + spacing
+        let week = Int(location.x / step)
+        let weekday = Int(location.y / step)
+        guard week >= 0, week < weekCount, weekday >= 0, weekday < 7 else { return nil }
+        let dayOffset = week * 7 + weekday
+        guard let date = calendar.date(byAdding: .day, value: dayOffset, to: startDate) else { return nil }
+        let day = calendar.startOfDay(for: date)
+        guard day <= today else { return nil }
+        return day
+    }
+
     var body: some View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -706,34 +720,43 @@ private struct CalendarHeatmapView: View {
         let spacing: CGFloat = compact ? 1.5 : 2
 
         VStack(alignment: .leading, spacing: compact ? 2 : 6) {
-            Text(title)
-                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-
-            // Selected day or last value
-            if let sel = selectedDate, let val = dayValues[sel] {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(formatValue(val))
-                        .font(.system(size: sz(compact ? 14 : 18), weight: .semibold, design: .rounded).monospacedDigit())
-                    if !unit.isEmpty {
-                        Text(unit)
-                            .font(.system(size: sz(compact ? 8 : 10)))
-                            .foregroundStyle(.tertiary)
-                    }
-                    Spacer()
-                    Text(sel.formatted(.dateTime.day().month(.abbreviated).year()))
-                        .font(.system(size: sz(compact ? 9 : 11)))
+            // Header — matches chart style: title + selected value, or title + last value
+            if let sel = selectedDate, let val = dayValues[sel], !compact {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.system(size: sz(14), weight: .medium))
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(sel.formatted(.dateTime.day().month(.abbreviated).year()))
+                            .font(.system(size: sz(12)).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Text(formatValue(val) + (unit.isEmpty ? "" : " \(unit)"))
+                            .font(.system(size: sz(22), weight: .semibold, design: .default).monospacedDigit())
+                    }
                 }
-            } else if let val = lastValue {
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(formatValue(val))
-                        .font(.system(size: sz(compact ? 14 : 18), weight: .semibold, design: .rounded).monospacedDigit())
-                    if !unit.isEmpty {
-                        Text(unit)
-                            .font(.system(size: sz(compact ? 8 : 10)))
-                            .foregroundStyle(.tertiary)
+            } else {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title)
+                        .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    if let val = lastValue {
+                        HStack(alignment: .firstTextBaseline, spacing: 3) {
+                            Text(formatValue(val))
+                                .font(.system(size: sz(compact ? 14 : 22), weight: .semibold, design: .default).monospacedDigit())
+                            if !unit.isEmpty {
+                                Text(unit)
+                                    .font(.system(size: sz(compact ? 8 : 10)))
+                                    .foregroundStyle(.tertiary)
+                                }
+                        }
                     }
                 }
             }
@@ -764,15 +787,22 @@ private struct CalendarHeatmapView: View {
                                             .stroke(Color.primary, lineWidth: 1) : nil
                                     )
                                     .frame(width: cellSize, height: cellSize)
-                                    .onTapGesture {
-                                        if !isFuture {
-                                            selectionState.selectedDate = selectionState.selectedDate == day ? nil : day
-                                        }
-                                    }
                             }
                         }
                     }
                 }
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { drag in
+                            if let day = dateAt(location: drag.location, weekCount: weekCount, cellSize: cellSize, spacing: spacing, startDate: startDate, today: today) {
+                                selectionState.selectedDate = day
+                            }
+                        }
+                        .onEnded { _ in
+                            selectionState.selectedDate = nil
+                        }
+                )
             }
             .frame(height: 7 * (compact ? 12 : 16) + 6 * spacing + 20)
         }
