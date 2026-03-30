@@ -148,6 +148,7 @@ struct WidgetDesignEditorView: View {
                 seriesData: seriesData,
                 textScale: design.wrappedTextScale.factor
             )
+            .environmentObject(HeatmapSelectionState())
         }
     }
 

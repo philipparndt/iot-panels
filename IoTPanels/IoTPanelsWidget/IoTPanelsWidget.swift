@@ -232,6 +232,7 @@ struct IoTPanelsWidget: Widget {
             provider: WidgetDesignTimelineProvider()
         ) { entry in
             DesignWidgetView(entry: entry)
+                .environmentObject(HeatmapSelectionState())
                 .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
                 .containerBackground(for: .widget) { ContainerRelativeShape().fill(.tertiary) }
         }

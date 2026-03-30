@@ -13,6 +13,9 @@ help:
 	@echo "  clean  - Clean build artifacts"
 	@echo "  icon   - Generate app icon from icon/ exports"
 	@echo "  check-translations - Check for missing translations"
+	@echo "  bump-major         - Bump major version (X.0.0)"
+	@echo "  bump-minor         - Bump minor version (x.X.0)"
+	@echo "  bump-patch         - Bump patch version (x.x.X)"
 
 icon: $(APPICONSET)/AppIcon.png
 

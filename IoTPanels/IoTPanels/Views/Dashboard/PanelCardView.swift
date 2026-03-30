@@ -2,6 +2,12 @@ import SwiftUI
 import Charts
 import Combine
 
+// MARK: - Shared Heatmap Selection
+
+class HeatmapSelectionState: ObservableObject {
+    @Published var selectedDate: Date?
+}
+
 // MARK: - Data Types
 
 struct PanelCardBackground: View {
@@ -680,7 +686,9 @@ private struct CalendarHeatmapView: View {
     let lastValue: Double?
     let heatmapColor: HeatmapColor
 
-    @State private var selectedDate: Date?
+    @EnvironmentObject private var selectionState: HeatmapSelectionState
+
+    private var selectedDate: Date? { selectionState.selectedDate }
 
     private var range: Double { maxVal - minVal }
 
@@ -758,7 +766,7 @@ private struct CalendarHeatmapView: View {
                                     .frame(width: cellSize, height: cellSize)
                                     .onTapGesture {
                                         if !isFuture {
-                                            selectedDate = selectedDate == day ? nil : day
+                                            selectionState.selectedDate = selectionState.selectedDate == day ? nil : day
                                         }
                                     }
                             }

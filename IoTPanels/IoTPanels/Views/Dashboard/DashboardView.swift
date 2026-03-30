@@ -11,6 +11,7 @@ struct DashboardView: View {
     @State private var renameText = ""
     @State private var isWiggling = false
     @State private var draggedPanel: DashboardPanel?
+    @StateObject private var heatmapSelection = HeatmapSelectionState()
 
     var body: some View {
         Group {
@@ -20,6 +21,7 @@ struct DashboardView: View {
                 normalContent
             }
         }
+        .environmentObject(heatmapSelection)
         .navigationTitle(dashboard.wrappedName)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
