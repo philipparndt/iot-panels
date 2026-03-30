@@ -11,6 +11,10 @@ struct DashboardListView: View {
 
     @State private var showingAdd = false
     @State private var showingResetDemo = false
+    @State private var showingRenameHome = false
+    @State private var showingDeleteHome = false
+    @State private var showingNewHome = false
+    @State private var homeRenameText = ""
 
     init(home: Home?) {
         self.home = home
@@ -92,13 +96,39 @@ struct DashboardListView: View {
         }
         .navigationTitle("Dashboards")
         .toolbar {
-            if navigationState.selectedHome?.isDemo == true {
-                ToolbarItem(placement: .navigation) {
+            ToolbarItem(placement: .navigation) {
+                Menu {
                     Button {
-                        showingResetDemo = true
+                        homeRenameText = home?.wrappedName ?? ""
+                        showingRenameHome = true
                     } label: {
-                        Label("Reset Demo", systemImage: "arrow.counterclockwise")
+                        Label("Rename Home", systemImage: "pencil")
                     }
+
+                    Button {
+                        showingNewHome = true
+                    } label: {
+                        Label("New Home", systemImage: "plus")
+                    }
+
+                    if home?.isDemo == true {
+                        Button {
+                            showingResetDemo = true
+                        } label: {
+                            Label("Reset Demo", systemImage: "arrow.counterclockwise")
+                        }
+                    }
+
+                    if !(home?.isDemo == true) {
+                        Divider()
+                        Button(role: .destructive) {
+                            showingDeleteHome = true
+                        } label: {
+                            Label("Delete Home", systemImage: "trash")
+                        }
+                    }
+                } label: {
+                    Label("Home Settings", systemImage: "ellipsis.circle")
                 }
             }
             ToolbarItem(placement: .primaryAction) {
@@ -114,6 +144,34 @@ struct DashboardListView: View {
             }
         } message: {
             Text("This will delete all demo dashboards, data sources, and widgets, then recreate them.")
+        }
+        .alert("Rename Home", isPresented: $showingRenameHome) {
+            TextField("Home name", text: $homeRenameText)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                home?.name = homeRenameText
+                try? viewContext.save()
+            }
+            .disabled(homeRenameText.isEmpty)
+        }
+        .alert("New Home", isPresented: $showingNewHome) {
+            NewHomeAlert { name in
+                let newHome = HomeManager.createHome(name: name, context: viewContext)
+                navigationState.selectedHome = newHome
+            }
+        }
+        .alert("Delete Home?", isPresented: $showingDeleteHome) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                if let home {
+                    let myHome = HomeManager.bootstrap(context: viewContext)
+                    navigationState.selectedHome = myHome
+                    viewContext.delete(home)
+                    try? viewContext.save()
+                }
+            }
+        } message: {
+            Text("This will permanently delete this home and all its dashboards, data sources, and widgets.")
         }
         .alert("New Dashboard", isPresented: $showingAdd) {
             DashboardNameAlert { name in
