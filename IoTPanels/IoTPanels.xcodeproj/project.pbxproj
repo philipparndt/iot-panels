@@ -22,6 +22,7 @@
 		A100000D0000000000000013 /* DemoSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000D0000000000000013 /* DemoSetup.swift */; };
 		A100000E0000000000000014 /* HomeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000E0000000000000014 /* HomeManager.swift */; };
 		A100000F0000000000000015 /* Home+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000F0000000000000015 /* Home+Wrapped.swift */; };
+		A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */; };
 		A10000100000000000000016 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A20000100000000000000016 /* Localizable.xcstrings */; };
 		A10000110000000000000017 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A20000110000000000000017 /* Settings.bundle */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
@@ -174,6 +175,7 @@
 		A200000D0000000000000013 /* DemoSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSetup.swift; sourceTree = "<group>"; };
 		A200000E0000000000000014 /* HomeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeManager.swift; sourceTree = "<group>"; };
 		A200000F0000000000000015 /* Home+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Home+Wrapped.swift"; sourceTree = "<group>"; };
+		A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTTopicDiscoveryPage.swift; sourceTree = "<group>"; };
 		A20000100000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A20000110000000000000017 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 				B20000060000000000000006 /* SavedQueryDetailView.swift */,
 				F200004100000000000000C1 /* FluxSyntaxView.swift */,
 				M20000040000000000000004 /* MQTTQueryBuilderView.swift */,
+				A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */,
 			);
 			path = QueryBuilder;
 			sourceTree = "<group>";
@@ -642,6 +645,7 @@
 				A100000D0000000000000013 /* DemoSetup.swift in Sources */,
 				A100000E0000000000000014 /* HomeManager.swift in Sources */,
 				A100000F0000000000000015 /* Home+Wrapped.swift in Sources */,
+				A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */,
 				B10000010000000000000001 /* TimeRange.swift in Sources */,
 				B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */,
 				B10000030000000000000003 /* QueryBuilderView.swift in Sources */,

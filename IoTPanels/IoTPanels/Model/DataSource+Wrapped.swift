@@ -103,6 +103,17 @@ extension DataSource {
         set { basePath = newValue }
     }
 
+    var wrappedMqttBaseTopic: String {
+        get {
+            let bt = mqttBaseTopic ?? ""
+            if !bt.isEmpty { return bt }
+            // Legacy fallback: derive from first subscription
+            let subs = [MQTTTopicSubscription].fromJSON(subscriptionsJSON)
+            return subs.first?.topic ?? ""
+        }
+        set { mqttBaseTopic = newValue }
+    }
+
     var wrappedSubscriptions: [MQTTTopicSubscription] {
         get { [MQTTTopicSubscription].fromJSON(subscriptionsJSON) }
         set { subscriptionsJSON = newValue.toJSON() }

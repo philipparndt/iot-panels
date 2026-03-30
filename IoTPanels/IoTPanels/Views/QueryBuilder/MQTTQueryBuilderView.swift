@@ -12,8 +12,6 @@ struct MQTTQueryBuilderView: View {
 
     @State private var queryName = ""
     @State private var selectedTopic = ""
-    @State private var topics: [String] = []
-    @State private var isLoadingTopics = false
     @State private var availableFields: [String] = []
     @State private var selectedFields: Set<String> = []
     @State private var isLoadingFields = false
@@ -43,11 +41,10 @@ struct MQTTQueryBuilderView: View {
                 // Topic
                 Section {
                     NavigationLink {
-                        MQTTTopicPickerPage(
-                            topics: topics,
-                            isLoading: isLoadingTopics,
-                            selection: $selectedTopic,
-                            onSelect: { t in selectTopic(t) }
+                        MQTTTopicDiscoveryPage(
+                            dataSource: dataSource,
+                            selectedTopic: $selectedTopic,
+                            discoveredFields: $availableFields
                         )
                     } label: {
                         summaryRow(
@@ -159,7 +156,9 @@ struct MQTTQueryBuilderView: View {
                 guard !didInitialLoad else { return }
                 didInitialLoad = true
                 loadExistingQuery()
-                loadTopics()
+            }
+            .onChange(of: selectedTopic) {
+                selectTopic(selectedTopic)
             }
         }
     }
@@ -188,26 +187,17 @@ struct MQTTQueryBuilderView: View {
     // MARK: - Actions
 
     private func selectTopic(_ t: String) {
-        let changed = selectedTopic != t
-        selectedTopic = t
-        if changed {
-            selectedFields = []
-            availableFields = []
+        guard !t.isEmpty else { return }
+        selectedFields = []
+        // If fields were already discovered (from topic discovery page), use them
+        if !availableFields.isEmpty {
+            if availableFields.count == 1 {
+                selectedFields = Set(availableFields)
+            }
+        } else {
             discoverFields(topic: t)
         }
         if queryName.isEmpty { queryName = t.replacingOccurrences(of: "/", with: " ").replacingOccurrences(of: "#", with: "all") }
-    }
-
-    private func loadTopics() {
-        isLoadingTopics = true
-        Task {
-            do {
-                let result = try await service.fetchMeasurements()
-                await MainActor.run { topics = result; isLoadingTopics = false }
-            } catch {
-                await MainActor.run { errorMessage = error.localizedDescription; isLoadingTopics = false }
-            }
-        }
     }
 
     private func discoverFields(topic: String) {
@@ -310,57 +300,6 @@ enum MQTTCollectDuration: String, CaseIterable, Identifiable {
         case .twentyFourHours: return .twentySeconds
         case .sevenDays, .thirtyDays, .ninetyDays, .oneYear: return .thirtySeconds
         }
-    }
-}
-
-// MARK: - Topic Picker Page
-
-struct MQTTTopicPickerPage: View {
-    let topics: [String]
-    let isLoading: Bool
-    @Binding var selection: String
-    let onSelect: (String) -> Void
-    @State private var customTopic = ""
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        List {
-            if isLoading {
-                HStack { ProgressView(); Text("Loading...").padding(.leading, 8) }
-            } else {
-                Section("Configured Subscriptions") {
-                    ForEach(topics, id: \.self) { topic in
-                        Button {
-                            onSelect(topic)
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Text(topic).foregroundStyle(.primary)
-                                Spacer()
-                                if selection == topic {
-                                    Image(systemName: "checkmark").fontWeight(.semibold).foregroundStyle(Color.accentColor)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Section("Custom Topic") {
-                    HStack {
-                        TextField("e.g. home/living/temperature", text: $customTopic)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                        Button("Use") {
-                            guard !customTopic.isEmpty else { return }
-                            onSelect(customTopic)
-                            dismiss()
-                        }
-                        .disabled(customTopic.isEmpty)
-                    }
-                }
-            }
-        }
-        .navigationTitle("Topic")
     }
 }
 

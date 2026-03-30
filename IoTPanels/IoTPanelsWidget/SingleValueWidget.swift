@@ -53,6 +53,7 @@ struct SavedQueryEntity: AppEntity {
     let unit: String
     let dataSourceName: String
     let homeName: String
+    let isDemo: Bool
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Saved Query"
     var displayRepresentation: DisplayRepresentation {
@@ -68,7 +69,7 @@ struct SavedQueryEntityQuery: EntityQuery {
         let queries = (try? context.fetch(SavedQuery.fetchRequest())) ?? []
         return queries.compactMap { q -> SavedQueryEntity? in
             guard let id = q.id?.uuidString, identifiers.contains(id) else { return nil }
-            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "")
+            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "", isDemo: q.dataSource?.home?.isDemo ?? false)
         }
     }
 
@@ -79,7 +80,11 @@ struct SavedQueryEntityQuery: EntityQuery {
         let queries = (try? context.fetch(request)) ?? []
         return queries.compactMap { q -> SavedQueryEntity? in
             guard let id = q.id?.uuidString else { return nil }
-            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "")
+            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "", isDemo: q.dataSource?.home?.isDemo ?? false)
+        }.sorted {
+            if $0.isDemo != $1.isDemo { return !$0.isDemo }
+            if $0.homeName != $1.homeName { return $0.homeName < $1.homeName }
+            return $0.name < $1.name
         }
     }
 

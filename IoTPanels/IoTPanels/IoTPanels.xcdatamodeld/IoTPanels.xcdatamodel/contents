@@ -21,6 +21,7 @@
         <attribute name="protocolMethod" optional="YES" attributeType="String"/>
         <attribute name="protocolVersion" optional="YES" attributeType="String"/>
         <attribute name="basePath" optional="YES" attributeType="String"/>
+        <attribute name="mqttBaseTopic" optional="YES" attributeType="String"/>
         <attribute name="subscriptionsJSON" optional="YES" attributeType="String"/>
         <attribute name="certificatesJSON" optional="YES" attributeType="String"/>
         <attribute name="certClientKeyPassword" optional="YES" attributeType="String"/>

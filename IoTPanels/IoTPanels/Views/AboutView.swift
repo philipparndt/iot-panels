@@ -38,10 +38,10 @@ struct AboutView: View {
 struct AboutTitleView: View {
     var body: some View {
         HStack {
-            Image("AppIcon")
+            Image("AboutIcon")
                 .resizable()
-                .frame(width: 50, height: 50)
-                .cornerRadius(10)
+                .frame(width: 80, height: 80)
+                .cornerRadius(16)
                 .shadow(radius: 10)
                 .padding(.trailing)
 

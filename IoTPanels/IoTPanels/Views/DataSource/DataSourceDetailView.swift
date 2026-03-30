@@ -36,13 +36,14 @@ struct DataSourceDetailView: View {
     @State private var mqttCertP12: MQTTCertificateFile?
     @State private var mqttCertClientKeyPassword = ""
     @State private var mqttClientID = ""
-    @State private var mqttSubscriptions = [MQTTTopicSubscription()]
+    @State private var mqttBaseTopic = ""
 
     @State private var testResult: TestResult?
     @State private var isTesting = false
     @State private var showingGuidedSetup = false
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
+    @State private var didLoad = false
     @FocusState private var nameFieldFocused: Bool
 
     enum TestResult {
@@ -53,7 +54,6 @@ struct DataSourceDetailView: View {
     var isEditing: Bool { dataSource != nil }
 
     private var canSave: Bool {
-        guard !name.isEmpty else { return false }
         switch backendType {
         case .influxDB2:
             guard !url.isEmpty else { return false }
@@ -91,13 +91,13 @@ struct DataSourceDetailView: View {
     var body: some View {
         let form = Form {
             Section("General") {
-                TextField("Name", text: $name)
-                    .focused($nameFieldFocused)
                 Picker("Type", selection: $backendType) {
                     ForEach(BackendType.allCases) { type in
                         Text(type.displayName).tag(type)
                     }
                 }
+                TextField(backendType.displayName, text: $name)
+                    .focused($nameFieldFocused)
             }
 
             if backendType == .demo {
@@ -169,7 +169,7 @@ struct DataSourceDetailView: View {
                             certP12: $mqttCertP12,
                             certClientKeyPassword: $mqttCertClientKeyPassword,
                             clientID: $mqttClientID,
-                            subscriptions: $mqttSubscriptions
+                            baseTopic: $mqttBaseTopic
                         )
                     } label: {
                         HStack {
@@ -268,6 +268,7 @@ struct DataSourceDetailView: View {
                     }
                 }
                 .onAppear(perform: loadDataSource)
+                .onDisappear { persistFields() }
         } else {
             NavigationStack {
                 form
@@ -287,7 +288,8 @@ struct DataSourceDetailView: View {
     }
 
     private func loadDataSource() {
-        guard let dataSource else { return }
+        guard !didLoad, let dataSource else { return }
+        didLoad = true
         name = dataSource.wrappedName
         backendType = dataSource.wrappedBackendType
 
@@ -317,13 +319,10 @@ struct DataSourceDetailView: View {
         mqttCertP12 = dataSource.wrappedCertificates.first { $0.type == .p12 }
         mqttCertClientKeyPassword = dataSource.wrappedCertClientKeyPassword
         mqttClientID = dataSource.wrappedClientID
-        mqttSubscriptions = dataSource.wrappedSubscriptions
-        if mqttSubscriptions.isEmpty {
-            mqttSubscriptions = [MQTTTopicSubscription()]
-        }
+        mqttBaseTopic = dataSource.wrappedMqttBaseTopic
     }
 
-    private func save() {
+    private func persistFields() {
         let target = dataSource ?? DataSource(context: viewContext)
 
         if dataSource == nil {
@@ -332,7 +331,7 @@ struct DataSourceDetailView: View {
             target.home = navigationState.selectedHome
         }
 
-        target.name = name
+        target.name = name.isEmpty ? backendType.displayName : name
         target.backendType = backendType.rawValue
         target.modifiedAt = Date()
 
@@ -361,7 +360,7 @@ struct DataSourceDetailView: View {
         }
         target.clientID = mqttClientID.isEmpty ? nil : mqttClientID
         target.certClientKeyPassword = mqttCertificateAuth ? mqttCertClientKeyPassword : nil
-        target.wrappedSubscriptions = mqttSubscriptions.filter { !$0.topic.trimmingCharacters(in: .whitespaces).isEmpty }
+        target.mqttBaseTopic = mqttBaseTopic.trimmingCharacters(in: .whitespaces)
 
         // Build certificates array from individual pickers
         var certs: [MQTTCertificateFile] = []
@@ -370,6 +369,10 @@ struct DataSourceDetailView: View {
         target.wrappedCertificates = certs
 
         try? viewContext.save()
+    }
+
+    private func save() {
+        persistFields()
         dismiss()
     }
 
@@ -438,9 +441,13 @@ struct DataSourceDetailView: View {
             }
 
         case .mqtt:
+            var certs: [MQTTCertificateFile] = []
+            if let serverCA = mqttCertServerCA { certs.append(serverCA) }
+            if mqttCertificateAuth, let p12 = mqttCertP12 { certs.append(p12) }
             let service = MQTTService(
                 hostname: mqttHostname,
                 port: UInt16(mqttPort) ?? 1883,
+                clientID: mqttClientID,
                 username: mqttUsernamePasswordAuth ? mqttUsername : nil,
                 password: mqttUsernamePasswordAuth ? mqttPassword : nil,
                 enableSSL: mqttSsl,
@@ -448,7 +455,8 @@ struct DataSourceDetailView: View {
                 protocolMethod: mqttProtocolMethod,
                 protocolVersion: mqttProtocolVersion,
                 basePath: mqttBasePath,
-                subscriptions: mqttSubscriptions
+                certificates: certs,
+                certPassword: mqttCertificateAuth ? mqttCertClientKeyPassword : ""
             )
             Task {
                 do {

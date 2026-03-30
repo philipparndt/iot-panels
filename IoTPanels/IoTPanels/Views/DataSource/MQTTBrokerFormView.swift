@@ -18,7 +18,7 @@ struct MQTTBrokerFormView: View {
     @Binding var certP12: MQTTCertificateFile?
     @Binding var certClientKeyPassword: String
     @Binding var clientID: String
-    @Binding var subscriptions: [MQTTTopicSubscription]
+    @Binding var baseTopic: String
 
     @State private var showAdvanced = false
     @State private var showCertificateHelp = false
@@ -51,9 +51,20 @@ struct MQTTBrokerFormView: View {
                 showCertificateHelp: $showCertificateHelp
             )
 
-            MQTTSubscriptionsFormView(
-                subscriptions: $subscriptions
-            )
+            Section {
+                HStack {
+                    Text("Base Topic")
+                    Spacer()
+                    TextField("e.g. home/#", text: $baseTopic)
+                        .multilineTextAlignment(.trailing)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                }
+            } header: {
+                Text("Discovery")
+            } footer: {
+                Text("Used to discover topics when creating queries. Leave empty to subscribe to all topics (#).")
+            }
 
             Toggle(isOn: $showAdvanced) {
                 Text("More settings")

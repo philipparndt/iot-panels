@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Network
 import CocoaMQTT
 import CocoaMQTTWebSocket
 
@@ -73,18 +74,108 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
 
     func testConnection() async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async { [self] in
-                let handler = MQTTConnectionHandler(service: self)
-                handler.testConnection { result in
-                    switch result {
-                    case .success:
-                        continuation.resume(returning: true)
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
-                    }
+            let lock = NSLock()
+            var didResume = false
+
+            func resumeOnce(_ result: Result<Bool, Error>) {
+                lock.lock()
+                defer { lock.unlock() }
+                guard !didResume else { return }
+                didResume = true
+                switch result {
+                case .success(let v): continuation.resume(returning: v)
+                case .failure(let e): continuation.resume(throwing: e)
                 }
             }
+
+            let params: NWParameters
+            if enableSSL {
+                let tls = NWProtocolTLS.Options()
+                let secOptions = tls.securityProtocolOptions
+                if allowUntrustedSSL {
+                    sec_protocol_options_set_verify_block(secOptions, { _, _, completionHandler in
+                        completionHandler(true)
+                    }, DispatchQueue.global())
+                }
+                params = NWParameters(tls: tls)
+            } else {
+                params = .tcp
+            }
+
+            let host = NWEndpoint.Host(hostname)
+            let port = NWEndpoint.Port(integerLiteral: self.port)
+            let connection = NWConnection(host: host, port: port, using: params)
+            let queue = DispatchQueue(label: "mqtt.test")
+
+            // Timeout
+            queue.asyncAfter(deadline: .now() + 10) {
+                connection.cancel()
+                resumeOnce(.failure(MQTTError.connectionFailed("Connection timeout")))
+            }
+
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    // Send minimal MQTT 3.1.1 CONNECT packet
+                    let packet = Self.buildMQTTConnectPacket()
+                    connection.send(content: packet, completion: .contentProcessed { error in
+                        if let error {
+                            connection.cancel()
+                            resumeOnce(.failure(MQTTError.connectionFailed(error.localizedDescription)))
+                            return
+                        }
+                        // Wait for CONNACK
+                        connection.receive(minimumIncompleteLength: 1, maximumLength: 256) { data, _, _, recvError in
+                            defer { connection.cancel() }
+                            if let recvError {
+                                resumeOnce(.failure(MQTTError.connectionFailed(recvError.localizedDescription)))
+                                return
+                            }
+                            guard let data, !data.isEmpty else {
+                                resumeOnce(.failure(MQTTError.connectionFailed("No response from broker")))
+                                return
+                            }
+                            let bytes = [UInt8](data)
+                            guard bytes.count >= 4, bytes[0] & 0xF0 == 0x20 else {
+                                resumeOnce(.failure(MQTTError.connectionFailed("Not an MQTT broker")))
+                                return
+                            }
+                            let returnCode = bytes[3]
+                            switch returnCode {
+                            case 0x00: resumeOnce(.success(true))   // accepted
+                            case 0x04: resumeOnce(.failure(MQTTError.connectionFailed("Bad credentials")))
+                            case 0x05: resumeOnce(.failure(MQTTError.connectionFailed("Not authorized")))
+                            default:   resumeOnce(.success(true))   // broker responded = reachable
+                            }
+                        }
+                    })
+                case .failed(let error):
+                    connection.cancel()
+                    resumeOnce(.failure(MQTTError.connectionFailed(error.localizedDescription)))
+                case .cancelled:
+                    break
+                default:
+                    break
+                }
+            }
+
+            connection.start(queue: queue)
         }
+    }
+
+    /// Minimal MQTT 3.1.1 CONNECT packet with client ID "diag".
+    private static func buildMQTTConnectPacket() -> Data {
+        var packet = Data()
+        packet.append(0x10) // CONNECT packet type
+        packet.append(0x10) // Remaining length: 16 bytes
+        packet.append(contentsOf: [0x00, 0x04])              // Length of "MQTT"
+        packet.append(contentsOf: [0x4D, 0x51, 0x54, 0x54])  // "MQTT"
+        packet.append(0x04)                                   // Protocol Level (3.1.1)
+        packet.append(0x02)                                   // Connect Flags (clean session)
+        packet.append(contentsOf: [0x00, 0x3C])               // Keep Alive: 60s
+        packet.append(contentsOf: [0x00, 0x04])               // Client ID length
+        packet.append(contentsOf: [0x64, 0x69, 0x61, 0x67])  // "diag"
+        return packet
     }
 
     func fetchMeasurements() async throws -> [String] {
@@ -137,7 +228,7 @@ final class MQTTConnectionManager {
 
     /// Fires the connection key + topic whenever a new message arrives.
     /// Views can filter by connection key and topic pattern to update on demand.
-    let messageReceived = PassthroughSubject<(connectionKey: String, topic: String), Never>()
+    let messageReceived = PassthroughSubject<(connectionKey: String, topic: String, payload: String), Never>()
 
     private let lock = NSLock()
     private var connections: [String: ManagedConnection] = [:]
@@ -181,6 +272,13 @@ final class MQTTConnectionManager {
         connection?.disconnect()
     }
 
+    /// Check if a connection is active for the given key.
+    func isConnected(key: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return connections[key]?.isConnected ?? false
+    }
+
     /// Disconnect all connections.
     func disconnectAll() {
         lock.lock()
@@ -206,8 +304,8 @@ final class MQTTConnectionManager {
         // Remove dead connection if any
         connections[key]?.disconnect()
 
-        let connection = ManagedConnection(service: service) { [weak self] topic in
-            self?.messageReceived.send((connectionKey: key, topic: topic))
+        let connection = ManagedConnection(service: service) { [weak self] topic, payload in
+            self?.messageReceived.send((connectionKey: key, topic: topic, payload: payload))
         }
         connections[key] = connection
         connection.connect()
@@ -220,7 +318,7 @@ final class MQTTConnectionManager {
 /// A single persistent MQTT connection that caches messages per topic.
 private class ManagedConnection: NSObject {
     private let service: MQTTService
-    private let onMessageReceived: (String) -> Void
+    private let onMessageReceived: (String, String) -> Void
     private var mqtt3: CocoaMQTT?
     private var mqtt5: CocoaMQTT5?
     private let lock = NSLock()
@@ -244,7 +342,7 @@ private class ManagedConnection: NSObject {
         return isConnected || isConnecting || mqtt3 != nil || mqtt5 != nil
     }
 
-    init(service: MQTTService, onMessageReceived: @escaping (String) -> Void) {
+    init(service: MQTTService, onMessageReceived: @escaping (String, String) -> Void) {
         self.service = service
         self.onMessageReceived = onMessageReceived
         super.init()
@@ -374,7 +472,7 @@ private class ManagedConnection: NSObject {
             waiter.completion(relevant)
         }
 
-        onMessageReceived(topic)
+        onMessageReceived(topic, payload)
     }
 
     private func pruneCache() {

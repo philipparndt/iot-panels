@@ -48,12 +48,18 @@ struct DataSourceListView: View {
                 NavigationLink {
                     DataSourceDetailView(dataSource: dataSource)
                 } label: {
-                    VStack(alignment: .leading) {
-                        Text(dataSource.wrappedName)
-                            .font(.headline)
-                        Text(dataSource.wrappedBackendType.displayName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(dataSource.wrappedName)
+                                .font(.headline)
+                            Text(dataSource.wrappedBackendType.displayName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if dataSource.wrappedBackendType == .mqtt {
+                            MQTTConnectionStatusView(dataSource: dataSource)
+                        }
                     }
                 }
                 .contextMenu {
@@ -159,6 +165,47 @@ struct DataSourceListView: View {
         }
     }
 }
+
+// MARK: - MQTT Connection Status
+
+#if canImport(CocoaMQTT)
+struct MQTTConnectionStatusView: View {
+    let dataSource: DataSource
+    @State private var isConnected = false
+    @State private var cancellable: AnyCancellable?
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isConnected ? Color.green : Color.secondary.opacity(0.3))
+                .frame(width: 8, height: 8)
+            Text(isConnected ? "Connected" : "Offline")
+                .font(.caption2)
+                .foregroundStyle(isConnected ? .green : .secondary)
+        }
+        .onAppear { startMonitoring() }
+        .onDisappear { cancellable?.cancel() }
+    }
+
+    private func startMonitoring() {
+        let service = MQTTService(dataSource: dataSource)
+        let key = service.connectionKey
+        isConnected = MQTTConnectionManager.shared.isConnected(key: key)
+
+        cancellable = MQTTConnectionManager.shared.messageReceived
+            .filter { $0.connectionKey == key }
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                isConnected = MQTTConnectionManager.shared.isConnected(key: key)
+            }
+    }
+}
+#else
+struct MQTTConnectionStatusView: View {
+    let dataSource: DataSource
+    var body: some View { EmptyView() }
+}
+#endif
 
 // MARK: - Share Sheet
 

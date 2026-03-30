@@ -14,6 +14,7 @@ struct DashboardListView: View {
     @State private var showingRenameHome = false
     @State private var showingDeleteHome = false
     @State private var showingNewHome = false
+    @State private var showingIconPicker = false
     @State private var homeRenameText = ""
 
     init(home: Home?) {
@@ -106,6 +107,12 @@ struct DashboardListView: View {
                     }
 
                     Button {
+                        showingIconPicker = true
+                    } label: {
+                        Label("Change Icon", systemImage: "face.smiling")
+                    }
+
+                    Button {
                         showingNewHome = true
                     } label: {
                         Label("New Home", systemImage: "plus")
@@ -178,6 +185,12 @@ struct DashboardListView: View {
                 createDashboard(name: name)
             }
         }
+        .sheet(isPresented: $showingIconPicker) {
+            HomeIconPickerView(currentIcon: home?.wrappedIcon ?? "house") { icon in
+                home?.icon = icon
+                try? viewContext.save()
+            }
+        }
     }
 
     private func createDashboard(name: String) {
@@ -209,5 +222,58 @@ struct DashboardNameAlert: View {
             onSave(name)
         }
         .disabled(name.isEmpty)
+    }
+}
+
+struct HomeIconPickerView: View {
+    let currentIcon: String
+    let onSelect: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private let icons: [(group: String, icons: [String])] = [
+        ("Home", ["house", "house.fill", "house.and.flag", "house.lodge", "building.2", "building"]),
+        ("Nature", ["leaf", "tree", "sun.max", "cloud", "snowflake", "drop"]),
+        ("Devices", ["lightbulb", "fan", "heater.vertical", "refrigerator", "washer", "oven"]),
+        ("Rooms", ["bed.double", "bathtub", "sofa", "chair.lounge", "cabinet", "table.furniture"]),
+        ("Outdoor", ["car", "bicycle", "tent", "mountain.2", "figure.walk", "pawprint"]),
+        ("Other", ["heart", "star", "bolt", "flame", "wrench", "gearshape"]),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(icons, id: \.group) { group in
+                    Section(group.group) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 16) {
+                            ForEach(group.icons, id: \.self) { icon in
+                                Button {
+                                    onSelect(icon)
+                                    dismiss()
+                                } label: {
+                                    Image(systemName: icon)
+                                        .font(.title2)
+                                        .frame(width: 44, height: 44)
+                                        .background(
+                                            currentIcon == icon
+                                                ? Color.accentColor.opacity(0.2)
+                                                : Color.clear
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Choose Icon")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
     }
 }

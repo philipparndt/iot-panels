@@ -1,4 +1,4 @@
-.PHONY: build test clean help icon
+.PHONY: build test clean help icon check-translations
 
 SCHEME = IoTPanels
 PROJECT = IoTPanels/IoTPanels.xcodeproj
@@ -12,6 +12,7 @@ help:
 	@echo "  test   - Run unit tests"
 	@echo "  clean  - Clean build artifacts"
 	@echo "  icon   - Generate app icon from icon/ exports"
+	@echo "  check-translations - Check for missing translations"
 
 icon: $(APPICONSET)/AppIcon.png
 
@@ -36,3 +37,15 @@ clean:
 	xcodebuild clean \
 		-project $(PROJECT) \
 		-scheme $(SCHEME)
+
+check-translations:
+	@python3 scripts/check-translations.py
+
+bump-major:
+	@python3 scripts/bump-version.py major
+
+bump-minor:
+	@python3 scripts/bump-version.py minor
+
+bump-patch:
+	@python3 scripts/bump-version.py patch

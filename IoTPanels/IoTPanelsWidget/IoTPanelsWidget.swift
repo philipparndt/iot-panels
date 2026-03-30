@@ -68,6 +68,7 @@ struct WidgetDesignEntity: AppEntity {
     let name: String
     let sizeLabel: String
     let homeName: String
+    let isDemo: Bool
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget Design"
     var displayRepresentation: DisplayRepresentation {
@@ -83,7 +84,7 @@ struct WidgetDesignEntityQuery: EntityQuery {
         let designs = (try? context.fetch(WidgetDesign.fetchRequest())) ?? []
         return designs.compactMap { d -> WidgetDesignEntity? in
             guard let id = d.id?.uuidString, identifiers.contains(id) else { return nil }
-            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "")
+            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "", isDemo: d.home?.isDemo ?? false)
         }
     }
 
@@ -94,7 +95,11 @@ struct WidgetDesignEntityQuery: EntityQuery {
         let designs = (try? context.fetch(request)) ?? []
         return designs.compactMap { d -> WidgetDesignEntity? in
             guard let id = d.id?.uuidString else { return nil }
-            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "")
+            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "", isDemo: d.home?.isDemo ?? false)
+        }.sorted {
+            if $0.isDemo != $1.isDemo { return !$0.isDemo }
+            if $0.homeName != $1.homeName { return $0.homeName < $1.homeName }
+            return $0.name < $1.name
         }
     }
 
