@@ -6,6 +6,8 @@ enum TimeRange: String, CaseIterable, Identifiable {
     case twentyFourHours = "24h"
     case sevenDays = "7d"
     case thirtyDays = "30d"
+    case ninetyDays = "90d"
+    case oneYear = "365d"
 
     var id: String { rawValue }
 
@@ -16,11 +18,32 @@ enum TimeRange: String, CaseIterable, Identifiable {
         case .twentyFourHours: return "Last 24 hours"
         case .sevenDays: return "Last 7 days"
         case .thirtyDays: return "Last 30 days"
+        case .ninetyDays: return "Last 90 days"
+        case .oneYear: return "Last 1 year"
         }
     }
 
     var fluxValue: String {
         "-\(rawValue)"
+    }
+
+    /// The minimum aggregation window that keeps data points at a usable count.
+    var minimumWindow: AggregateWindow {
+        switch self {
+        case .oneHour: return .none
+        case .sixHours: return .oneMinute
+        case .twentyFourHours: return .fiveMinutes
+        case .sevenDays: return .fifteenMinutes
+        case .thirtyDays: return .oneHour
+        case .ninetyDays: return .oneDay
+        case .oneYear: return .oneDay
+        }
+    }
+
+    /// Returns only the aggregate windows that make sense for this time range.
+    var allowedWindows: [AggregateWindow] {
+        let min = minimumWindow
+        return AggregateWindow.allCases.filter { $0.sortOrder >= min.sortOrder }
     }
 }
 
@@ -56,6 +79,18 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fifteenMinutes: return "15 minutes"
         case .oneHour: return "1 hour"
         case .oneDay: return "1 day"
+        }
+    }
+
+    /// Used for filtering allowed windows per time range.
+    var sortOrder: Int {
+        switch self {
+        case .none: return 0
+        case .oneMinute: return 1
+        case .fiveMinutes: return 2
+        case .fifteenMinutes: return 3
+        case .oneHour: return 4
+        case .oneDay: return 5
         }
     }
 }

@@ -102,6 +102,8 @@ struct PanelRenderer: View {
             singleValueBody
         case .gauge:
             gaugeBody
+        case .calendarHeatmap:
+            calendarHeatmapBody
         }
     }
 
@@ -632,8 +634,150 @@ struct PanelRenderer: View {
         }
     }
 
+    // MARK: - Calendar Heatmap
+
+    // MARK: - Calendar Heatmap
+
+    private var calendarHeatmapBody: some View {
+        var dayValues: [Date: Double] = [:]
+        let cal = Calendar.current
+        for dp in allDataPoints {
+            let day = cal.startOfDay(for: dp.time)
+            dayValues[day, default: 0] = dp.value
+        }
+        let values = dayValues.values
+        let minVal = styleConfig.gaugeMin ?? (values.min() ?? 0)
+        let maxVal = styleConfig.gaugeMax ?? (values.max() ?? 1)
+
+        return CalendarHeatmapView(
+            title: title,
+            dayValues: dayValues,
+            minVal: minVal,
+            maxVal: maxVal,
+            unit: unit,
+            compact: compact,
+            textScale: textScale,
+            lastValue: allDataPoints.last?.value,
+            heatmapColor: styleConfig.resolvedHeatmapColor
+        )
+    }
+
     private func formatValue(_ value: Double) -> String {
         abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+    }
+}
+
+// MARK: - Calendar Heatmap View
+
+private struct CalendarHeatmapView: View {
+    let title: String
+    let dayValues: [Date: Double]
+    let minVal: Double
+    let maxVal: Double
+    let unit: String
+    let compact: Bool
+    let textScale: CGFloat
+    let lastValue: Double?
+    let heatmapColor: HeatmapColor
+
+    @State private var selectedDate: Date?
+
+    private var range: Double { maxVal - minVal }
+
+    private func sz(_ base: CGFloat) -> CGFloat { base * textScale }
+
+    private func formatValue(_ value: Double) -> String {
+        abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+    }
+
+    var body: some View {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let todayWeekday = (calendar.component(.weekday, from: today) + 5) % 7
+        let endOfWeek = calendar.date(byAdding: .day, value: 6 - todayWeekday, to: today)!
+        let spacing: CGFloat = compact ? 1.5 : 2
+
+        VStack(alignment: .leading, spacing: compact ? 2 : 6) {
+            Text(title)
+                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            // Selected day or last value
+            if let sel = selectedDate, let val = dayValues[sel] {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(formatValue(val))
+                        .font(.system(size: sz(compact ? 14 : 18), weight: .semibold, design: .rounded).monospacedDigit())
+                    if !unit.isEmpty {
+                        Text(unit)
+                            .font(.system(size: sz(compact ? 8 : 10)))
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                    Text(sel.formatted(.dateTime.day().month(.abbreviated).year()))
+                        .font(.system(size: sz(compact ? 9 : 11)))
+                        .foregroundStyle(.secondary)
+                }
+            } else if let val = lastValue {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(formatValue(val))
+                        .font(.system(size: sz(compact ? 14 : 18), weight: .semibold, design: .rounded).monospacedDigit())
+                    if !unit.isEmpty {
+                        Text(unit)
+                            .font(.system(size: sz(compact ? 8 : 10)))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
+            GeometryReader { geo in
+                let availableWidth = geo.size.width
+                let targetCellSize: CGFloat = compact ? 12 : 16
+                let weekCount = max(1, Int((availableWidth + spacing) / (targetCellSize + spacing)))
+                let cellSize = (availableWidth - CGFloat(weekCount - 1) * spacing) / CGFloat(weekCount)
+                let totalDays = weekCount * 7
+                let startDate = calendar.date(byAdding: .day, value: -(totalDays - 1), to: endOfWeek)!
+
+                HStack(alignment: .top, spacing: spacing) {
+                    ForEach(0..<weekCount, id: \.self) { week in
+                        VStack(spacing: spacing) {
+                            ForEach(0..<7, id: \.self) { weekday in
+                                let dayOffset = week * 7 + weekday
+                                let date = calendar.date(byAdding: .day, value: dayOffset, to: startDate)!
+                                let day = calendar.startOfDay(for: date)
+                                let value = dayValues[day]
+                                let isFuture = date > today
+                                let isSelected = selectedDate == day
+
+                                RoundedRectangle(cornerRadius: compact ? 1 : 1.5)
+                                    .fill(isFuture ? Color.clear : cellColor(value: value))
+                                    .overlay(
+                                        isSelected ? RoundedRectangle(cornerRadius: compact ? 1 : 1.5)
+                                            .stroke(Color.primary, lineWidth: 1) : nil
+                                    )
+                                    .frame(width: cellSize, height: cellSize)
+                                    .onTapGesture {
+                                        if !isFuture {
+                                            selectedDate = selectedDate == day ? nil : day
+                                        }
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(height: 7 * (compact ? 12 : 16) + 6 * spacing + 20)
+        }
+    }
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private func cellColor(value: Double?) -> Color {
+        guard let value else {
+            return colorScheme == .dark ? Color(white: 0.15) : Color(white: 0.92)
+        }
+        let progress = range > 0 ? max(0, min(1, (value - minVal) / range)) : 0
+        return heatmapColor.color(at: progress, darkMode: colorScheme == .dark)
     }
 }
 

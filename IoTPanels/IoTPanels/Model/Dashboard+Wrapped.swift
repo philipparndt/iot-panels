@@ -9,6 +9,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case linePointChart
     case singleValue
     case gauge
+    case calendarHeatmap
 
     var id: String { rawValue }
 
@@ -21,6 +22,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .linePointChart: return "Line + Points"
         case .singleValue: return "Value"
         case .gauge: return "Gauge"
+        case .calendarHeatmap: return "Calendar"
         }
     }
 
@@ -33,6 +35,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .linePointChart: return "point.topleft.down.to.point.bottomright.curvepath"
         case .singleValue: return "number"
         case .gauge: return "gauge.medium"
+        case .calendarHeatmap: return "calendar"
         }
     }
 }

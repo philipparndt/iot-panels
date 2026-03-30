@@ -506,11 +506,17 @@ struct TimeAggregationPage: View {
                 }
                 .pickerStyle(.inline)
                 .labelsHidden()
+                .onChange(of: timeRange) {
+                    let allowed = timeRange.allowedWindows
+                    if !allowed.contains(aggregateWindow) {
+                        aggregateWindow = timeRange.minimumWindow
+                    }
+                }
             }
 
             Section("Aggregate Window") {
                 Picker("Window", selection: $aggregateWindow) {
-                    ForEach(AggregateWindow.allCases) { w in Text(w.displayName).tag(w) }
+                    ForEach(timeRange.allowedWindows) { w in Text(w.displayName).tag(w) }
                 }
                 .pickerStyle(.inline)
                 .labelsHidden()

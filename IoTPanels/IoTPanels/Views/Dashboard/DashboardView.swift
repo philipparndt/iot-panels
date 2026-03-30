@@ -262,12 +262,39 @@ struct EditPanelView: View {
     @State private var styleConfig = StyleConfig.default
     @State private var gaugeMinText = ""
     @State private var gaugeMaxText = ""
+    @State private var timeRange: TimeRange = .oneHour
+    @State private var aggregateWindow: AggregateWindow = .fiveMinutes
+    @State private var aggregateFunction: AggregateFunction = .mean
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Title") {
                     TextField("Panel title", text: $title)
+                }
+
+                Section("Data") {
+                    Picker("Time Range", selection: $timeRange) {
+                        ForEach(TimeRange.allCases) { range in
+                            Text(range.displayName).tag(range)
+                        }
+                    }
+                    .onChange(of: timeRange) {
+                        let allowed = timeRange.allowedWindows
+                        if !allowed.contains(aggregateWindow) {
+                            aggregateWindow = timeRange.minimumWindow
+                        }
+                    }
+                    Picker("Aggregation", selection: $aggregateWindow) {
+                        ForEach(timeRange.allowedWindows) { window in
+                            Text(window.displayName).tag(window)
+                        }
+                    }
+                    Picker("Function", selection: $aggregateFunction) {
+                        ForEach(AggregateFunction.allCases) { fn in
+                            Text(fn.displayName).tag(fn)
+                        }
+                    }
                 }
 
                 Section("Display Style") {
@@ -336,6 +363,28 @@ struct EditPanelView: View {
                     }
                 }
 
+                if style == .calendarHeatmap {
+                    Section("Heatmap Color") {
+                        ForEach(HeatmapColor.allCases) { color in
+                            Button {
+                                styleConfig.heatmapColor = color.rawValue
+                            } label: {
+                                HStack(spacing: 8) {
+                                    HeatmapSwatchView(color: color)
+                                        .frame(width: 60, height: 14)
+                                    Text(color.displayName)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    if styleConfig.resolvedHeatmapColor == color {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Section("Preview") {
                     PanelCardView(panel: panel)
                         .listRowInsets(EdgeInsets())
@@ -354,6 +403,13 @@ struct EditPanelView: View {
                         panel.wrappedDisplayStyle = style
                         panel.wrappedStyleConfig = styleConfig
                         panel.modifiedAt = Date()
+                        if let query = panel.savedQuery {
+                            query.wrappedTimeRange = timeRange
+                            query.wrappedAggregateWindow = aggregateWindow
+                            query.wrappedAggregateFunction = aggregateFunction
+                            query.cachedResultJSON = nil
+                            query.cachedAt = nil
+                        }
                         try? viewContext.save()
                         WidgetHelper.reloadWidgets()
                         dismiss()
@@ -366,12 +422,34 @@ struct EditPanelView: View {
                 styleConfig = panel.wrappedStyleConfig
                 if let min = styleConfig.gaugeMin { gaugeMinText = String(format: "%.1f", min) }
                 if let max = styleConfig.gaugeMax { gaugeMaxText = String(format: "%.1f", max) }
+                if let query = panel.savedQuery {
+                    timeRange = query.wrappedTimeRange
+                    aggregateWindow = query.wrappedAggregateWindow
+                    aggregateFunction = query.wrappedAggregateFunction
+                }
             }
             .onChange(of: style) {
                 panel.wrappedDisplayStyle = style
             }
             .onChange(of: styleConfig) {
                 panel.wrappedStyleConfig = styleConfig
+            }
+        }
+    }
+}
+
+struct HeatmapSwatchView: View {
+    let color: HeatmapColor
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<4) { i in
+                let dark = colorScheme == .dark
+                let colors = dark ? color.swatchColorsDark : color.swatchColors
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(colors[i])
+                    .frame(maxWidth: .infinity)
             }
         }
     }

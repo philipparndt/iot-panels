@@ -113,6 +113,8 @@ extension SavedQuery {
         case .twentyFourHours: rangeSeconds = 20
         case .sevenDays: rangeSeconds = 25
         case .thirtyDays: rangeSeconds = 30
+        case .ninetyDays: rangeSeconds = 30
+        case .oneYear: rangeSeconds = 30
         }
         return MQTTQueryParser.build(topic: wrappedMeasurement, fields: fields, rangeSeconds: TimeInterval(rangeSeconds))
     }

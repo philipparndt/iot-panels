@@ -308,7 +308,7 @@ enum MQTTCollectDuration: String, CaseIterable, Identifiable {
         case .oneHour: return .tenSeconds
         case .sixHours: return .fifteenSeconds
         case .twentyFourHours: return .twentySeconds
-        case .sevenDays, .thirtyDays: return .thirtySeconds
+        case .sevenDays, .thirtyDays, .ninetyDays, .oneYear: return .thirtySeconds
         }
     }
 }

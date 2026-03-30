@@ -52,10 +52,12 @@ struct SavedQueryEntity: AppEntity {
     let name: String
     let unit: String
     let dataSourceName: String
+    let homeName: String
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Saved Query"
     var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)", subtitle: "\(dataSourceName)")
+        let subtitle = homeName.isEmpty ? dataSourceName : "\(homeName) · \(dataSourceName)"
+        return DisplayRepresentation(title: "\(name)", subtitle: "\(subtitle)")
     }
     static var defaultQuery = SavedQueryEntityQuery()
 }
@@ -64,9 +66,9 @@ struct SavedQueryEntityQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [SavedQueryEntity] {
         let context = PersistenceController.shared.container.viewContext
         let queries = (try? context.fetch(SavedQuery.fetchRequest())) ?? []
-        return queries.compactMap { q in
+        return queries.compactMap { q -> SavedQueryEntity? in
             guard let id = q.id?.uuidString, identifiers.contains(id) else { return nil }
-            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "")
+            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "")
         }
     }
 
@@ -75,9 +77,9 @@ struct SavedQueryEntityQuery: EntityQuery {
         let request = SavedQuery.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \SavedQuery.name, ascending: true)]
         let queries = (try? context.fetch(request)) ?? []
-        return queries.compactMap { q in
+        return queries.compactMap { q -> SavedQueryEntity? in
             guard let id = q.id?.uuidString else { return nil }
-            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "")
+            return SavedQueryEntity(id: id, name: q.wrappedName, unit: q.wrappedUnit, dataSourceName: q.dataSource?.wrappedName ?? "", homeName: q.dataSource?.home?.name ?? "")
         }
     }
 

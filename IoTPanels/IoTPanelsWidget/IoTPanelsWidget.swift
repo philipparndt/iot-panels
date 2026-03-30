@@ -67,10 +67,12 @@ struct WidgetDesignEntity: AppEntity {
     let id: String
     let name: String
     let sizeLabel: String
+    let homeName: String
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget Design"
     var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)", subtitle: "\(sizeLabel)")
+        let subtitle = homeName.isEmpty ? sizeLabel : "\(homeName) · \(sizeLabel)"
+        return DisplayRepresentation(title: "\(name)", subtitle: "\(subtitle)")
     }
     static var defaultQuery = WidgetDesignEntityQuery()
 }
@@ -79,9 +81,9 @@ struct WidgetDesignEntityQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [WidgetDesignEntity] {
         let context = PersistenceController.shared.container.viewContext
         let designs = (try? context.fetch(WidgetDesign.fetchRequest())) ?? []
-        return designs.compactMap { d in
+        return designs.compactMap { d -> WidgetDesignEntity? in
             guard let id = d.id?.uuidString, identifiers.contains(id) else { return nil }
-            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName)
+            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "")
         }
     }
 
@@ -90,9 +92,9 @@ struct WidgetDesignEntityQuery: EntityQuery {
         let request = WidgetDesign.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \WidgetDesign.name, ascending: true)]
         let designs = (try? context.fetch(request)) ?? []
-        return designs.compactMap { d in
+        return designs.compactMap { d -> WidgetDesignEntity? in
             guard let id = d.id?.uuidString else { return nil }
-            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName)
+            return WidgetDesignEntity(id: id, name: d.wrappedName, sizeLabel: d.wrappedSizeType.displayName, homeName: d.home?.name ?? "")
         }
     }
 
