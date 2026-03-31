@@ -73,6 +73,7 @@ struct DashboardView: View {
         .sheet(item: $editingPanel, onDismiss: { refreshID = UUID() }) { panel in
             EditPanelView(panel: panel)
                 .environment(\.managedObjectContext, viewContext)
+                .environmentObject(heatmapSelection)
         }
     }
 
@@ -264,9 +265,11 @@ struct EditPanelView: View {
     @State private var styleConfig = StyleConfig.default
     @State private var gaugeMinText = ""
     @State private var gaugeMaxText = ""
-    @State private var timeRange: TimeRange = .oneHour
+    @State private var timeRange: TimeRange = .twoHours
     @State private var aggregateWindow: AggregateWindow = .fiveMinutes
     @State private var aggregateFunction: AggregateFunction = .mean
+    @State private var comparisonOffset: ComparisonOffset = .none
+    @State private var bandOpacityText = ""
 
     var body: some View {
         NavigationStack {
@@ -296,6 +299,25 @@ struct EditPanelView: View {
                         ForEach(AggregateFunction.allCases) { fn in
                             Text(fn.displayName).tag(fn)
                         }
+                    }
+
+                    if let query = panel.savedQuery, let dataSource = query.dataSource {
+                        NavigationLink {
+                            SavedQueryDetailView(dataSource: dataSource, savedQuery: query)
+                        } label: {
+                            HStack {
+                                Text("Query")
+                                Spacer()
+                                Text(query.wrappedName)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    NavigationLink {
+                        ChangeQueryView(panel: panel)
+                    } label: {
+                        Text("Change Query")
                     }
                 }
 
@@ -365,7 +387,7 @@ struct EditPanelView: View {
                     }
                 }
 
-                if style == .calendarHeatmap {
+                if style == .calendarHeatmap || style == .calendarHeatmapDense {
                     Section("Heatmap Color") {
                         ForEach(HeatmapColor.allCases) { color in
                             Button {
@@ -382,6 +404,36 @@ struct EditPanelView: View {
                                             .foregroundStyle(Color.accentColor)
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                if style == .bandChart {
+                    Section {
+                        HStack {
+                            Text("Band Opacity")
+                            Spacer()
+                            TextField("0.2", text: $bandOpacityText)
+                                .keyboardType(.decimalPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 60)
+                                .onChange(of: bandOpacityText) {
+                                    styleConfig.bandOpacity = Double(bandOpacityText)
+                                }
+                        }
+                    } header: {
+                        Text("Band Chart Style")
+                    } footer: {
+                        Text("Opacity of the min/max band fill (0.0–1.0). Default is 0.2.")
+                    }
+                }
+
+                if style.isLineBased {
+                    Section("Compare With") {
+                        Picker("Comparison Period", selection: $comparisonOffset) {
+                            ForEach(ComparisonOffset.allCases) { offset in
+                                Text(offset.displayName).tag(offset)
                             }
                         }
                     }
@@ -404,14 +456,11 @@ struct EditPanelView: View {
                         panel.title = title
                         panel.wrappedDisplayStyle = style
                         panel.wrappedStyleConfig = styleConfig
+                        panel.effectiveTimeRange = timeRange
+                        panel.effectiveAggregateWindow = aggregateWindow
+                        panel.effectiveAggregateFunction = aggregateFunction
+                        panel.wrappedComparisonOffset = comparisonOffset
                         panel.modifiedAt = Date()
-                        if let query = panel.savedQuery {
-                            query.wrappedTimeRange = timeRange
-                            query.wrappedAggregateWindow = aggregateWindow
-                            query.wrappedAggregateFunction = aggregateFunction
-                            query.cachedResultJSON = nil
-                            query.cachedAt = nil
-                        }
                         try? viewContext.save()
                         WidgetHelper.reloadWidgets()
                         dismiss()
@@ -424,14 +473,18 @@ struct EditPanelView: View {
                 styleConfig = panel.wrappedStyleConfig
                 if let min = styleConfig.gaugeMin { gaugeMinText = String(format: "%.1f", min) }
                 if let max = styleConfig.gaugeMax { gaugeMaxText = String(format: "%.1f", max) }
-                if let query = panel.savedQuery {
-                    timeRange = query.wrappedTimeRange
-                    aggregateWindow = query.wrappedAggregateWindow
-                    aggregateFunction = query.wrappedAggregateFunction
-                }
+                timeRange = panel.effectiveTimeRange
+                aggregateWindow = panel.effectiveAggregateWindow
+                aggregateFunction = panel.effectiveAggregateFunction
+                comparisonOffset = panel.wrappedComparisonOffset
+                if let opacity = styleConfig.bandOpacity { bandOpacityText = String(format: "%.1f", opacity) }
             }
             .onChange(of: style) {
                 panel.wrappedDisplayStyle = style
+                // Auto-select minimum aggregate window for band chart
+                if style == .bandChart && aggregateWindow == .none {
+                    aggregateWindow = timeRange.minimumWindow
+                }
             }
             .onChange(of: styleConfig) {
                 panel.wrappedStyleConfig = styleConfig
@@ -454,5 +507,54 @@ struct HeatmapSwatchView: View {
                     .frame(maxWidth: .infinity)
             }
         }
+    }
+}
+
+// MARK: - Change Query
+
+struct ChangeQueryView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var panel: DashboardPanel
+
+    private var dataSources: [DataSource] {
+        guard let home = panel.dashboard?.home else { return [] }
+        let set = home.dataSources as? Set<DataSource> ?? []
+        return set.sorted { ($0.name ?? "") < ($1.name ?? "") }
+    }
+
+    var body: some View {
+        List {
+            ForEach(dataSources, id: \.objectID) { ds in
+                let queries = (ds.savedQueries as? Set<SavedQuery> ?? []).sorted { $0.wrappedName < $1.wrappedName }
+                Section(ds.wrappedName) {
+                    ForEach(queries, id: \.objectID) { query in
+                        Button {
+                            panel.savedQuery = query
+                            panel.modifiedAt = Date()
+                            try? viewContext.save()
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(query.wrappedName)
+                                        .foregroundStyle(.primary)
+                                    Text("\(query.wrappedMeasurement) · \(query.wrappedFields.joined(separator: ", "))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if query == panel.savedQuery {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Change Query")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

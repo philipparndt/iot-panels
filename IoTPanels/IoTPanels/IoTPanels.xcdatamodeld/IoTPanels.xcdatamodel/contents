@@ -90,6 +90,10 @@
         <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="sortOrder" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="timeRange" optional="YES" attributeType="String"/>
+        <attribute name="aggregateWindow" optional="YES" attributeType="String"/>
+        <attribute name="aggregateFunction" optional="YES" attributeType="String"/>
+        <attribute name="comparisonOffset" optional="YES" attributeType="String"/>
         <relationship name="dashboard" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dashboard" inverseName="panels" inverseEntity="Dashboard"/>
         <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="panels" inverseEntity="SavedQuery"/>
     </entity>

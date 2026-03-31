@@ -20,6 +20,19 @@ extension Color {
     }
 }
 
+// MARK: - Complementary Color
+
+extension Color {
+    /// Returns the complementary color by rotating hue 180° in HSB space.
+    func complementary() -> Color {
+        let uiColor = UIColor(self)
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        uiColor.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        let newHue = (h + 0.5).truncatingRemainder(dividingBy: 1.0)
+        return Color(hue: Double(newHue), saturation: Double(s), brightness: Double(b), opacity: Double(a))
+    }
+}
+
 // MARK: - Series Color Palette
 
 enum SeriesColors {

@@ -1,25 +1,33 @@
 import Foundation
 
 enum TimeRange: String, CaseIterable, Identifiable {
-    case oneHour = "1h"
+    case twoHours = "2h"
     case sixHours = "6h"
+    case twelveHours = "12h"
     case twentyFourHours = "24h"
     case sevenDays = "7d"
+    case fourteenDays = "14d"
     case thirtyDays = "30d"
     case ninetyDays = "90d"
     case oneYear = "365d"
+    case twoYears = "730d"
+    case fiveYears = "1825d"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .oneHour: return "Last 1 hour"
+        case .twoHours: return "Last 2 hours"
         case .sixHours: return "Last 6 hours"
+        case .twelveHours: return "Last 12 hours"
         case .twentyFourHours: return "Last 24 hours"
         case .sevenDays: return "Last 7 days"
+        case .fourteenDays: return "Last 14 days"
         case .thirtyDays: return "Last 30 days"
         case .ninetyDays: return "Last 90 days"
         case .oneYear: return "Last 1 year"
+        case .twoYears: return "Last 2 years"
+        case .fiveYears: return "Last 5 years"
         }
     }
 
@@ -30,13 +38,17 @@ enum TimeRange: String, CaseIterable, Identifiable {
     /// The minimum aggregation window that keeps data points at a usable count.
     var minimumWindow: AggregateWindow {
         switch self {
-        case .oneHour: return .none
+        case .twoHours: return .none
         case .sixHours: return .oneMinute
+        case .twelveHours: return .fiveMinutes
         case .twentyFourHours: return .fiveMinutes
         case .sevenDays: return .fifteenMinutes
+        case .fourteenDays: return .oneHour
         case .thirtyDays: return .oneHour
         case .ninetyDays: return .oneDay
         case .oneYear: return .oneDay
+        case .twoYears: return .twoDays
+        case .fiveYears: return .sevenDays
         }
     }
 
@@ -68,6 +80,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
     case fifteenMinutes = "15m"
     case oneHour = "1h"
     case oneDay = "1d"
+    case twoDays = "2d"
+    case sevenDays = "7d"
+    case thirtyDays = "30d"
 
     var id: String { rawValue }
 
@@ -79,6 +94,23 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fifteenMinutes: return "15 minutes"
         case .oneHour: return "1 hour"
         case .oneDay: return "1 day"
+        case .twoDays: return "2 days"
+        case .sevenDays: return "7 days"
+        case .thirtyDays: return "30 days"
+        }
+    }
+
+    var seconds: TimeInterval {
+        switch self {
+        case .none: return 0
+        case .oneMinute: return 60
+        case .fiveMinutes: return 300
+        case .fifteenMinutes: return 900
+        case .oneHour: return 3600
+        case .oneDay: return 86400
+        case .twoDays: return 172800
+        case .sevenDays: return 604800
+        case .thirtyDays: return 2592000
         }
     }
 
@@ -91,6 +123,66 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fifteenMinutes: return 3
         case .oneHour: return 4
         case .oneDay: return 5
+        case .twoDays: return 6
+        case .sevenDays: return 7
+        case .thirtyDays: return 8
+        }
+    }
+}
+
+enum ComparisonOffset: String, CaseIterable, Identifiable {
+    case none = ""
+    case twentyFourHours = "24h"
+    case sevenDays = "7d"
+    case fourteenDays = "14d"
+    case thirtyDays = "30d"
+    case ninetyDays = "90d"
+    case oneYear = "365d"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .none: return "None"
+        case .twentyFourHours: return "24 hours ago"
+        case .sevenDays: return "7 days ago"
+        case .fourteenDays: return "14 days ago"
+        case .thirtyDays: return "30 days ago"
+        case .ninetyDays: return "90 days ago"
+        case .oneYear: return "1 year ago"
+        }
+    }
+
+    var seconds: TimeInterval {
+        switch self {
+        case .none: return 0
+        case .twentyFourHours: return 86400
+        case .sevenDays: return 604800
+        case .fourteenDays: return 1209600
+        case .thirtyDays: return 2592000
+        case .ninetyDays: return 7776000
+        case .oneYear: return 31536000
+        }
+    }
+
+    /// Flux duration string for the offset (e.g., "7d").
+    var fluxValue: String { rawValue }
+}
+
+extension TimeRange {
+    var seconds: TimeInterval {
+        switch self {
+        case .twoHours: return 7200
+        case .sixHours: return 21600
+        case .twelveHours: return 43200
+        case .twentyFourHours: return 86400
+        case .sevenDays: return 604800
+        case .fourteenDays: return 1209600
+        case .thirtyDays: return 2592000
+        case .ninetyDays: return 7776000
+        case .oneYear: return 31536000
+        case .twoYears: return 63072000
+        case .fiveYears: return 157680000
         }
     }
 }

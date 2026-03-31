@@ -19,7 +19,7 @@ struct QueryBuilderView: View {
     @State private var tagValues: [String: [String]] = [:]
     @State private var selectedTagValues: [String: Set<String>] = [:]
     @State private var isLoadingTags = false
-    @State private var timeRange: TimeRange = .oneHour
+    @State private var timeRange: TimeRange = .twoHours
     @State private var aggregateWindow: AggregateWindow = .fiveMinutes
     @State private var aggregateFunction: AggregateFunction = .mean
     @State private var selectedUnit: String = ""

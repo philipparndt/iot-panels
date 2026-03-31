@@ -10,6 +10,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case singleValue
     case gauge
     case calendarHeatmap
+    case calendarHeatmapDense
+    case bandChart
 
     var id: String { rawValue }
 
@@ -23,6 +25,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .singleValue: return "Value"
         case .gauge: return "Gauge"
         case .calendarHeatmap: return "Calendar"
+        case .calendarHeatmapDense: return "Calendar Dense"
+        case .bandChart: return "Band"
         }
     }
 
@@ -36,6 +40,15 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .singleValue: return "number"
         case .gauge: return "gauge.medium"
         case .calendarHeatmap: return "calendar"
+        case .calendarHeatmapDense: return "calendar.badge.clock"
+        case .bandChart: return "chart.line.flattrend.xyaxis"
+        }
+    }
+
+    var isLineBased: Bool {
+        switch self {
+        case .chart, .linePointChart, .bandChart: return true
+        default: return false
         }
     }
 }
@@ -96,5 +109,41 @@ extension DashboardPanel {
     var wrappedModifiedAt: Date {
         get { modifiedAt ?? Date() }
         set { modifiedAt = newValue }
+    }
+
+    // MARK: - Panel-local time/aggregation overrides (nil = use query default)
+
+    var effectiveTimeRange: TimeRange {
+        get {
+            if let raw = timeRange, let val = TimeRange(rawValue: raw) { return val }
+            return savedQuery?.wrappedTimeRange ?? .twoHours
+        }
+        set { timeRange = newValue.rawValue }
+    }
+
+    var effectiveAggregateWindow: AggregateWindow {
+        get {
+            if let raw = aggregateWindow, let val = AggregateWindow(rawValue: raw) { return val }
+            return savedQuery?.wrappedAggregateWindow ?? .fiveMinutes
+        }
+        set { aggregateWindow = newValue.rawValue }
+    }
+
+    var effectiveAggregateFunction: AggregateFunction {
+        get {
+            if let raw = aggregateFunction, let val = AggregateFunction(rawValue: raw) { return val }
+            return savedQuery?.wrappedAggregateFunction ?? .mean
+        }
+        set { aggregateFunction = newValue.rawValue }
+    }
+
+    var wrappedComparisonOffset: ComparisonOffset {
+        get { ComparisonOffset(rawValue: comparisonOffset ?? "") ?? .none }
+        set { comparisonOffset = newValue == .none ? nil : newValue.rawValue }
+    }
+
+    /// Whether this panel needs multi-aggregate queries (min/max/mean).
+    var needsBandAggregates: Bool {
+        wrappedDisplayStyle == .bandChart
     }
 }

@@ -9,6 +9,10 @@ struct StyleConfig: Codable, Equatable {
     var gaugeColorScheme: String = GaugeColorScheme.blueToRed.rawValue
     var heatmapColor: String = HeatmapColor.green.rawValue
 
+    // Band chart settings
+    var bandOpacity: Double?    // nil = default 0.2
+    var bandColor: String?      // nil = use series accent color
+
     static let `default` = StyleConfig()
 
     var resolvedGaugeColorScheme: GaugeColorScheme {
@@ -17,6 +21,10 @@ struct StyleConfig: Codable, Equatable {
 
     var resolvedHeatmapColor: HeatmapColor {
         HeatmapColor(rawValue: heatmapColor) ?? .green
+    }
+
+    var resolvedBandOpacity: Double {
+        bandOpacity ?? 0.2
     }
 }
 

@@ -104,6 +104,19 @@ enum DemoSetup {
                                    measurement: "weather", fields: ["pressure"],
                                    timeRange: .twentyFourHours, window: .fifteenMinutes, unit: "hPa")
 
+        // Band chart query for temperature range
+        let tempRange = createQuery(context: context, dataSource: ds, name: "Temperature Range",
+                                    measurement: "temperature", fields: ["value"],
+                                    tags: ["location": ["living_room"]],
+                                    timeRange: .twentyFourHours, window: .fifteenMinutes, unit: "°C")
+
+        // Band chart panel on Climate dashboard
+        addPanel(context: context, dashboard: climate, query: tempRange, title: "Temperature Band", style: .bandChart, order: 5)
+
+        // Comparison demo: same as Living Room but with comparison offset
+        let compPanel = addPanel(context: context, dashboard: climate, query: tempLiving, title: "Temperature (vs. Yesterday)", style: .chart, order: 6)
+        compPanel.comparisonOffset = ComparisonOffset.twentyFourHours.rawValue
+
         // Dashboard: Garden
         let garden = createDashboard(context: context, name: "Garden", home: home)
         addPanel(context: context, dashboard: garden, query: gardenTemp, title: "Temperature", style: .chart, order: 0)
@@ -143,7 +156,7 @@ enum DemoSetup {
         measurement: String,
         fields: [String],
         tags: [String: [String]] = [:],
-        timeRange: TimeRange = .oneHour,
+        timeRange: TimeRange = .twoHours,
         window: AggregateWindow = .fiveMinutes,
         fn: AggregateFunction = .mean,
         unit: String? = nil

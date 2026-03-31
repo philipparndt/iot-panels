@@ -33,6 +33,16 @@
     "#" : {
 
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
     "%@–%@%@" : {
       "localizations" : {
         "en" : {
@@ -173,10 +183,19 @@
         }
       }
     },
+    "↑%@" : {
+
+    },
+    "↓%@" : {
+
+    },
     "+" : {
 
     },
     "0" : {
+
+    },
+    "0.2" : {
 
     },
     "1" : {
@@ -962,6 +981,12 @@
         }
       }
     },
+    "Band Chart Style" : {
+
+    },
+    "Band Opacity" : {
+
+    },
     "Bar" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1256,6 +1281,9 @@
         }
       }
     },
+    "Change Query" : {
+
+    },
     "Chart Group" : {
       "localizations" : {
         "de" : {
@@ -1481,6 +1509,12 @@
           }
         }
       }
+    },
+    "Compare With" : {
+
+    },
+    "Comparison Period" : {
+
     },
     "Configuration" : {
       "localizations" : {
@@ -3599,7 +3633,6 @@
       }
     },
     "Mean" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -4390,6 +4423,9 @@
         }
       }
     },
+    "Opacity of the min/max band fill (0.0–1.0). Default is 0.2." : {
+
+    },
     "Organization" : {
       "localizations" : {
         "de" : {
@@ -4718,6 +4754,9 @@
           }
         }
       }
+    },
+    "Previous %@" : {
+
     },
     "Protocol" : {
       "localizations" : {
@@ -5138,7 +5177,6 @@
       }
     },
     "S" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

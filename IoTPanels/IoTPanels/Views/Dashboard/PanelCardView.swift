@@ -92,7 +92,7 @@ struct PanelRenderer: View {
         return nil
     }
 
-    private var isMultiSeries: Bool { series.count > 1 }
+    private var isMultiSeries: Bool { series.filter { !$0.label.hasPrefix("cmp_") }.count > 1 }
 
     var body: some View {
         switch effectiveStyle {
@@ -109,7 +109,11 @@ struct PanelRenderer: View {
         case .gauge:
             gaugeBody
         case .calendarHeatmap:
-            calendarHeatmapBody
+            calendarHeatmapBody(dense: false)
+        case .calendarHeatmapDense:
+            calendarHeatmapBody(dense: true)
+        case .bandChart:
+            bandChartBody
         }
     }
 
@@ -235,62 +239,86 @@ struct PanelRenderer: View {
         return (min: minPt, max: maxPt)
     }
 
+    @ChartContentBuilder
+    private func singleSeriesComparisonMarks(compPoints: [ChartDataPoint]) -> some ChartContent {
+        ForEach(Array(compPoints.enumerated()), id: \.offset) { _, point in
+            LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "comparison"))
+                .foregroundStyle(Color.accentColor.complementary())
+                .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
+        }
+    }
+
+    @ChartContentBuilder
+    private func singleSeriesPrimaryMarks(points: [ChartDataPoint], chartType: ChartType) -> some ChartContent {
+        ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+            switch chartType {
+            case .line:
+                AreaMark(x: .value("T", point.time), y: .value("V", point.value))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.accentColor.opacity(0.25), Color.accentColor.opacity(0.02)],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                    )
+                LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "primary"))
+                    .foregroundStyle(Color.accentColor)
+                    .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+
+            case .bar:
+                BarMark(x: .value("T", point.time), y: .value("V", point.value))
+                    .foregroundStyle(Color.accentColor.gradient)
+
+            case .scatter:
+                PointMark(x: .value("T", point.time), y: .value("V", point.value))
+                    .foregroundStyle(Color.accentColor)
+                    .symbolSize(compact ? 20 : 40)
+
+            case .linePoint:
+                LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "primary"))
+                    .foregroundStyle(Color.accentColor)
+                    .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                PointMark(x: .value("T", point.time), y: .value("V", point.value))
+                    .foregroundStyle(Color.accentColor)
+                    .symbolSize(compact ? 15 : 30)
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private func singleSeriesMinMaxMarks(minMax: (min: ChartDataPoint, max: ChartDataPoint)) -> some ChartContent {
+        PointMark(x: .value("T", minMax.min.time), y: .value("V", minMax.min.value))
+            .foregroundStyle(.blue)
+            .symbolSize(compact ? 15 : 30)
+            .annotation(position: .bottom, spacing: 2) {
+                Text(formatValue(minMax.min.value))
+                    .font(.system(size: 8).monospacedDigit())
+                    .foregroundStyle(.blue)
+            }
+        PointMark(x: .value("T", minMax.max.time), y: .value("V", minMax.max.value))
+            .foregroundStyle(.red)
+            .symbolSize(compact ? 15 : 30)
+            .annotation(position: .top, spacing: 2) {
+                Text(formatValue(minMax.max.value))
+                    .font(.system(size: 8).monospacedDigit())
+                    .foregroundStyle(.red)
+            }
+    }
+
     private func singleSeriesChartView(chartType: ChartType) -> some View {
-        let points = series.first?.dataPoints ?? []
+        let points = series.first(where: { !$0.label.hasPrefix("cmp_") })?.dataPoints ?? series.first?.dataPoints ?? []
+        let compPoints = series.first(where: { $0.label.hasPrefix("cmp_") })?.dataPoints ?? []
         let minMax = chartType == .line ? minMaxPoints(for: points) : nil
 
         return VStack(spacing: 2) {
             Chart {
-                ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                    switch chartType {
-                    case .line:
-                        AreaMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color.accentColor.opacity(0.25), Color.accentColor.opacity(0.02)],
-                                    startPoint: .top, endPoint: .bottom
-                                )
-                            )
-                        LineMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(Color.accentColor)
-                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
-
-                    case .bar:
-                        BarMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(Color.accentColor.gradient)
-
-                    case .scatter:
-                        PointMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(Color.accentColor)
-                            .symbolSize(compact ? 20 : 40)
-
-                    case .linePoint:
-                        LineMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(Color.accentColor)
-                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
-                        PointMark(x: .value("T", point.time), y: .value("V", point.value))
-                            .foregroundStyle(Color.accentColor)
-                            .symbolSize(compact ? 15 : 30)
-                    }
+                if !compPoints.isEmpty && (chartType == .line || chartType == .linePoint) {
+                    singleSeriesComparisonMarks(compPoints: compPoints)
                 }
 
+                singleSeriesPrimaryMarks(points: points, chartType: chartType)
+
                 if !compact, let minMax {
-                    PointMark(x: .value("T", minMax.min.time), y: .value("V", minMax.min.value))
-                        .foregroundStyle(.blue)
-                        .symbolSize(compact ? 15 : 30)
-                        .annotation(position: .bottom, spacing: 2) {
-                            Text(formatValue(minMax.min.value))
-                                .font(.system(size: 8).monospacedDigit())
-                                .foregroundStyle(.blue)
-                        }
-                    PointMark(x: .value("T", minMax.max.time), y: .value("V", minMax.max.value))
-                        .foregroundStyle(.red)
-                        .symbolSize(compact ? 15 : 30)
-                        .annotation(position: .top, spacing: 2) {
-                            Text(formatValue(minMax.max.value))
-                                .font(.system(size: 8).monospacedDigit())
-                                .foregroundStyle(.red)
-                        }
+                    singleSeriesMinMaxMarks(minMax: minMax)
                 }
 
                 selectionRuleMark
@@ -304,55 +332,79 @@ struct PanelRenderer: View {
         }
     }
 
+    @ChartContentBuilder
+    private func multiSeriesChartMarks(for s: ChartSeries, chartType: ChartType) -> some ChartContent {
+        ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
+            switch chartType {
+            case .line:
+                LineMark(
+                    x: .value("Time", point.time),
+                    y: .value("Value", point.value),
+                    series: .value("Series", s.label)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+                .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+
+            case .bar:
+                BarMark(
+                    x: .value("Time", point.time),
+                    y: .value("Value", point.value)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+
+            case .scatter:
+                PointMark(
+                    x: .value("Time", point.time),
+                    y: .value("Value", point.value)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+                .symbolSize(compact ? 20 : 40)
+
+            case .linePoint:
+                LineMark(
+                    x: .value("Time", point.time),
+                    y: .value("Value", point.value),
+                    series: .value("Series", s.label)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+                .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                PointMark(
+                    x: .value("Time", point.time),
+                    y: .value("Value", point.value)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+                .symbolSize(compact ? 15 : 30)
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private func comparisonSeriesMarks(for s: ChartSeries) -> some ChartContent {
+        ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
+            LineMark(
+                x: .value("Time", point.time),
+                y: .value("Value", point.value),
+                series: .value("Series", s.label)
+            )
+            .foregroundStyle(by: .value("Series", s.label))
+            .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
+        }
+    }
+
     private func multiSeriesChartView(chartType: ChartType) -> some View {
+        let primarySeries = series.filter { !$0.label.hasPrefix("cmp_") }
+        let comparisonSeries = series.filter { $0.label.hasPrefix("cmp_") }
         let seriesLabels = series.map(\.label)
         let seriesColors = series.map(\.color)
 
         return VStack(spacing: 2) {
             Chart {
-                ForEach(Array(series.enumerated()), id: \.offset) { _, s in
-                    ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
-                        switch chartType {
-                        case .line:
-                            LineMark(
-                                x: .value("Time", point.time),
-                                y: .value("Value", point.value),
-                                series: .value("Series", s.label)
-                            )
-                            .foregroundStyle(by: .value("Series", s.label))
-                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+                ForEach(Array(primarySeries.enumerated()), id: \.offset) { _, s in
+                    multiSeriesChartMarks(for: s, chartType: chartType)
+                }
 
-                        case .bar:
-                            BarMark(
-                                x: .value("Time", point.time),
-                                y: .value("Value", point.value)
-                            )
-                            .foregroundStyle(by: .value("Series", s.label))
-
-                        case .scatter:
-                            PointMark(
-                                x: .value("Time", point.time),
-                                y: .value("Value", point.value)
-                            )
-                            .foregroundStyle(by: .value("Series", s.label))
-                            .symbolSize(compact ? 20 : 40)
-
-                        case .linePoint:
-                            LineMark(
-                                x: .value("Time", point.time),
-                                y: .value("Value", point.value),
-                                series: .value("Series", s.label)
-                            )
-                            .foregroundStyle(by: .value("Series", s.label))
-                            .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
-                            PointMark(
-                                x: .value("Time", point.time),
-                                y: .value("Value", point.value)
-                            )
-                            .foregroundStyle(by: .value("Series", s.label))
-                            .symbolSize(compact ? 15 : 30)
-                        }
-                    }
+                ForEach(Array(comparisonSeries.enumerated()), id: \.offset) { _, s in
+                    comparisonSeriesMarks(for: s)
                 }
 
                 selectionRuleMark
@@ -395,6 +447,302 @@ struct PanelRenderer: View {
         }
     }
 
+    // MARK: - Band Chart
+
+    /// Groups series into band triplets (min/max/mean) by base field name.
+    private struct BandGroup: Identifiable {
+        let id: String // base field name
+        let minPoints: [ChartDataPoint]
+        let maxPoints: [ChartDataPoint]
+        let meanPoints: [ChartDataPoint]
+        let color: Color
+    }
+
+    private var bandGroups: [BandGroup] {
+        // Group series by base field name (strip _min, _max, _mean suffix)
+        // Exclude comparison series (prefixed with "cmp_")
+        var grouped: [String: (min: [ChartDataPoint]?, max: [ChartDataPoint]?, mean: [ChartDataPoint]?, color: Color)] = [:]
+
+        for s in series where !s.label.hasPrefix("cmp_") {
+            let label = s.label
+            let baseName: String
+            let suffix: String
+            if label.hasSuffix("_min") {
+                baseName = String(label.dropLast(4))
+                suffix = "min"
+            } else if label.hasSuffix("_max") {
+                baseName = String(label.dropLast(4))
+                suffix = "max"
+            } else if label.hasSuffix("_mean") {
+                baseName = String(label.dropLast(5))
+                suffix = "mean"
+            } else {
+                baseName = label
+                suffix = "mean"
+            }
+
+            var entry = grouped[baseName] ?? (min: nil, max: nil, mean: nil, color: s.color)
+            switch suffix {
+            case "min": entry.min = s.dataPoints
+            case "max": entry.max = s.dataPoints
+            case "mean": entry.mean = s.dataPoints; entry.color = s.color
+            default: break
+            }
+            grouped[baseName] = entry
+        }
+
+        return grouped.map { key, val in
+            BandGroup(
+                id: key,
+                minPoints: val.min ?? val.mean ?? [],
+                maxPoints: val.max ?? val.mean ?? [],
+                meanPoints: val.mean ?? [],
+                color: val.color
+            )
+        }.sorted { $0.id < $1.id }
+    }
+
+    private var bandChartBody: some View {
+        let groups = bandGroups
+
+        return VStack(spacing: compact ? 4 : 8) {
+            bandChartHeader(groups: groups)
+
+            if allDataPoints.count > 2 {
+                bandChartContent(groups: groups)
+                chartFooter(for: allDataPoints)
+            } else if allDataPoints.isEmpty {
+                Text("No data")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 30 : 60)
+            }
+
+            if groups.count > 1 {
+                bandLegend(groups: groups)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func bandChartHeader(groups: [BandGroup]) -> some View {
+        if let selectedTime, !compact, let point = closestPoint(to: selectedTime) {
+            bandChartSelectionHeader(groups: groups, selectedTime: selectedTime, point: point)
+        } else {
+            bandChartDefaultHeader(groups: groups)
+        }
+    }
+
+    private func bandChartSelectionHeader(groups: [BandGroup], selectedTime: Date, point: ChartDataPoint) -> some View {
+        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+        let closestMin: ChartDataPoint? = groups.first.flatMap { g in
+            g.minPoints.min(by: { abs($0.time.timeIntervalSince(selectedTime)) < abs($1.time.timeIntervalSince(selectedTime)) })
+        }
+        let closestMax: ChartDataPoint? = groups.first.flatMap { g in
+            g.maxPoints.min(by: { abs($0.time.timeIntervalSince(selectedTime)) < abs($1.time.timeIntervalSince(selectedTime)) })
+        }
+
+        return HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.system(size: sz(14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formatTime(point.time))
+                    .font(.system(size: sz(10)).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    if let minVal = closestMin {
+                        Text("↓\(formatValue(minVal.value))")
+                            .font(.system(size: sz(12)).monospacedDigit())
+                            .foregroundStyle(.blue)
+                    }
+                    Text(formatValue(point.value) + unitSuffix)
+                        .font(.system(size: sz(18), weight: .semibold).monospacedDigit())
+                    if let maxVal = closestMax {
+                        Text("↑\(formatValue(maxVal.value))")
+                            .font(.system(size: sz(12)).monospacedDigit())
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+        }
+    }
+
+    private func bandChartDefaultHeader(groups: [BandGroup]) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            if let meanLast = groups.first?.meanPoints.last {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(formatValue(meanLast.value))
+                        .font(.system(size: sz(compact ? 14 : 22), weight: .semibold, design: .default).monospacedDigit())
+                    if let fieldName {
+                        Text(fieldName)
+                            .font(.system(size: sz(compact ? 8 : 10)))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Indexed wrapper for a min/max pair used in band chart rendering.
+    private struct BandPair: Identifiable {
+        let id: Int
+        let minTime: Date
+        let minValue: Double
+        let maxTime: Date
+        let maxValue: Double
+    }
+
+    private func makeBandPairs(minPoints: [ChartDataPoint], maxPoints: [ChartDataPoint]) -> [BandPair] {
+        zip(minPoints, maxPoints).enumerated().map { i, pair in
+            BandPair(id: i, minTime: pair.0.time, minValue: pair.0.value, maxTime: pair.1.time, maxValue: pair.1.value)
+        }
+    }
+
+    private func bandChartContent(groups: [BandGroup]) -> some View {
+        let bandOpacity = styleConfig.resolvedBandOpacity
+        let bandColor: Color? = styleConfig.bandColor.flatMap { Color(hex: $0) }
+
+        return Chart {
+            ForEach(groups) { group in
+                bandAreaMarks(group: group, bandColor: bandColor, bandOpacity: bandOpacity)
+                bandMeanMarks(group: group, bandColor: bandColor, lineWidth: compact ? 1.5 : 2)
+            }
+
+            ForEach(comparisonBandGroups) { group in
+                bandComparisonMeanMarks(group: group, bandColor: bandColor)
+            }
+
+            selectionRuleMark
+        }
+        .chartXAxis(compact ? .hidden : .automatic)
+        .chartYAxis(compact ? .hidden : .automatic)
+        .chartXSelection(value: $selectedTime)
+        .frame(height: compact ? 40 : 160)
+    }
+
+    @ChartContentBuilder
+    private func bandAreaMarks(group: BandGroup, bandColor: Color?, bandOpacity: Double) -> some ChartContent {
+        let effectiveColor = bandColor ?? group.color
+        let pairs = makeBandPairs(minPoints: group.minPoints, maxPoints: group.maxPoints)
+        ForEach(pairs) { pair in
+            AreaMark(
+                x: .value("Time", pair.minTime),
+                yStart: .value("Min", pair.minValue),
+                yEnd: .value("Max", pair.maxValue)
+            )
+            .foregroundStyle(effectiveColor.opacity(bandOpacity))
+        }
+    }
+
+    @ChartContentBuilder
+    private func bandMeanMarks(group: BandGroup, bandColor: Color?, lineWidth: CGFloat) -> some ChartContent {
+        let effectiveColor = bandColor ?? group.color
+        ForEach(Array(group.meanPoints.enumerated()), id: \.offset) { _, point in
+            LineMark(
+                x: .value("Time", point.time),
+                y: .value("Mean", point.value)
+            )
+            .foregroundStyle(effectiveColor)
+            .lineStyle(StrokeStyle(lineWidth: lineWidth))
+        }
+    }
+
+    @ChartContentBuilder
+    private func bandComparisonMeanMarks(group: BandGroup, bandColor: Color?) -> some ChartContent {
+        let effectiveColor = bandColor ?? group.color
+        ForEach(Array(group.meanPoints.enumerated()), id: \.offset) { _, point in
+            LineMark(
+                x: .value("Time", point.time),
+                y: .value("Mean", point.value)
+            )
+            .foregroundStyle(effectiveColor.complementary())
+            .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
+        }
+    }
+
+    /// Comparison band groups — populated by PanelCardView when comparison data is available.
+    private var comparisonBandGroups: [BandGroup] {
+        // Comparison series are identified by having labels prefixed with "cmp_"
+        let compSeries = series.filter { $0.label.hasPrefix("cmp_") }
+        guard !compSeries.isEmpty else { return [] }
+
+        var grouped: [String: (min: [ChartDataPoint]?, max: [ChartDataPoint]?, mean: [ChartDataPoint]?, color: Color)] = [:]
+
+        for s in compSeries {
+            let stripped = String(s.label.dropFirst(4)) // remove "cmp_"
+            let baseName: String
+            let suffix: String
+            if stripped.hasSuffix("_min") {
+                baseName = String(stripped.dropLast(4))
+                suffix = "min"
+            } else if stripped.hasSuffix("_max") {
+                baseName = String(stripped.dropLast(4))
+                suffix = "max"
+            } else if stripped.hasSuffix("_mean") {
+                baseName = String(stripped.dropLast(5))
+                suffix = "mean"
+            } else {
+                baseName = stripped
+                suffix = "mean"
+            }
+
+            var entry = grouped[baseName] ?? (min: nil, max: nil, mean: nil, color: s.color)
+            switch suffix {
+            case "min": entry.min = s.dataPoints
+            case "max": entry.max = s.dataPoints
+            case "mean": entry.mean = s.dataPoints; entry.color = s.color
+            default: break
+            }
+            grouped[baseName] = entry
+        }
+
+        return grouped.map { key, val in
+            BandGroup(
+                id: key,
+                minPoints: val.min ?? val.mean ?? [],
+                maxPoints: val.max ?? val.mean ?? [],
+                meanPoints: val.mean ?? [],
+                color: val.color
+            )
+        }.sorted { $0.id < $1.id }
+    }
+
+    private func bandLegend(groups: [BandGroup]) -> some View {
+        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+        let fontSize: CGFloat = sz(compact ? 8 : 10)
+
+        return HStack(spacing: compact ? 6 : 10) {
+            ForEach(groups) { group in
+                HStack(spacing: 3) {
+                    Circle()
+                        .fill(group.color)
+                        .frame(width: compact ? 5 : 7, height: compact ? 5 : 7)
+                    Text(group.id)
+                        .font(.system(size: fontSize))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    if let last = group.meanPoints.last {
+                        Text(formatValue(last.value) + unitSuffix)
+                            .font(.system(size: fontSize, weight: .semibold).monospacedDigit())
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+        }
+    }
+
     private func formatTime(_ date: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
@@ -404,9 +752,10 @@ struct PanelRenderer: View {
     private var customLegend: some View {
         let unitSuffix = unit.isEmpty ? "" : " \(unit)"
         let fontSize: CGFloat = sz(compact ? 8 : 10)
+        let primarySeries = series.filter { !$0.label.hasPrefix("cmp_") }
 
         return HStack(spacing: compact ? 6 : 10) {
-            ForEach(Array(series.enumerated()), id: \.offset) { _, s in
+            ForEach(Array(primarySeries.enumerated()), id: \.offset) { _, s in
                 HStack(spacing: 3) {
                     Circle()
                         .fill(s.color)
@@ -644,7 +993,7 @@ struct PanelRenderer: View {
 
     // MARK: - Calendar Heatmap
 
-    private var calendarHeatmapBody: some View {
+    private func calendarHeatmapBody(dense: Bool) -> some View {
         var dayValues: [Date: Double] = [:]
         let cal = Calendar.current
         for dp in allDataPoints {
@@ -662,6 +1011,7 @@ struct PanelRenderer: View {
             maxVal: maxVal,
             unit: unit,
             compact: compact,
+            dense: dense,
             textScale: textScale,
             lastValue: allDataPoints.last?.value,
             heatmapColor: styleConfig.resolvedHeatmapColor
@@ -682,6 +1032,7 @@ private struct CalendarHeatmapView: View {
     let maxVal: Double
     let unit: String
     let compact: Bool
+    let dense: Bool
     let textScale: CGFloat
     let lastValue: Double?
     let heatmapColor: HeatmapColor
@@ -698,26 +1049,11 @@ private struct CalendarHeatmapView: View {
         abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
     }
 
-    /// Map a drag position within the grid to the corresponding date.
-    private func dateAt(location: CGPoint, weekCount: Int, cellSize: CGFloat, spacing: CGFloat, startDate: Date, today: Date) -> Date? {
-        let calendar = Calendar.current
-        let step = cellSize + spacing
-        let week = Int(location.x / step)
-        let weekday = Int(location.y / step)
-        guard week >= 0, week < weekCount, weekday >= 0, weekday < 7 else { return nil }
-        let dayOffset = week * 7 + weekday
-        guard let date = calendar.date(byAdding: .day, value: dayOffset, to: startDate) else { return nil }
-        let day = calendar.startOfDay(for: date)
-        guard day <= today else { return nil }
-        return day
-    }
-
     var body: some View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let todayWeekday = (calendar.component(.weekday, from: today) + 5) % 7
         let endOfWeek = calendar.date(byAdding: .day, value: 6 - todayWeekday, to: today)!
-        let spacing: CGFloat = compact ? 1.5 : 2
 
         VStack(alignment: .leading, spacing: compact ? 2 : 6) {
             // Header — matches chart style: title + selected value, or title + last value
@@ -763,11 +1099,14 @@ private struct CalendarHeatmapView: View {
 
             GeometryReader { geo in
                 let availableWidth = geo.size.width
-                let targetCellSize: CGFloat = compact ? 12 : 16
+                let targetCellSize: CGFloat = dense ? 8 : (compact ? 12 : 16)
+                let spacing: CGFloat = (compact || dense) ? 1.5 : 2
                 let weekCount = max(1, Int((availableWidth + spacing) / (targetCellSize + spacing)))
                 let cellSize = (availableWidth - CGFloat(weekCount - 1) * spacing) / CGFloat(weekCount)
                 let totalDays = weekCount * 7
                 let startDate = calendar.date(byAdding: .day, value: -(totalDays - 1), to: endOfWeek)!
+                let step = cellSize + spacing
+                let cornerRadius: CGFloat = dense ? 0.5 : (compact ? 1 : 1.5)
 
                 HStack(alignment: .top, spacing: spacing) {
                     ForEach(0..<weekCount, id: \.self) { week in
@@ -780,11 +1119,11 @@ private struct CalendarHeatmapView: View {
                                 let isFuture = date > today
                                 let isSelected = selectedDate == day
 
-                                RoundedRectangle(cornerRadius: compact ? 1 : 1.5)
+                                RoundedRectangle(cornerRadius: cornerRadius)
                                     .fill(isFuture ? Color.clear : cellColor(value: value))
                                     .overlay(
-                                        isSelected ? RoundedRectangle(cornerRadius: compact ? 1 : 1.5)
-                                            .stroke(Color.primary, lineWidth: 1) : nil
+                                        isSelected ? RoundedRectangle(cornerRadius: cornerRadius)
+                                            .stroke(Color.primary, lineWidth: dense ? 0.5 : 1) : nil
                                     )
                                     .frame(width: cellSize, height: cellSize)
                             }
@@ -792,19 +1131,31 @@ private struct CalendarHeatmapView: View {
                     }
                 }
                 .contentShape(Rectangle())
-                .simultaneousGesture(
+                .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { drag in
-                            if let day = dateAt(location: drag.location, weekCount: weekCount, cellSize: cellSize, spacing: spacing, startDate: startDate, today: today) {
-                                selectionState.selectedDate = day
-                            }
+                            let row = Int(drag.location.y / step)
+                            let week = Int(drag.location.x / step)
+                            guard row >= 0, row < 7, week >= 0, week < weekCount else { return }
+                            let d = calendar.date(byAdding: .day, value: week * 7 + row, to: startDate)!
+                            let day = calendar.startOfDay(for: d)
+                            if day <= today { selectionState.selectedDate = day }
                         }
-                        .onEnded { _ in
-                            selectionState.selectedDate = nil
+                        .onEnded { drag in
+                            let row = Int(drag.location.y / step)
+                            let week = Int(drag.location.x / step)
+                            guard row >= 0, row < 7, week >= 0, week < weekCount else {
+                                selectionState.selectedDate = nil
+                                return
+                            }
+                            let d = calendar.date(byAdding: .day, value: week * 7 + row, to: startDate)!
+                            let day = calendar.startOfDay(for: d)
+                            guard day <= today else { selectionState.selectedDate = nil; return }
+                            selectionState.selectedDate = (day == selectionState.selectedDate) ? nil : day
                         }
                 )
             }
-            .frame(height: 7 * (compact ? 12 : 16) + 6 * spacing + 20)
+            .frame(height: 7 * CGFloat(dense ? 8 : (compact ? 12 : 16)) + 6 * ((compact || dense) ? 1.5 : 2) + 20)
         }
     }
 
@@ -826,6 +1177,7 @@ struct PanelCardView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var dataPoints: [ChartDataPoint] = []
+    @State private var comparisonDataPoints: [ChartDataPoint] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isCachedData = false
@@ -893,11 +1245,30 @@ struct PanelCardView: View {
                     PanelRenderer(
                         title: panel.wrappedTitle,
                         style: panel.wrappedDisplayStyle,
-                        dataPoints: dataPoints,
+                        series: buildSeries(),
                         compact: false,
                         unit: panel.savedQuery?.wrappedUnit ?? "",
                         styleConfig: panel.wrappedStyleConfig
                     )
+
+                    // Comparison legend
+                    if panel.wrappedComparisonOffset != .none && !comparisonDataPoints.isEmpty {
+                        HStack(spacing: 4) {
+                            Rectangle()
+                                .fill(Color.accentColor.complementary())
+                                .frame(width: 16, height: 2)
+                                .overlay(
+                                    Rectangle()
+                                        .stroke(style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
+                                        .foregroundStyle(Color.accentColor.complementary())
+                                )
+                            Text("Previous \(panel.wrappedComparisonOffset.fluxValue)")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.top, 2)
+                    }
 
                     HStack(spacing: 4) {
                         Image(systemName: "icloud.slash")
@@ -937,6 +1308,45 @@ struct PanelCardView: View {
         }
     }
 
+    /// Builds series array including comparison data if available.
+    private func buildSeries() -> [ChartSeries] {
+        // Group primary data by field
+        let grouped = Dictionary(grouping: dataPoints, by: \.field)
+        let colors: [Color] = [.accentColor, .blue, .green, .orange, .purple, .red]
+        var result: [ChartSeries] = []
+
+        for (i, key) in grouped.keys.sorted().enumerated() {
+            let points = grouped[key] ?? []
+            result.append(ChartSeries(
+                id: key,
+                label: key,
+                color: colors[i % colors.count],
+                dataPoints: points
+            ))
+        }
+
+        // Add comparison series (prefixed with "cmp_" for band chart identification)
+        if !comparisonDataPoints.isEmpty {
+            let cmpGrouped = Dictionary(grouping: comparisonDataPoints, by: \.field)
+            for (i, key) in cmpGrouped.keys.sorted().enumerated() {
+                let points = cmpGrouped[key] ?? []
+                result.append(ChartSeries(
+                    id: "cmp_\(key)",
+                    label: "cmp_\(key)",
+                    color: colors[i % colors.count].complementary(),
+                    dataPoints: points
+                ))
+            }
+        }
+
+        // If only one primary field and no band/comparison, return single default series
+        if result.count == 1 && comparisonDataPoints.isEmpty {
+            return [ChartSeries(id: "default", label: result[0].label, color: .accentColor, dataPoints: result[0].dataPoints)]
+        }
+
+        return result
+    }
+
     private func subscribeMQTTUpdates() {
         guard isMQTT, mqttSubscription == nil,
               let connKey = mqttConnectionKey else { return }
@@ -949,7 +1359,7 @@ struct PanelCardView: View {
                 guard let query = panel.savedQuery,
                       let dataSource = query.dataSource else { return }
                 let service = ServiceFactory.service(for: dataSource)
-                let queryString = query.buildQuery(for: dataSource)
+                let queryString = query.buildQuery(for: dataSource, panel: panel)
                 Task {
                     guard let result = try? await service.query(queryString) else { return }
                     let parsed = Self.parseChartData(result: result)
@@ -983,7 +1393,9 @@ struct PanelCardView: View {
         errorMessage = nil
 
         let service = ServiceFactory.service(for: dataSource)
-        let flux = query.buildQuery(for: dataSource)
+        let flux = query.buildQuery(for: dataSource, panel: panel)
+        let comparisonFlux = query.buildComparisonQuery(for: dataSource, panel: panel)
+        let comparisonOffsetSeconds = panel.wrappedComparisonOffset.seconds
 
         Task {
             do {
@@ -1000,9 +1412,26 @@ struct PanelCardView: View {
                     return first
                 }
                 let parsed = Self.parseChartData(result: result)
+
+                // Fetch comparison data if configured
+                var compParsed: [ChartDataPoint] = []
+                if let compFlux = comparisonFlux {
+                    if let compResult = try? await service.query(compFlux) {
+                        compParsed = Self.parseChartData(result: compResult).map { point in
+                            // Time-shift comparison data forward to align with primary x-axis
+                            ChartDataPoint(
+                                time: point.time.addingTimeInterval(comparisonOffsetSeconds),
+                                value: point.value,
+                                field: point.field
+                            )
+                        }
+                    }
+                }
+
                 await MainActor.run {
                     if !parsed.isEmpty {
                         dataPoints = parsed
+                        comparisonDataPoints = compParsed
                         isCachedData = false
                         query.cacheResult(parsed)
                         try? query.managedObjectContext?.save()

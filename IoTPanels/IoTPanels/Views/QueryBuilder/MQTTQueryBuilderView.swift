@@ -286,7 +286,7 @@ enum MQTTCollectDuration: String, CaseIterable, Identifiable {
 
     var asTimeRange: TimeRange {
         switch self {
-        case .fiveSeconds, .tenSeconds: return .oneHour
+        case .fiveSeconds, .tenSeconds: return .twoHours
         case .fifteenSeconds: return .sixHours
         case .twentySeconds: return .twentyFourHours
         case .thirtySeconds: return .sevenDays
@@ -295,10 +295,10 @@ enum MQTTCollectDuration: String, CaseIterable, Identifiable {
 
     static func from(timeRange: TimeRange) -> MQTTCollectDuration {
         switch timeRange {
-        case .oneHour: return .tenSeconds
+        case .twoHours: return .tenSeconds
         case .sixHours: return .fifteenSeconds
-        case .twentyFourHours: return .twentySeconds
-        case .sevenDays, .thirtyDays, .ninetyDays, .oneYear: return .thirtySeconds
+        case .twelveHours, .twentyFourHours: return .twentySeconds
+        case .sevenDays, .fourteenDays, .thirtyDays, .ninetyDays, .oneYear, .twoYears, .fiveYears: return .thirtySeconds
         }
     }
 }
