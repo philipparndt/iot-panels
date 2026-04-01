@@ -4,6 +4,10 @@ import SwiftUI
 
 extension Color {
     init(hex: String) {
+        if hex == SeriesColors.adaptivePrimary {
+            self = .primary
+            return
+        }
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
@@ -36,7 +40,11 @@ extension Color {
 // MARK: - Series Color Palette
 
 enum SeriesColors {
+    /// Special value that resolves to adaptive primary color (white in dark mode, black in light mode).
+    static let adaptivePrimary = "#PRIMARY"
+
     static let palette: [String] = [
+        adaptivePrimary, // Adaptive (white/black based on theme)
         "#4A90D9", // Blue
         "#E74C3C", // Red
         "#2ECC71", // Green

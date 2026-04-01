@@ -32,15 +32,7 @@ enum WidgetDataLoader {
             // Cache on success
             if cache {
                 let compPoints = compSeries.flatMap(\.dataPoints)
-                await MainActor.run {
-                    item.cacheResult(points)
-                    if !compPoints.isEmpty {
-                        item.cacheComparisonResult(compPoints)
-                    } else {
-                        item.clearComparisonCache()
-                    }
-                    try? item.managedObjectContext?.save()
-                }
+                await cacheData(item: item, points: points, compPoints: compPoints)
             }
 
             return series
@@ -86,6 +78,17 @@ enum WidgetDataLoader {
             }
         }
         return result
+    }
+
+    @MainActor
+    private static func cacheData(item: WidgetDesignItem, points: [ChartDataPoint], compPoints: [ChartDataPoint]) {
+        item.cacheResult(points)
+        if !compPoints.isEmpty {
+            item.cacheComparisonResult(compPoints)
+        } else {
+            item.clearComparisonCache()
+        }
+        try? item.managedObjectContext?.save()
     }
 
     // MARK: - Private

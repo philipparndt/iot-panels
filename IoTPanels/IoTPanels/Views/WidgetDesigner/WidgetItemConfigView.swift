@@ -303,15 +303,28 @@ struct WidgetItemConfigView: View {
         Section("Color") {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 12) {
                 ForEach(SeriesColors.palette, id: \.self) { hex in
-                    Circle()
-                        .fill(Color(hex: hex))
-                        .frame(width: 30, height: 30)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(.primary, lineWidth: selectedColor == hex ? 2 : 0)
-                                .padding(-2)
-                        )
-                        .onTapGesture { selectedColor = hex }
+                    Group {
+                        if hex == SeriesColors.adaptivePrimary {
+                            // Split circle: white/black to indicate adaptive
+                            ZStack {
+                                Circle().fill(Color.white)
+                                Circle().fill(Color.black)
+                                    .mask(
+                                        Rectangle().offset(x: 15)
+                                    )
+                                Circle().strokeBorder(Color.gray.opacity(0.4), lineWidth: 0.5)
+                            }
+                        } else {
+                            Circle().fill(Color(hex: hex))
+                        }
+                    }
+                    .frame(width: 30, height: 30)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(.primary, lineWidth: selectedColor == hex ? 2 : 0)
+                            .padding(-2)
+                    )
+                    .onTapGesture { selectedColor = hex }
                 }
             }
             .padding(.vertical, 4)

@@ -98,6 +98,11 @@ struct PanelRenderer: View {
         return nil
     }
 
+    /// The color of the first (primary) series, used for single-series rendering.
+    private var primaryColor: Color {
+        series.first(where: { !$0.label.hasPrefix("cmp_") })?.color ?? .accentColor
+    }
+
     private var isMultiSeries: Bool { series.filter { !$0.label.hasPrefix("cmp_") }.count > 1 }
 
     var body: some View {
@@ -249,7 +254,7 @@ struct PanelRenderer: View {
     private func singleSeriesComparisonMarks(compPoints: [ChartDataPoint]) -> some ChartContent {
         ForEach(Array(compPoints.enumerated()), id: \.offset) { _, point in
             LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "comparison"))
-                .foregroundStyle(Color.accentColor.complementary())
+                .foregroundStyle(primaryColor.complementary())
                 .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
         }
     }
@@ -262,29 +267,29 @@ struct PanelRenderer: View {
                 AreaMark(x: .value("T", point.time), y: .value("V", point.value))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color.accentColor.opacity(0.25), Color.accentColor.opacity(0.02)],
+                            colors: [primaryColor.opacity(0.25), primaryColor.opacity(0.02)],
                             startPoint: .top, endPoint: .bottom
                         )
                     )
                 LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "primary"))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(primaryColor)
                     .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
 
             case .bar:
                 BarMark(x: .value("T", point.time), y: .value("V", point.value))
-                    .foregroundStyle(Color.accentColor.gradient)
+                    .foregroundStyle(primaryColor.gradient)
 
             case .scatter:
                 PointMark(x: .value("T", point.time), y: .value("V", point.value))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(primaryColor)
                     .symbolSize(compact ? 20 : 40)
 
             case .linePoint:
                 LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "primary"))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(primaryColor)
                     .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
                 PointMark(x: .value("T", point.time), y: .value("V", point.value))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(primaryColor)
                     .symbolSize(compact ? 15 : 30)
             }
         }
@@ -808,6 +813,7 @@ struct PanelRenderer: View {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(lastValue ?? "—")
                         .font(.system(size: sz(compact ? 24 : 44), weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(primaryColor)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
 
