@@ -168,25 +168,26 @@ struct WidgetCanvasFromEntry: View {
                 Image(systemName: "rectangle.on.rectangle.angled").font(.title2).foregroundStyle(.tertiary)
             }
         } else {
-            switch sizeType {
-            case .small:
-                if let g = visibleGroups.first {
-                    groupCell(g, compact: true)
-                }
-            case .medium:
+            gridLayout(groups: visibleGroups)
+        }
+    }
+
+    private func gridLayout(groups: [WidgetDesignEntry.RenderedGroup]) -> some View {
+        let columns = sizeType.gridColumns(for: groups.count)
+        let rows = stride(from: 0, to: groups.count, by: columns).map {
+            Array(groups[$0..<min($0 + columns, groups.count)])
+        }
+        let isCompact = sizeType != .large || columns > 1 || rows.count > 1
+
+        return VStack(spacing: 8) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 HStack(spacing: 12) {
-                    ForEach(Array(visibleGroups.enumerated()), id: \.element.id) { _, g in
-                        groupCell(g, compact: visibleGroups.count > 1)
-                            .frame(maxWidth: .infinity)
+                    ForEach(row, id: \.id) { group in
+                        groupCell(group, compact: isCompact)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
-            case .large:
-                VStack(spacing: 8) {
-                    ForEach(Array(visibleGroups.enumerated()), id: \.element.id) { _, g in
-                        groupCell(g, compact: visibleGroups.count > 2)
-                    }
-                    Spacer(minLength: 0)
-                }
+                .frame(maxHeight: .infinity)
             }
         }
     }

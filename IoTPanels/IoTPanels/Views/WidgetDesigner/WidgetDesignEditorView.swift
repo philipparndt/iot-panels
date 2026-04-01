@@ -8,35 +8,42 @@ struct WidgetDesignEditorView: View {
     @State private var editingItem: WidgetDesignItem?
     @State private var seriesData: [String: [ChartSeries]] = [:]
     @State private var isLoadingPreview = false
+    @State private var isRearranging = false
+    @State private var editItems: [WidgetDesignItem] = []
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Size picker
-                sizePicker
-
-                // Text scale
-                textScalePicker
-
-                // Refresh rate
-                refreshPicker
-
-                // Background color
-                backgroundColorPicker
-
-                // Live preview
-                previewSection
-
-                // Items list
-                itemsSection
+        Group {
+            if isRearranging {
+                rearrangeContent
+            } else {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        sizePicker
+                        textScalePicker
+                        refreshPicker
+                        backgroundColorPicker
+                        previewSection
+                        itemsSection
+                    }
+                    .padding()
+                }
             }
-            .padding()
         }
         .navigationTitle(design.wrappedName)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingAddItem = true }) {
-                    Label("Add Item", systemImage: "plus")
+                if isRearranging {
+                    Button("Done") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isRearranging = false
+                        }
+                        loadPreviewData()
+                    }
+                    .fontWeight(.semibold)
+                } else {
+                    Button(action: { showingAddItem = true }) {
+                        Label("Add Item", systemImage: "plus")
+                    }
                 }
             }
         }
@@ -205,9 +212,23 @@ struct WidgetDesignEditorView: View {
 
     private var itemsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Items")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+            HStack {
+                Text("Items")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if design.sortedItems.count > 1 {
+                    Button {
+                        editItems = design.sortedItems
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isRearranging = true
+                        }
+                    } label: {
+                        Label("Rearrange", systemImage: "arrow.up.arrow.down")
+                            .font(.caption)
+                    }
+                }
+            }
 
             let items = design.sortedItems
 
@@ -226,14 +247,75 @@ struct WidgetDesignEditorView: View {
                     Spacer()
                 }
             } else {
-                ForEach(Array(items.enumerated()), id: \.element.objectID) { index, item in
-                    itemRow(item: item, index: index, totalCount: items.count)
+                ForEach(items, id: \.objectID) { item in
+                    itemRow(item: item)
                 }
             }
         }
     }
 
-    private func itemRow(item: WidgetDesignItem, index: Int, totalCount: Int) -> some View {
+    // MARK: - Rearrange Mode
+
+    private var rearrangeContent: some View {
+        List {
+            ForEach(editItems, id: \.objectID) { item in
+                HStack(spacing: 12) {
+                    Button {
+                        withAnimation {
+                            if let idx = editItems.firstIndex(of: item) {
+                                editItems.remove(at: idx)
+                            }
+                            viewContext.delete(item)
+                            design.modifiedAt = Date()
+                            try? viewContext.save()
+                            WidgetHelper.reloadWidgets()
+                        }
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+
+                    Circle()
+                        .fill(item.color)
+                        .frame(width: 12, height: 12)
+
+                    Text(item.wrappedTitle)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Label(item.wrappedDisplayStyle.displayName, systemImage: item.wrappedDisplayStyle.icon)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            }
+            .onMove { from, to in
+                editItems.move(fromOffsets: from, toOffset: to)
+                saveItemOrder()
+            }
+        }
+        .environment(\.editMode, .constant(.active))
+        .onAppear {
+            editItems = design.sortedItems
+        }
+    }
+
+    private func saveItemOrder() {
+        for (i, item) in editItems.enumerated() {
+            item.sortOrder = Int32(i)
+        }
+        design.modifiedAt = Date()
+        try? viewContext.save()
+        WidgetHelper.reloadWidgets()
+    }
+
+    // MARK: - Item Row
+
+    private func itemRow(item: WidgetDesignItem) -> some View {
         HStack(spacing: 12) {
             Circle()
                 .fill(item.color)
@@ -261,26 +343,6 @@ struct WidgetDesignEditorView: View {
             }
 
             Spacer()
-
-            // Reorder buttons
-            VStack(spacing: 0) {
-                Button {
-                    moveItem(item, direction: -1)
-                } label: {
-                    Image(systemName: "chevron.up")
-                        .font(.caption2)
-                }
-                .disabled(index == 0)
-
-                Button {
-                    moveItem(item, direction: 1)
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.caption2)
-                }
-                .disabled(index == totalCount - 1)
-            }
-            .foregroundStyle(.secondary)
         }
         .padding(12)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
@@ -303,18 +365,6 @@ struct WidgetDesignEditorView: View {
     }
 
     // MARK: - Actions
-
-    private func moveItem(_ item: WidgetDesignItem, direction: Int) {
-        var items = design.sortedItems
-        guard let idx = items.firstIndex(of: item) else { return }
-        let newIdx = idx + direction
-        guard newIdx >= 0, newIdx < items.count else { return }
-        items.swapAt(idx, newIdx)
-        for (i, it) in items.enumerated() { it.sortOrder = Int32(i) }
-        try? viewContext.save()
-        WidgetHelper.reloadWidgets()
-        loadPreviewData()
-    }
 
     private func renumberItems() {
         for (i, item) in design.sortedItems.enumerated() {

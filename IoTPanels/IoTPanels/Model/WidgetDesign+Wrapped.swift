@@ -38,8 +38,17 @@ enum WidgetSizeType: String, CaseIterable, Identifiable {
     var maxCells: Int {
         switch self {
         case .small: return 1
-        case .medium: return 3
-        case .large: return 4
+        case .medium: return 6
+        case .large: return 6
+        }
+    }
+
+    /// Number of grid columns for auto-grid layout.
+    func gridColumns(for itemCount: Int) -> Int {
+        switch self {
+        case .small: return 1
+        case .medium: return itemCount <= 1 ? 1 : min(itemCount, 3)
+        case .large: return itemCount <= 1 ? 1 : 2
         }
     }
 }

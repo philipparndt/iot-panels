@@ -22,27 +22,32 @@ struct WidgetCanvas: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            switch sizeType {
-            case .small:
-                if let g = visibleGroups.first {
-                    cellView(for: g, compact: true)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            case .medium:
+            gridLayout(groups: visibleGroups)
+        }
+    }
+
+    private func gridLayout(groups: [WidgetRenderGroup]) -> some View {
+        let columns = sizeType.gridColumns(for: groups.count)
+        let rows = chunked(groups, size: columns)
+        let isCompact = sizeType != .large || columns > 1 || rows.count > 1
+
+        return VStack(spacing: 8) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 HStack(spacing: 12) {
-                    ForEach(Array(visibleGroups.enumerated()), id: \.element.id) { _, g in
-                        cellView(for: g, compact: visibleGroups.count > 1)
-                            .frame(maxWidth: .infinity)
+                    ForEach(row, id: \.id) { group in
+                        cellView(for: group, compact: isCompact)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
-            case .large:
-                VStack(spacing: 8) {
-                    ForEach(Array(visibleGroups.enumerated()), id: \.element.id) { _, g in
-                        cellView(for: g, compact: visibleGroups.count > 2)
-                    }
-                    Spacer(minLength: 0)
-                }
+                .frame(maxHeight: .infinity)
             }
+        }
+    }
+
+    /// Splits an array into chunks of a given size.
+    private func chunked(_ array: [WidgetRenderGroup], size: Int) -> [[WidgetRenderGroup]] {
+        stride(from: 0, to: array.count, by: size).map {
+            Array(array[$0..<min($0 + size, array.count)])
         }
     }
 
