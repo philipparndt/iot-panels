@@ -1275,7 +1275,7 @@ struct PanelCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "icloud.slash")
                             .font(.system(size: 8))
-                        Text("Cached \(panel.savedQuery?.wrappedCachedAt ?? Date(), style: .relative) ago")
+                        Text("Cached \(panel.wrappedCachedAt ?? Date(), style: .relative) ago")
                             .font(.system(size: 9))
                     }
                     .foregroundStyle(.tertiary)
@@ -1290,7 +1290,7 @@ struct PanelCardView: View {
         .background(PanelCardBackground())
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
-        .animation(.none, value: dataPoints.count)
+        .transaction { $0.animation = nil }
         .onAppear {
             loadData()
             subscribeMQTTUpdates()
@@ -1397,9 +1397,12 @@ struct PanelCardView: View {
             return
         }
 
-        // Show cached data immediately while loading fresh data
-        if let cached = query.cachedDataPoints, !cached.isEmpty {
+        // Show panel-level cached data immediately while loading fresh data
+        if let cached = panel.cachedDataPoints, !cached.isEmpty {
             dataPoints = cached
+            if let cachedComp = panel.cachedComparisonDataPoints, !cachedComp.isEmpty {
+                comparisonDataPoints = cachedComp
+            }
             isCachedData = true
         }
 
@@ -1450,7 +1453,12 @@ struct PanelCardView: View {
                         dataPoints = parsed
                         comparisonDataPoints = compParsed
                         isCachedData = false
-                        query.cacheResult(parsed)
+                        panel.cacheResult(parsed)
+                        if !compParsed.isEmpty {
+                            panel.cacheComparisonResult(compParsed)
+                        } else {
+                            panel.clearComparisonCache()
+                        }
                         try? query.managedObjectContext?.save()
                     } else if !dataPoints.isEmpty {
                         isCachedData = true
