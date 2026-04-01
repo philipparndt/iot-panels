@@ -444,6 +444,7 @@ struct FilterPickerPage: View {
     let service: any DataSourceServiceProtocol
 
     @State private var expandedTag: String?
+    @State private var search = ""
 
     var body: some View {
         List {
@@ -458,6 +459,7 @@ struct FilterPickerPage: View {
                             get: { expandedTag == tagKey },
                             set: { expanded in
                                 expandedTag = expanded ? tagKey : nil
+                                search = ""
                                 if expanded && tagValues[tagKey] == nil {
                                     loadValues(tag: tagKey)
                                 }
@@ -465,7 +467,13 @@ struct FilterPickerPage: View {
                         )
                     ) {
                         if let values = tagValues[tagKey] {
-                            ForEach(values, id: \.self) { value in
+                            let filtered = filteredValues(values)
+                            if values.count > 10 {
+                                TextField("Search \(tagKey)...", text: $search)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                            }
+                            ForEach(filtered, id: \.self) { value in
                                 Button {
                                     toggle(tagKey: tagKey, value: value)
                                 } label: {
@@ -498,6 +506,11 @@ struct FilterPickerPage: View {
             }
         }
         .navigationTitle("Filters")
+    }
+
+    private func filteredValues(_ values: [String]) -> [String] {
+        guard !search.isEmpty else { return values }
+        return values.filter { $0.localizedCaseInsensitiveContains(search) }
     }
 
     private func toggle(tagKey: String, value: String) {

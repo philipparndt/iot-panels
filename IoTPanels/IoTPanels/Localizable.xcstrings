@@ -5255,6 +5255,9 @@
         }
       }
     },
+    "Search %@..." : {
+
+    },
     "Search measurements" : {
       "localizations" : {
         "de" : {
