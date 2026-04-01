@@ -804,11 +804,12 @@ struct PanelRenderer: View {
     // MARK: - Single Value
 
     private var singleValueBody: some View {
-        VStack(alignment: .leading, spacing: compact ? 2 : 6) {
+        VStack(alignment: compact ? .center : .leading, spacing: compact ? 2 : 6) {
             Text(title)
                 .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .frame(maxWidth: compact ? .infinity : nil, alignment: compact ? .center : .leading)
 
             if isMultiSeries {
                 multiValueBody
