@@ -113,8 +113,6 @@
 		W10000090000000000000009 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
 		W1000010000000000000000A /* Dashboard+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000010000000000000001 /* Dashboard+Wrapped.swift */; };
 		W1000011000000000000000B /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
-		W1000022000000000000001C /* ChartExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */; };
-		W1000023000000000000001D /* ChartExplorerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */; };
 		W1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
 		W1000013000000000000000D /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
 		W1000014000000000000000E /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
@@ -124,6 +122,8 @@
 		W10000180000000000000012 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		W1000020000000000000001A /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
 		W1000021000000000000001B /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
+		W1000022000000000000001C /* ChartExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */; };
+		W1000023000000000000001D /* ChartExplorerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */; };
 		W30000010000000000000001 /* IoTPanelsWatchWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -599,7 +599,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					A40000010000000000000001 = {
 						CreatedOnToolsVersion = 15.4;
@@ -830,6 +830,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -893,6 +894,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
