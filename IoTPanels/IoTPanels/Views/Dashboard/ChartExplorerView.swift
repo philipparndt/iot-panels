@@ -9,6 +9,8 @@ struct ChartExplorerView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var state: ChartExplorerState
+    @State private var exportCSVURL: URL?
+    @State private var showingShareSheet = false
 
     init(panel: DashboardPanel) {
         self.panel = panel
@@ -41,6 +43,22 @@ struct ChartExplorerView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 8) {
+                        Menu {
+                            Button {
+                                exportExplorer(format: "csv")
+                            } label: {
+                                Label("CSV", systemImage: "tablecells")
+                            }
+                            Button {
+                                exportExplorer(format: "json")
+                            } label: {
+                                Label("JSON", systemImage: "curlybraces")
+                            }
+                        } label: {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(state.dataPoints.isEmpty)
+
                         if state.hasChanges {
                             Button {
                                 state.resetAll()
@@ -54,6 +72,11 @@ struct ChartExplorerView: View {
                         }
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = exportCSVURL {
+                DataShareSheetView(items: [url])
             }
         }
         .onAppear {
@@ -120,6 +143,20 @@ struct ChartExplorerView: View {
                 }
             }
             .opacity(state.isLoading && !state.dataPoints.isEmpty ? 0.6 : 1)
+        }
+    }
+
+    private func exportExplorer(format: String) {
+        let name = state.title.isEmpty ? "export" : state.title
+        let url: URL?
+        if format == "json" {
+            url = DataExporter.tempJSONFile(name: name, from: state.dataPoints, comparisonPoints: state.comparisonDataPoints)
+        } else {
+            url = DataExporter.tempCSVFile(name: name, from: state.dataPoints, comparisonPoints: state.comparisonDataPoints)
+        }
+        if let url {
+            exportCSVURL = url
+            showingShareSheet = true
         }
     }
 

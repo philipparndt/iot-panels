@@ -12,6 +12,8 @@ struct DashboardView: View {
     @State private var isWiggling = false
     @State private var draggedPanel: DashboardPanel?
     @State private var exploringPanel: DashboardPanel?
+    @State private var exportCSVURL: URL?
+    @State private var showingShareSheet = false
     @StateObject private var heatmapSelection = HeatmapSelectionState()
 
     var body: some View {
@@ -79,6 +81,11 @@ struct DashboardView: View {
         .fullScreenCover(item: $exploringPanel) { panel in
             ChartExplorerView(panel: panel)
         }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = exportCSVURL {
+                DataShareSheetView(items: [url])
+            }
+        }
     }
 
     // MARK: - Normal Mode
@@ -105,6 +112,19 @@ struct DashboardView: View {
                                     exploringPanel = panel
                                 } label: {
                                     Label("Explore", systemImage: "arrow.up.left.and.arrow.down.right")
+                                }
+
+                                Menu("Export") {
+                                    Button {
+                                        exportPanel(panel, format: .csv)
+                                    } label: {
+                                        Label("CSV", systemImage: "tablecells")
+                                    }
+                                    Button {
+                                        exportPanel(panel, format: .json)
+                                    } label: {
+                                        Label("JSON", systemImage: "curlybraces")
+                                    }
                                 }
 
                                 Button {
@@ -285,6 +305,23 @@ struct DashboardView: View {
         try? viewContext.save()
         WidgetHelper.reloadWidgets()
         refreshID = UUID()
+    }
+
+    enum ExportFormat { case csv, json }
+
+    private func exportPanel(_ panel: DashboardPanel, format: ExportFormat) {
+        let points = panel.cachedDataPoints ?? []
+        let compPoints = panel.cachedComparisonDataPoints ?? []
+        let name = panel.wrappedTitle.isEmpty ? "panel" : panel.wrappedTitle
+        let url: URL?
+        switch format {
+        case .csv: url = DataExporter.tempCSVFile(name: name, from: points, comparisonPoints: compPoints)
+        case .json: url = DataExporter.tempJSONFile(name: name, from: points, comparisonPoints: compPoints)
+        }
+        if let url {
+            exportCSVURL = url
+            showingShareSheet = true
+        }
     }
 
 }
