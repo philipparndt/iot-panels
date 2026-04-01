@@ -21,11 +21,20 @@ struct MQTTTopicDiscoveryPage: View {
         return bt.isEmpty ? "#" : bt
     }
 
+    /// Only show topics that have discovered numeric fields.
     private var filteredTopics: [(topic: String, count: Int)] {
-        let sorted = discoveredTopics.sorted { $0.topic < $1.topic }
+        let withValues = discoveredTopics.filter { item in
+            guard let fields = topicPayloads[item.topic] else { return false }
+            return !fields.isEmpty
+        }
+        let sorted = withValues.sorted { $0.topic < $1.topic }
         if searchText.isEmpty { return sorted }
         let query = searchText.lowercased()
-        return sorted.filter { $0.topic.lowercased().contains(query) }
+        return sorted.filter { item in
+            if item.topic.lowercased().contains(query) { return true }
+            let fields = topicPayloads[item.topic] ?? []
+            return fields.contains { $0.lowercased().contains(query) }
+        }
     }
 
     var body: some View {
@@ -38,7 +47,7 @@ struct MQTTTopicDiscoveryPage: View {
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(topicCounts.count) topics")
+                    Text("\(filteredTopics.count) topics")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -77,7 +86,7 @@ struct MQTTTopicDiscoveryPage: View {
                                     .foregroundStyle(.primary)
                                     .lineLimit(2)
                                 if !fields.isEmpty {
-                                    Text(fields.sorted().joined(separator: ", "))
+                                    Text(fields.sorted().map { $0 == "value" ? "[value]" : $0 }.joined(separator: ", "))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
@@ -107,9 +116,17 @@ struct MQTTTopicDiscoveryPage: View {
     }
 
     private func startDiscovery() {
+        // Clear previous state for a fresh discovery
+        topicCounts.removeAll()
+        topicPayloads.removeAll()
+        discoveredTopics.removeAll()
+
         let service = MQTTService(dataSource: dataSource)
         let manager = MQTTConnectionManager.shared
         let key = service.connectionKey
+
+        // Force broker to resend retained messages
+        manager.refreshSubscription(for: service, topic: baseTopic)
 
         Task {
             _ = try? await manager.getMessages(for: service, topic: baseTopic, rangeSeconds: 0)
@@ -123,7 +140,7 @@ struct MQTTTopicDiscoveryPage: View {
                 topicCounts[msg.topic, default: 0] += 1
                 discoveredTopics = topicCounts.map { (topic: $0.key, count: $0.value) }
 
-                // Extract field names from JSON payload
+                // Extract field names from payload (JSON or plain numeric)
                 let fields = extractFieldNames(from: msg.payload)
                 if !fields.isEmpty {
                     if topicPayloads[msg.topic] == nil {
@@ -141,15 +158,23 @@ struct MQTTTopicDiscoveryPage: View {
     }
 
     private func extractFieldNames(from payload: String) -> Set<String> {
-        guard let data = payload.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return []
+        // Try JSON object first
+        if let data = payload.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let numericKeys = json.compactMap { key, value -> String? in
+                if value is NSNumber || Double("\(value)") != nil { return key }
+                return nil
+            }
+            if !numericKeys.isEmpty { return Set(numericKeys) }
         }
-        // Only include keys with numeric values
-        return Set(json.compactMap { key, value in
-            if value is NSNumber || Double("\(value)") != nil { return key }
-            return nil
-        })
+
+        // Try plain numeric value
+        let trimmed = payload.trimmingCharacters(in: .whitespacesAndNewlines)
+        if Double(trimmed) != nil {
+            return ["value"]
+        }
+
+        return []
     }
 }
 

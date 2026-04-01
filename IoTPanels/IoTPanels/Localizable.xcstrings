@@ -13579,6 +13579,7 @@
       }
     },
     "No items yet" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

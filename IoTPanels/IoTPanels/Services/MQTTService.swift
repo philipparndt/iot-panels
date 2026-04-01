@@ -279,6 +279,15 @@ final class MQTTConnectionManager {
         return connections[key]?.isConnected ?? false
     }
 
+    /// Refreshes a subscription by unsubscribing, clearing cache, and resubscribing.
+    /// Forces the broker to resend retained messages. Used by topic discovery.
+    func refreshSubscription(for service: MQTTService, topic: String) {
+        lock.lock()
+        let connection = connections[service.connectionKey]
+        lock.unlock()
+        connection?.refreshSubscription(for: topic)
+    }
+
     /// Disconnect all connections.
     func disconnectAll() {
         lock.lock()
@@ -416,6 +425,24 @@ private class ManagedConnection: NSObject {
 
         if connected {
             subscribe(to: topic)
+        }
+    }
+
+    /// Unsubscribes, clears cached messages for the topic, and resubscribes.
+    /// Forces the broker to resend retained messages.
+    func refreshSubscription(for topic: String) {
+        lock.lock()
+        subscribedTopics.remove(topic)
+        messageCache.removeAll { matchesTopic($0.topic, pattern: topic) }
+        let connected = isConnected
+        lock.unlock()
+
+        if connected {
+            unsubscribe(from: topic)
+            // Small delay to let the unsubscribe complete before resubscribing
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.ensureSubscribed(to: topic)
+            }
         }
     }
 
@@ -680,6 +707,11 @@ private class ManagedConnection: NSObject {
     private func subscribe(to topic: String) {
         mqtt3?.subscribe(topic, qos: .qos0)
         mqtt5?.subscribe(topic, qos: .qos0)
+    }
+
+    private func unsubscribe(from topic: String) {
+        mqtt3?.unsubscribe(topic)
+        mqtt5?.unsubscribe(topic)
     }
 }
 
