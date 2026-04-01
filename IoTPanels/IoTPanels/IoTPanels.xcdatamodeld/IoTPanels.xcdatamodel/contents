@@ -60,6 +60,7 @@
         <attribute name="refreshInterval" optional="YES" attributeType="Integer 32" defaultValueString="15" usesScalarValueType="YES"/>
         <attribute name="sizeType" optional="YES" attributeType="String"/>
         <attribute name="textScale" optional="YES" attributeType="String"/>
+        <attribute name="backgroundColorHex" optional="YES" attributeType="String"/>
         <relationship name="home" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Home" inverseName="widgetDesigns" inverseEntity="Home"/>
         <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WidgetDesignItem" inverseName="widgetDesign" inverseEntity="WidgetDesignItem"/>
     </entity>

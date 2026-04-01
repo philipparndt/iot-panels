@@ -156,6 +156,15 @@ extension WidgetDesign {
         set { textScale = newValue.rawValue }
     }
 
+    var wrappedBackgroundColorHex: String {
+        get { backgroundColorHex ?? "#1C1C1E" }
+        set { backgroundColorHex = newValue }
+    }
+
+    var backgroundColor: Color {
+        Color(hex: wrappedBackgroundColorHex)
+    }
+
     var wrappedRefreshInterval: RefreshInterval {
         get { RefreshInterval.from(minutes: Int(refreshInterval)) }
         set { refreshInterval = Int32(newValue.minutes) }

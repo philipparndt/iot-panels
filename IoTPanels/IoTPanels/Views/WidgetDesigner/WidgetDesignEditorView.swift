@@ -21,6 +21,9 @@ struct WidgetDesignEditorView: View {
                 // Refresh rate
                 refreshPicker
 
+                // Background color
+                backgroundColorPicker
+
                 // Live preview
                 previewSection
 
@@ -123,6 +126,51 @@ struct WidgetDesignEditorView: View {
         }
     }
 
+    // MARK: - Background Color
+
+    private static let backgroundPresets: [(String, String)] = [
+        ("#1C1C1E", "Dark"),
+        ("#000000", "Black"),
+        ("#2C2C2E", "Charcoal"),
+        ("#3A3A3C", "Gray"),
+        ("#F2F2F7", "Light"),
+        ("#FFFFFF", "White"),
+    ]
+
+    private var backgroundColorPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Background")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
+                ForEach(Self.backgroundPresets, id: \.0) { hex, label in
+                    VStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: hex))
+                            .frame(height: 36)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(
+                                        design.wrappedBackgroundColorHex == hex ? Color.accentColor : Color.secondary.opacity(0.3),
+                                        lineWidth: design.wrappedBackgroundColorHex == hex ? 2 : 1
+                                    )
+                            )
+                            .onTapGesture {
+                                design.wrappedBackgroundColorHex = hex
+                                design.modifiedAt = Date()
+                                try? viewContext.save()
+                                WidgetHelper.reloadWidgets()
+                            }
+                        Text(label)
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Preview
 
     private var previewSection: some View {
@@ -146,7 +194,8 @@ struct WidgetDesignEditorView: View {
                 sizeType: design.wrappedSizeType,
                 groups: design.resolvedGroups,
                 seriesData: seriesData,
-                textScale: design.wrappedTextScale.factor
+                textScale: design.wrappedTextScale.factor,
+                backgroundColor: design.backgroundColor
             )
             .environmentObject(HeatmapSelectionState())
         }

@@ -12,6 +12,7 @@ struct WidgetDesignEntry: TimelineEntry {
     let sizeType: WidgetSizeType
     let textScale: CGFloat
     let refreshMinutes: Int
+    let backgroundColorHex: String
     let groups: [RenderedGroup]
     let isPlaceholder: Bool
 
@@ -31,6 +32,7 @@ struct WidgetDesignEntry: TimelineEntry {
             sizeType: .medium,
             textScale: 1.0,
             refreshMinutes: 15,
+            backgroundColorHex: "#1C1C1E",
             groups: [
                 RenderedGroup(id: "1", title: "Temperature", style: .chart, series: [
                     ChartSeries(id: "a", label: "Indoor", color: Color(hex: "#4A90D9"), dataPoints:
@@ -49,7 +51,7 @@ struct WidgetDesignEntry: TimelineEntry {
     }
 
     static var empty: WidgetDesignEntry {
-        WidgetDesignEntry(date: Date(), designId: nil, designName: "Select a widget", sizeType: .medium, textScale: 1.0, refreshMinutes: 15, groups: [], isPlaceholder: false)
+        WidgetDesignEntry(date: Date(), designId: nil, designName: "Select a widget", sizeType: .medium, textScale: 1.0, refreshMinutes: 15, backgroundColorHex: "#1C1C1E", groups: [], isPlaceholder: false)
     }
 }
 
@@ -147,25 +149,26 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
             renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
         }
 
-        return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, refreshMinutes: Int(design.refreshInterval), groups: renderedGroups, isPlaceholder: false)
+        return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, refreshMinutes: Int(design.refreshInterval), backgroundColorHex: design.wrappedBackgroundColorHex, groups: renderedGroups, isPlaceholder: false)
     }
 }
 
 // MARK: - Widget Views
 
-struct DesignWidgetView: View {
-    let entry: WidgetDesignEntry
+struct WidgetCanvasFromEntry: View {
+    let sizeType: WidgetSizeType
+    let groups: [WidgetDesignEntry.RenderedGroup]
+    var textScale: CGFloat = 1.0
 
     var body: some View {
-        let visibleGroups = Array(entry.groups.prefix(entry.sizeType.maxCells))
+        let visibleGroups = Array(groups.prefix(sizeType.maxCells))
 
         if visibleGroups.isEmpty {
             VStack {
                 Image(systemName: "rectangle.on.rectangle.angled").font(.title2).foregroundStyle(.tertiary)
-                Text(entry.designName).font(.caption).foregroundStyle(.secondary)
             }
         } else {
-            switch entry.sizeType {
+            switch sizeType {
             case .small:
                 if let g = visibleGroups.first {
                     groupCell(g, compact: true)
@@ -194,9 +197,29 @@ struct DesignWidgetView: View {
             style: group.style,
             series: group.series,
             compact: compact,
-            textScale: entry.textScale,
+            textScale: textScale,
             styleConfig: group.styleConfig
         )
+    }
+}
+
+struct DesignWidgetView: View {
+    let entry: WidgetDesignEntry
+
+    var body: some View {
+        let refWidth = entry.sizeType == .small
+            ? WidgetDesignPreviewView.referenceWidth * 0.5
+            : WidgetDesignPreviewView.referenceWidth
+        let refHeight = refWidth / entry.sizeType.aspectRatio
+
+        ScaledWidgetContainer(referenceSize: CGSize(width: refWidth, height: refHeight)) {
+            WidgetCanvasFromEntry(
+                sizeType: entry.sizeType,
+                groups: entry.groups,
+                textScale: entry.textScale
+            )
+            .padding(10)
+        }
     }
 }
 
@@ -214,8 +237,9 @@ struct IoTPanelsWidget: Widget {
             DesignWidgetView(entry: entry)
                 .environmentObject(HeatmapSelectionState())
                 .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
-                .containerBackground(for: .widget) { ContainerRelativeShape().fill(.tertiary) }
+                .containerBackground(for: .widget) { Color(hex: entry.backgroundColorHex) }
         }
+        .contentMarginsDisabled()
         .configurationDisplayName("IoT Panel")
         .description("Display a designed widget with live IoT data.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
