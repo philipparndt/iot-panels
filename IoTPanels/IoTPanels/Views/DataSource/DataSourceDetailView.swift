@@ -19,6 +19,9 @@ struct DataSourceDetailView: View {
     @State private var organization = ""
     @State private var bucket = ""
 
+    // InfluxDB 3 fields
+    @State private var influx3Database = ""
+
     // MQTT fields
     @State private var mqttHostname = ""
     @State private var mqttPort = "1883"
@@ -41,6 +44,7 @@ struct DataSourceDetailView: View {
     @State private var testResult: TestResult?
     @State private var isTesting = false
     @State private var showingGuidedSetup = false
+    @State private var showingInflux3Setup = false
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
     @State private var didLoad = false
@@ -63,6 +67,8 @@ struct DataSourceDetailView: View {
             case .usernamePassword:
                 return !influxUsername.isEmpty && (isEditing || !influxPassword.isEmpty)
             }
+        case .influxDB3:
+            return !url.isEmpty
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -81,6 +87,8 @@ struct DataSourceDetailView: View {
             case .usernamePassword:
                 return !influxUsername.isEmpty && !influxPassword.isEmpty
             }
+        case .influxDB3:
+            return !url.isEmpty
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -133,6 +141,43 @@ struct DataSourceDetailView: View {
                             password: $influxPassword,
                             organization: $organization,
                             bucket: $bucket
+                        )
+                    } label: {
+                        HStack {
+                            Label("Connection Settings", systemImage: "server.rack")
+                            Spacer()
+                            if !url.isEmpty {
+                                Text(url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if backendType == .influxDB3 && !isEditing {
+                Section {
+                    Button {
+                        showingInflux3Setup = true
+                    } label: {
+                        Label("Setup Wizard", systemImage: "wand.and.stars")
+                    }
+                } header: {
+                    Text("Guided Setup")
+                } footer: {
+                    Text("Connect to your InfluxDB 3 server and select a database.")
+                }
+            }
+
+            if backendType == .influxDB3 {
+                Section("InfluxDB 3") {
+                    NavigationLink {
+                        InfluxDB3SettingsFormView(
+                            url: $url,
+                            token: $token,
+                            database: $influx3Database
                         )
                     } label: {
                         HStack {
@@ -214,6 +259,7 @@ struct DataSourceDetailView: View {
                         case .failure(let message):
                             Label(message, systemImage: "xmark.circle.fill")
                                 .foregroundStyle(.red)
+                                .textSelection(.enabled)
                         }
                     }
                 }
@@ -231,6 +277,17 @@ struct DataSourceDetailView: View {
                 showingGuidedSetup = false
                 if name.isEmpty {
                     name = "\(result.organization) / \(result.bucket)"
+                }
+            }
+        }
+        .sheet(isPresented: $showingInflux3Setup) {
+            InfluxDB3SetupView { result in
+                url = result.url
+                token = result.token
+                influx3Database = result.database
+                showingInflux3Setup = false
+                if name.isEmpty {
+                    name = result.database
                 }
             }
         }
@@ -302,6 +359,9 @@ struct DataSourceDetailView: View {
         organization = dataSource.wrappedOrganization
         bucket = dataSource.wrappedBucket
 
+        // InfluxDB 3
+        influx3Database = dataSource.wrappedDatabase
+
         // MQTT
         mqttHostname = dataSource.wrappedHostname
         mqttPort = "\(dataSource.wrappedPort)"
@@ -338,9 +398,14 @@ struct DataSourceDetailView: View {
         // InfluxDB fields
         target.url = url
         target.influxAuthMethod = influxAuthMethod.rawValue
-        target.token = influxAuthMethod == .token ? token : nil
+        if backendType == .influxDB3 {
+            target.token = token
+        } else {
+            target.token = influxAuthMethod == .token ? token : nil
+        }
         target.organization = organization
         target.bucket = bucket
+        target.database = influx3Database
 
         // MQTT fields
         target.hostname = mqttHostname
@@ -427,6 +492,25 @@ struct DataSourceDetailView: View {
             Task {
                 do {
                     let success = try await service.testConnection()
+                    await MainActor.run {
+                        url = resolvedUrl
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
+                }
+            }
+
+        case .influxDB3:
+            let resolvedUrl = normalizedInfluxUrl()
+            let influx3Service = InfluxDB3Service(url: resolvedUrl, token: token, database: influx3Database)
+            Task {
+                do {
+                    let success = try await influx3Service.testConnection()
                     await MainActor.run {
                         url = resolvedUrl
                         testResult = success ? .success : .failure("Connection refused")

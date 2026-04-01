@@ -3,6 +3,7 @@
     <entity name="DataSource" representedClassName="DataSource" syncable="YES" codeGenerationType="class">
         <attribute name="backendType" optional="YES" attributeType="String"/>
         <attribute name="bucket" optional="YES" attributeType="String"/>
+        <attribute name="database" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="modifiedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>

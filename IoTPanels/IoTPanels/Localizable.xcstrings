@@ -1645,6 +1645,9 @@
         }
       }
     },
+    "Connect to your InfluxDB 3 server and select a database." : {
+
+    },
     "Connect to your InfluxDB server and select an organization and bucket." : {
       "localizations" : {
         "de" : {
@@ -1660,6 +1663,9 @@
           }
         }
       }
+    },
+    "Connect without authentication. Suitable for local installations." : {
+
     },
     "Connected" : {
       "localizations" : {
@@ -2004,6 +2010,9 @@
         }
       }
     },
+    "Database" : {
+
+    },
     "Days" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2119,6 +2128,9 @@
           }
         }
       }
+    },
+    "Discover Databases" : {
+
     },
     "Discover Organizations & Buckets" : {
       "localizations" : {
@@ -2427,6 +2439,9 @@
           }
         }
       }
+    },
+    "Enter an API token for authenticated access." : {
+
     },
     "Enter an existing API token. Organizations and buckets will be discovered automatically." : {
       "localizations" : {
@@ -3113,6 +3128,15 @@
         }
       }
     },
+    "InfluxDB 3" : {
+
+    },
+    "InfluxDB 3 Settings" : {
+
+    },
+    "InfluxDB 3 Setup" : {
+
+    },
     "InfluxDB Settings" : {
       "localizations" : {
         "de" : {
@@ -3451,6 +3475,9 @@
         }
       }
     },
+    "Leave empty for unauthenticated access." : {
+
+    },
     "Legend Label" : {
       "localizations" : {
         "de" : {
@@ -3533,6 +3560,9 @@
           }
         }
       }
+    },
+    "Loading databases..." : {
+
     },
     "Loading organizations..." : {
       "localizations" : {
@@ -5306,6 +5336,9 @@
         }
       }
     },
+    "Select Database" : {
+
+    },
     "Select Organization" : {
       "localizations" : {
         "de" : {
@@ -6068,6 +6101,9 @@
         }
       }
     },
+    "Token (optional)" : {
+
+    },
     "Token Authentication" : {
       "localizations" : {
         "de" : {
@@ -6180,6 +6216,9 @@
           }
         }
       }
+    },
+    "Use API Token" : {
+
     },
     "Used to discover topics when creating queries. Leave empty to subscribe to all topics (#)." : {
       "localizations" : {

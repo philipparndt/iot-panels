@@ -147,7 +147,7 @@ struct QueryBuilderView: View {
                     // Preview
                     Section {
                         NavigationLink {
-                            QueryPreviewPage(flux: buildFluxQuery(), service: service)
+                            QueryPreviewPage(flux: buildPreviewQuery(), service: service)
                         } label: {
                             Label("Preview Query", systemImage: "play.circle")
                         }
@@ -263,7 +263,14 @@ struct QueryBuilderView: View {
         }
     }
 
-    private func buildFluxQuery() -> String {
+    private func buildPreviewQuery() -> String {
+        if dataSource.wrappedBackendType == .influxDB3 {
+            return buildSQLPreviewQuery()
+        }
+        return buildFluxPreviewQuery()
+    }
+
+    private func buildFluxPreviewQuery() -> String {
         var query = """
         from(bucket: "\(dataSource.wrappedBucket)")
           |> range(start: \(timeRange.fluxValue))
@@ -281,6 +288,27 @@ struct QueryBuilderView: View {
             query += "\n  |> aggregateWindow(every: \(aggregateWindow.rawValue), fn: \(aggregateFunction.rawValue), createEmpty: false)"
         }
         query += "\n  |> yield(name: \"results\")"
+        return query
+    }
+
+    private func buildSQLPreviewQuery() -> String {
+        let fields = selectedFields.isEmpty ? "*" : selectedFields.sorted().map { "\"\($0)\"" }.joined(separator: ", ")
+        var query = "SELECT time, \(fields)\nFROM \"\(selectedMeasurement)\"\nWHERE time >= NOW() - INTERVAL '\(Int(timeRange.seconds)) seconds'"
+        for (k, v) in selectedTagValues where !v.isEmpty {
+            let values = v.sorted().map { "'\($0)'" }.joined(separator: ", ")
+            query += "\n  AND \"\(k)\" IN (\(values))"
+        }
+        if aggregateWindow != .none {
+            // Simplified preview — actual query uses DATE_BIN
+            query = "SELECT DATE_BIN(INTERVAL '\(Int(aggregateWindow.seconds)) seconds', time) AS time, \(selectedFields.sorted().map { "AVG(\"\($0)\") AS \"\($0)\"" }.joined(separator: ", "))\nFROM \"\(selectedMeasurement)\"\nWHERE time >= NOW() - INTERVAL '\(Int(timeRange.seconds)) seconds'"
+            for (k, v) in selectedTagValues where !v.isEmpty {
+                let values = v.sorted().map { "'\($0)'" }.joined(separator: ", ")
+                query += "\n  AND \"\(k)\" IN (\(values))"
+            }
+            query += "\nGROUP BY 1\nORDER BY 1"
+        } else {
+            query += "\nORDER BY time"
+        }
         return query
     }
 

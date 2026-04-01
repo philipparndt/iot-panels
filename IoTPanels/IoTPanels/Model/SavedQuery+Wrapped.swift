@@ -125,6 +125,8 @@ extension SavedQuery {
         switch dataSource.wrappedBackendType {
         case .influxDB2:
             return buildFluxQuery(bucket: dataSource.wrappedBucket)
+        case .influxDB3:
+            return buildSQLQuery(database: dataSource.wrappedDatabase)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -271,6 +273,175 @@ extension SavedQuery {
         return unions.joined(separator: "\n\n")
     }
 
+    // MARK: - InfluxDB 3 SQL Query Building
+
+    func buildSQLQuery(database: String, timeRange: TimeRange? = nil, window: AggregateWindow? = nil, fn: AggregateFunction? = nil) -> String {
+        let tr = timeRange ?? wrappedTimeRange
+        let aw = window ?? wrappedAggregateWindow
+        let af = fn ?? wrappedAggregateFunction
+
+        let fields = wrappedFields.isEmpty ? ["*"] : wrappedFields.map { "\"\(escapeSQLId($0))\"" }
+        let measurement = "\"\(escapeSQLId(wrappedMeasurement))\""
+        let timeFilter = "time >= NOW() - INTERVAL '\(Int(tr.seconds)) seconds'"
+
+        var conditions = [timeFilter]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let valueList = tagValues.map { "'\(escapeSQLString($0))'" }.joined(separator: ", ")
+            conditions.append("\"\(escapeSQLId(tagKey))\" IN (\(valueList))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        if aw != .none {
+            let sqlFn = sqlAggregateFunction(af)
+            let selectFields = wrappedFields.isEmpty ? ["\(sqlFn)(value) AS value"] : wrappedFields.map { "\(sqlFn)(\"\(escapeSQLId($0))\") AS \"\(escapeSQLId($0))\"" }
+            return """
+            SELECT DATE_BIN(INTERVAL '\(Int(aw.seconds)) seconds', time) AS time, \(selectFields.joined(separator: ", "))
+            FROM \(measurement)
+            WHERE \(whereClause)
+            GROUP BY 1
+            ORDER BY 1
+            """
+        }
+
+        return """
+        SELECT time, \(fields.joined(separator: ", "))
+        FROM \(measurement)
+        WHERE \(whereClause)
+        ORDER BY time
+        """
+    }
+
+    func buildBandSQLQuery(database: String, timeRange: TimeRange? = nil, window: AggregateWindow? = nil) -> String {
+        let tr = timeRange ?? wrappedTimeRange
+        let aw = window ?? wrappedAggregateWindow
+        let effectiveWindow = aw == .none ? tr.minimumWindow : aw
+
+        let measurement = "\"\(escapeSQLId(wrappedMeasurement))\""
+        let timeFilter = "time >= NOW() - INTERVAL '\(Int(tr.seconds)) seconds'"
+
+        var conditions = [timeFilter]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let valueList = tagValues.map { "'\(escapeSQLString($0))'" }.joined(separator: ", ")
+            conditions.append("\"\(escapeSQLId(tagKey))\" IN (\(valueList))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        let fieldList = wrappedFields.isEmpty ? ["value"] : wrappedFields
+        let selectFields = fieldList.flatMap { field -> [String] in
+            let f = "\"\(escapeSQLId(field))\""
+            return [
+                "MIN(\(f)) AS \"\(escapeSQLId(field))_min\"",
+                "MAX(\(f)) AS \"\(escapeSQLId(field))_max\"",
+                "AVG(\(f)) AS \"\(escapeSQLId(field))_mean\""
+            ]
+        }
+
+        return """
+        SELECT DATE_BIN(INTERVAL '\(Int(effectiveWindow.seconds)) seconds', time) AS time, \(selectFields.joined(separator: ", "))
+        FROM \(measurement)
+        WHERE \(whereClause)
+        GROUP BY 1
+        ORDER BY 1
+        """
+    }
+
+    func buildComparisonSQLQuery(database: String, timeRange: TimeRange, window: AggregateWindow, fn: AggregateFunction, offset: ComparisonOffset) -> String {
+        let rangeSeconds = Int(timeRange.seconds)
+        let offsetSeconds = Int(offset.seconds)
+
+        let measurement = "\"\(escapeSQLId(wrappedMeasurement))\""
+        let startFilter = "time >= NOW() - INTERVAL '\(rangeSeconds + offsetSeconds) seconds'"
+        let stopFilter = "time < NOW() - INTERVAL '\(offsetSeconds) seconds'"
+
+        var conditions = [startFilter, stopFilter]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let valueList = tagValues.map { "'\(escapeSQLString($0))'" }.joined(separator: ", ")
+            conditions.append("\"\(escapeSQLId(tagKey))\" IN (\(valueList))")
+        }
+
+        if !wrappedFields.isEmpty {
+            // Field filter is implicit in SELECT for SQL
+        }
+
+        let whereClause = conditions.joined(separator: " AND ")
+        let sqlFn = sqlAggregateFunction(fn)
+        let fields = wrappedFields.isEmpty ? ["value"] : wrappedFields
+
+        if window != .none {
+            let selectFields = fields.map { "\(sqlFn)(\"\(escapeSQLId($0))\") AS \"\(escapeSQLId($0))\"" }
+            return """
+            SELECT DATE_BIN(INTERVAL '\(Int(window.seconds)) seconds', time) + INTERVAL '\(offsetSeconds) seconds' AS time, \(selectFields.joined(separator: ", "))
+            FROM \(measurement)
+            WHERE \(whereClause)
+            GROUP BY 1
+            ORDER BY 1
+            """
+        }
+
+        let selectFields = fields.map { "\"\(escapeSQLId($0))\"" }
+        return """
+        SELECT time + INTERVAL '\(offsetSeconds) seconds' AS time, \(selectFields.joined(separator: ", "))
+        FROM \(measurement)
+        WHERE \(whereClause)
+        ORDER BY time
+        """
+    }
+
+    func buildComparisonBandSQLQuery(database: String, timeRange: TimeRange, window: AggregateWindow, offset: ComparisonOffset) -> String {
+        let rangeSeconds = Int(timeRange.seconds)
+        let offsetSeconds = Int(offset.seconds)
+        let effectiveWindow = window == .none ? timeRange.minimumWindow : window
+
+        let measurement = "\"\(escapeSQLId(wrappedMeasurement))\""
+        let startFilter = "time >= NOW() - INTERVAL '\(rangeSeconds + offsetSeconds) seconds'"
+        let stopFilter = "time < NOW() - INTERVAL '\(offsetSeconds) seconds'"
+
+        var conditions = [startFilter, stopFilter]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let valueList = tagValues.map { "'\(escapeSQLString($0))'" }.joined(separator: ", ")
+            conditions.append("\"\(escapeSQLId(tagKey))\" IN (\(valueList))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        let fieldList = wrappedFields.isEmpty ? ["value"] : wrappedFields
+        let selectFields = fieldList.flatMap { field -> [String] in
+            let f = "\"\(escapeSQLId(field))\""
+            return [
+                "MIN(\(f)) AS \"\(escapeSQLId(field))_min\"",
+                "MAX(\(f)) AS \"\(escapeSQLId(field))_max\"",
+                "AVG(\(f)) AS \"\(escapeSQLId(field))_mean\""
+            ]
+        }
+
+        return """
+        SELECT DATE_BIN(INTERVAL '\(Int(effectiveWindow.seconds)) seconds', time) + INTERVAL '\(offsetSeconds) seconds' AS time, \(selectFields.joined(separator: ", "))
+        FROM \(measurement)
+        WHERE \(whereClause)
+        GROUP BY 1
+        ORDER BY 1
+        """
+    }
+
+    private func sqlAggregateFunction(_ fn: AggregateFunction) -> String {
+        switch fn {
+        case .mean: return "AVG"
+        case .last: return "LAST_VALUE"
+        case .max: return "MAX"
+        case .min: return "MIN"
+        case .sum: return "SUM"
+        }
+    }
+
+    private func escapeSQLId(_ identifier: String) -> String {
+        identifier.replacingOccurrences(of: "\"", with: "\"\"")
+    }
+
+    private func escapeSQLString(_ value: String) -> String {
+        value.replacingOccurrences(of: "'", with: "''")
+    }
+
+    // MARK: - InfluxDB 2 Flux Query Building
+
     func buildFluxQuery(bucket: String, timeRange: TimeRange? = nil, window: AggregateWindow? = nil, fn: AggregateFunction? = nil) -> String {
         let tr = timeRange ?? wrappedTimeRange
         let aw = window ?? wrappedAggregateWindow
@@ -317,6 +488,11 @@ extension SavedQuery {
                 return buildBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw)
             }
             return buildFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, fn: af)
+        case .influxDB3:
+            if panel.needsBandAggregates {
+                return buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
+            }
+            return buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -345,6 +521,11 @@ extension SavedQuery {
                 return buildComparisonBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, offset: offset)
             }
             return buildComparisonFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .influxDB3:
+            if panel.needsBandAggregates {
+                return buildComparisonBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
+            }
+            return buildComparisonSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
         case .mqtt:
             return nil
         case .demo:

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		22279B402F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */; };
+		22279B412F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */; };
+		22279B422F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */; };
 		A10000010000000000000001 /* IoTPanelsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000001 /* IoTPanelsApp.swift */; };
 		A10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		A10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
@@ -22,12 +25,12 @@
 		A100000D0000000000000013 /* DemoSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000D0000000000000013 /* DemoSetup.swift */; };
 		A100000E0000000000000014 /* HomeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000E0000000000000014 /* HomeManager.swift */; };
 		A100000F0000000000000015 /* Home+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000F0000000000000015 /* Home+Wrapped.swift */; };
-		A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */; };
-		A10000100000000000000016 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A20000100000000000000016 /* Localizable.xcstrings */; };
-		A10000110000000000000017 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A20000110000000000000017 /* Settings.bundle */; };
 		A1000010000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000010000000000000000A /* Assets.xcassets */; };
+		A10000100000000000000016 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A20000100000000000000016 /* Localizable.xcstrings */; };
 		A1000011000000000000000B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B /* Preview Assets.xcassets */; };
+		A10000110000000000000017 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = A20000110000000000000017 /* Settings.bundle */; };
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
+		A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */; };
 		A1000013000000000000000D /* IoTPanelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013000000000000000D /* IoTPanelsTests.swift */; };
 		B10000010000000000000001 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* TimeRange.swift */; };
 		B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
@@ -40,10 +43,7 @@
 		C10000030000000000000003 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000030000000000000003 /* DashboardView.swift */; };
 		C10000040000000000000004 /* AddPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000040000000000000004 /* AddPanelView.swift */; };
 		C10000050000000000000005 /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
-		F100003100000000000000B1 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200003100000000000000B1 /* NavigationState.swift */; };
-		F100004100000000000000C1 /* FluxSyntaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200004100000000000000C1 /* FluxSyntaxView.swift */; };
-		F100005100000000000000D1 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
-		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
+		D03DC25287DF29A9589976F3 /* InfluxDB3SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02032788A59A73707192C288 /* InfluxDB3SetupView.swift */; };
 		D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000010000000000000001 /* IoTPanelsWidget.swift */; };
 		D10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		D10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
@@ -56,6 +56,7 @@
 		D1000010000000000000000A /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
 		D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D100001200000000000000FF /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
+		D10000130000000000000013 /* SingleValueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000050000000000000005 /* SingleValueWidget.swift */; };
 		E10000010000000000000001 /* WidgetHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000010000000000000001 /* WidgetHelper.swift */; };
 		F10000010000000000000001 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
 		F10000020000000000000002 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
@@ -67,10 +68,15 @@
 		F10000080000000000000008 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
 		F10000090000000000000009 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
 		F1000010000000000000000A /* WidgetDesignPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000050000000000000005 /* WidgetDesignPreviewView.swift */; };
-		F100002100000000000000A1 /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
-		F100002200000000000000A2 /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
 		F100001100000000000000F1 /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
 		F100001200000000000000F2 /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
+		F100002100000000000000A1 /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
+		F100002200000000000000A2 /* StyleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200002100000000000000A1 /* StyleConfig.swift */; };
+		F100003100000000000000B1 /* NavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200003100000000000000B1 /* NavigationState.swift */; };
+		F100004100000000000000C1 /* FluxSyntaxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200004100000000000000C1 /* FluxSyntaxView.swift */; };
+		F100005100000000000000D1 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
+		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
+		FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */; };
 		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
 		M10000030000000000000003 /* MQTTFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000030000000000000003 /* MQTTFormView.swift */; };
@@ -81,12 +87,11 @@
 		M50000020000000000000002 /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = M40000020000000000000002 /* CocoaMQTTWebSocket */; };
 		M50000030000000000000003 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = M40000030000000000000003 /* CocoaMQTT */; };
 		M50000040000000000000004 /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = M40000040000000000000004 /* CocoaMQTTWebSocket */; };
-		M80000010000000000000001 /* MQTTBrokerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M80000020000000000000002 /* MQTTBrokerFormView.swift */; };
 		M60000010000000000000001 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
 		M60000020000000000000002 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
 		M60000030000000000000003 /* BrokerFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000010000000000000001 /* BrokerFileType.swift */; };
 		M60000040000000000000004 /* BrokerImportExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = M70000020000000000000002 /* BrokerImportExport.swift */; };
-		D10000130000000000000013 /* SingleValueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000050000000000000005 /* SingleValueWidget.swift */; };
+		M80000010000000000000001 /* MQTTBrokerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M80000020000000000000002 /* MQTTBrokerFormView.swift */; };
 		W10000010000000000000001 /* IoTPanelsWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20000010000000000000001 /* IoTPanelsWatchApp.swift */; };
 		W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20000020000000000000002 /* IoTPanelsWatchWidget.swift */; };
 		W10000030000000000000003 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
@@ -160,6 +165,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		02032788A59A73707192C288 /* InfluxDB3SetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB3SetupView.swift; sourceTree = "<group>"; };
+		22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB3Service.swift; sourceTree = "<group>"; };
+		667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB3SettingsFormView.swift; sourceTree = "<group>"; };
 		A20000010000000000000001 /* IoTPanelsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsApp.swift; sourceTree = "<group>"; };
 		A20000020000000000000002 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		A20000030000000000000003 /* BackendType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendType.swift; sourceTree = "<group>"; };
@@ -175,11 +183,11 @@
 		A200000D0000000000000013 /* DemoSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSetup.swift; sourceTree = "<group>"; };
 		A200000E0000000000000014 /* HomeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeManager.swift; sourceTree = "<group>"; };
 		A200000F0000000000000015 /* Home+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Home+Wrapped.swift"; sourceTree = "<group>"; };
-		A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTTopicDiscoveryPage.swift; sourceTree = "<group>"; };
-		A20000100000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		A20000110000000000000017 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		A2000010000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A20000100000000000000016 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A2000011000000000000000B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		A20000110000000000000017 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTTopicDiscoveryPage.swift; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
 		A2000014000000000000000E /* IoTPanels.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IoTPanels.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000015000000000000000F /* IoTPanelsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IoTPanelsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -198,10 +206,10 @@
 		C20000040000000000000004 /* AddPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPanelView.swift; sourceTree = "<group>"; };
 		C20000050000000000000005 /* PanelCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanelCardView.swift; sourceTree = "<group>"; };
 		D20000010000000000000001 /* IoTPanelsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWidget.swift; sourceTree = "<group>"; };
-		D20000050000000000000005 /* SingleValueWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleValueWidget.swift; sourceTree = "<group>"; };
 		D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IoTPanelsWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D20000030000000000000003 /* IoTPanelsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWidget.entitlements; sourceTree = "<group>"; };
 		D20000040000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D20000050000000000000005 /* SingleValueWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleValueWidget.swift; sourceTree = "<group>"; };
 		E20000010000000000000001 /* WidgetHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetHelper.swift; sourceTree = "<group>"; };
 		F20000010000000000000001 /* WidgetDesign+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WidgetDesign+Wrapped.swift"; sourceTree = "<group>"; };
 		F20000020000000000000002 /* ColorUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorUtilities.swift; sourceTree = "<group>"; };
@@ -210,18 +218,18 @@
 		F20000050000000000000005 /* WidgetDesignPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDesignPreviewView.swift; sourceTree = "<group>"; };
 		F20000060000000000000006 /* AddWidgetItemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddWidgetItemView.swift; sourceTree = "<group>"; };
 		F20000070000000000000007 /* WidgetItemConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetItemConfigView.swift; sourceTree = "<group>"; };
-		F200005100000000000000D1 /* DemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoService.swift; sourceTree = "<group>"; };
-		F200004100000000000000C1 /* FluxSyntaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FluxSyntaxView.swift; sourceTree = "<group>"; };
-		F200003100000000000000B1 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
-		F200002100000000000000A1 /* StyleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleConfig.swift; sourceTree = "<group>"; };
 		F200001100000000000000F1 /* UnitType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitType.swift; sourceTree = "<group>"; };
+		F200002100000000000000A1 /* StyleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleConfig.swift; sourceTree = "<group>"; };
+		F200003100000000000000B1 /* NavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationState.swift; sourceTree = "<group>"; };
+		F200004100000000000000C1 /* FluxSyntaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FluxSyntaxView.swift; sourceTree = "<group>"; };
+		F200005100000000000000D1 /* DemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoService.swift; sourceTree = "<group>"; };
 		M20000010000000000000001 /* MQTTModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTModels.swift; sourceTree = "<group>"; };
 		M20000020000000000000002 /* MQTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTService.swift; sourceTree = "<group>"; };
 		M20000030000000000000003 /* MQTTFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTFormView.swift; sourceTree = "<group>"; };
 		M20000040000000000000004 /* MQTTQueryBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTQueryBuilderView.swift; sourceTree = "<group>"; };
-		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
 		M70000010000000000000001 /* BrokerFileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerFileType.swift; sourceTree = "<group>"; };
 		M70000020000000000000002 /* BrokerImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerImportExport.swift; sourceTree = "<group>"; };
+		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
 		W20000010000000000000001 /* IoTPanelsWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchApp.swift; sourceTree = "<group>"; };
 		W20000020000000000000002 /* IoTPanelsWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchWidget.swift; sourceTree = "<group>"; };
 		W20000030000000000000003 /* IoTPanelsWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWatch.entitlements; sourceTree = "<group>"; };
@@ -326,6 +334,7 @@
 		A70000040000000000000004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */,
 				A20000050000000000000005 /* DataSourceService.swift */,
 				A20000060000000000000006 /* InfluxDB2Service.swift */,
 				E20000010000000000000001 /* WidgetHelper.swift */,
@@ -361,6 +370,8 @@
 				A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */,
 				M20000030000000000000003 /* MQTTFormView.swift */,
 				M80000020000000000000002 /* MQTTBrokerFormView.swift */,
+				667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */,
+				02032788A59A73707192C288 /* InfluxDB3SetupView.swift */,
 			);
 			path = DataSource;
 			sourceTree = "<group>";
@@ -647,6 +658,7 @@
 				A100000F0000000000000015 /* Home+Wrapped.swift in Sources */,
 				A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */,
 				B10000010000000000000001 /* TimeRange.swift in Sources */,
+				22279B422F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
 				B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */,
 				B10000030000000000000003 /* QueryBuilderView.swift in Sources */,
 				B10000040000000000000004 /* QueryResultTableView.swift in Sources */,
@@ -678,6 +690,8 @@
 				M10000040000000000000004 /* MQTTQueryBuilderView.swift in Sources */,
 				M60000010000000000000001 /* BrokerFileType.swift in Sources */,
 				M60000020000000000000002 /* BrokerImportExport.swift in Sources */,
+				FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */,
+				D03DC25287DF29A9589976F3 /* InfluxDB3SetupView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -694,6 +708,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */,
+				22279B402F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
 				D10000020000000000000002 /* Persistence.swift in Sources */,
 				D10000030000000000000003 /* BackendType.swift in Sources */,
 				D10000040000000000000004 /* DataSource+Wrapped.swift in Sources */,
@@ -747,6 +762,7 @@
 				W10000160000000000000010 /* WidgetDesign+Wrapped.swift in Sources */,
 				W10000170000000000000011 /* ColorUtilities.swift in Sources */,
 				W10000180000000000000012 /* MQTTModels.swift in Sources */,
+				22279B412F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
 				W1000020000000000000001A /* BrokerFileType.swift in Sources */,
 				W1000021000000000000001B /* BrokerImportExport.swift in Sources */,
 			);
@@ -1223,19 +1239,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCVersionGroup section */
-		A2000012000000000000000C /* IoTPanels.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				AD0000010000000000000001 /* IoTPanels.xcdatamodel */,
-			);
-			currentVersion = AD0000010000000000000001 /* IoTPanels.xcdatamodel */;
-			path = IoTPanels.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
-
 /* Begin XCRemoteSwiftPackageReference section */
 		M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1269,6 +1272,19 @@
 			productName = CocoaMQTTWebSocket;
 		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCVersionGroup section */
+		A2000012000000000000000C /* IoTPanels.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				AD0000010000000000000001 /* IoTPanels.xcdatamodel */,
+			);
+			currentVersion = AD0000010000000000000001 /* IoTPanels.xcdatamodel */;
+			path = IoTPanels.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = A50000010000000000000001 /* Project object */;
 }

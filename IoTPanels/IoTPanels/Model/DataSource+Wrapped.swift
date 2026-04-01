@@ -41,6 +41,11 @@ extension DataSource {
         set { bucket = newValue }
     }
 
+    var wrappedDatabase: String {
+        get { database ?? "" }
+        set { database = newValue }
+    }
+
     var wrappedCreatedAt: Date {
         get { createdAt ?? Date() }
         set { createdAt = newValue }
