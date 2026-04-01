@@ -131,6 +131,12 @@ struct DashboardView: View {
                                     }
                                 }
 
+                                Button {
+                                    duplicatePanel(panel)
+                                } label: {
+                                    Label("Duplicate", systemImage: "plus.square.on.square")
+                                }
+
                                 Divider()
 
                                 Button {
@@ -258,6 +264,27 @@ struct DashboardView: View {
             WidgetHelper.reloadWidgets()
             refreshID = UUID()
         }
+    }
+
+    private func duplicatePanel(_ panel: DashboardPanel) {
+        let newPanel = DashboardPanel(context: viewContext)
+        newPanel.id = UUID()
+        newPanel.title = panel.wrappedTitle
+        newPanel.displayStyle = panel.displayStyle
+        newPanel.styleConfigJSON = panel.styleConfigJSON
+        newPanel.timeRange = panel.timeRange
+        newPanel.aggregateWindow = panel.aggregateWindow
+        newPanel.aggregateFunction = panel.aggregateFunction
+        newPanel.comparisonOffset = panel.comparisonOffset
+        newPanel.savedQuery = panel.savedQuery
+        newPanel.dashboard = dashboard
+        newPanel.sortOrder = Int32(dashboard.sortedPanels.count)
+        newPanel.createdAt = Date()
+        newPanel.modifiedAt = Date()
+        dashboard.modifiedAt = Date()
+        try? viewContext.save()
+        WidgetHelper.reloadWidgets()
+        refreshID = UUID()
     }
 
 }
