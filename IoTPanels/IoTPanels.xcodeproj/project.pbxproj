@@ -13,6 +13,8 @@
 		22CA484F2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */; };
 		22CA48502F7CDCEA00E2F2C9 /* InfluxDB1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */; };
 		22CA48512F7CDCEA00E2F2C9 /* InfluxDB1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */; };
+		22CA48542F7CEF2400E2F2C9 /* ChartExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */; };
+		22CA48552F7CEF2400E2F2C9 /* ChartExplorerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */; };
 		64707E62288CFC72ED734E1D /* InfluxDB1SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */; };
 		6E0F62D9ECD0950BC0D789C8 /* InfluxDB1SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB95FEE044E5D4BA157D84D0 /* InfluxDB1SettingsFormView.swift */; };
 		9CFE7053CA7F49B4AE44EC43 /* ManualQueryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */; };
@@ -63,6 +65,8 @@
 		D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D100001200000000000000FF /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
 		D10000130000000000000013 /* SingleValueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000050000000000000005 /* SingleValueWidget.swift */; };
+		D10000140000000000000014 /* ChartExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */; };
+		D10000150000000000000015 /* ChartExplorerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */; };
 		E10000010000000000000001 /* WidgetHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000010000000000000001 /* WidgetHelper.swift */; };
 		F10000010000000000000001 /* WidgetDesign+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000010000000000000001 /* WidgetDesign+Wrapped.swift */; };
 		F10000020000000000000002 /* ColorUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000020000000000000002 /* ColorUtilities.swift */; };
@@ -109,6 +113,8 @@
 		W10000090000000000000009 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
 		W1000010000000000000000A /* Dashboard+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000010000000000000001 /* Dashboard+Wrapped.swift */; };
 		W1000011000000000000000B /* PanelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000050000000000000005 /* PanelCardView.swift */; };
+		W1000022000000000000001C /* ChartExplorerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */; };
+		W1000023000000000000001D /* ChartExplorerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */; };
 		W1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
 		W1000013000000000000000D /* UnitType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200001100000000000000F1 /* UnitType.swift */; };
 		W1000014000000000000000E /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
@@ -175,6 +181,8 @@
 		0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ManualQueryEditorView.swift; sourceTree = "<group>"; };
 		22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB3Service.swift; sourceTree = "<group>"; };
 		22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB1Service.swift; sourceTree = "<group>"; };
+		22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartExplorerState.swift; sourceTree = "<group>"; };
+		22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartExplorerView.swift; sourceTree = "<group>"; };
 		5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB1SetupView.swift; sourceTree = "<group>"; };
 		667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB3SettingsFormView.swift; sourceTree = "<group>"; };
 		A20000010000000000000001 /* IoTPanelsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsApp.swift; sourceTree = "<group>"; };
@@ -435,6 +443,8 @@
 		C70000010000000000000001 /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
+				22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */,
+				22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */,
 				C20000020000000000000002 /* DashboardListView.swift */,
 				C20000030000000000000003 /* DashboardView.swift */,
 				C20000040000000000000004 /* AddPanelView.swift */,
@@ -686,6 +696,8 @@
 				C10000050000000000000005 /* PanelCardView.swift in Sources */,
 				E10000010000000000000001 /* WidgetHelper.swift in Sources */,
 				F100003100000000000000B1 /* NavigationState.swift in Sources */,
+				22CA48542F7CEF2400E2F2C9 /* ChartExplorerView.swift in Sources */,
+				22CA48552F7CEF2400E2F2C9 /* ChartExplorerState.swift in Sources */,
 				F100004100000000000000C1 /* FluxSyntaxView.swift in Sources */,
 				F100005100000000000000D1 /* DemoService.swift in Sources */,
 				F100001100000000000000F1 /* UnitType.swift in Sources */,
@@ -736,6 +748,8 @@
 				D10000080000000000000008 /* SavedQuery+Wrapped.swift in Sources */,
 				D10000090000000000000009 /* Dashboard+Wrapped.swift in Sources */,
 				D100001200000000000000FF /* PanelCardView.swift in Sources */,
+				D10000140000000000000014 /* ChartExplorerView.swift in Sources */,
+				D10000150000000000000015 /* ChartExplorerState.swift in Sources */,
 				F100001200000000000000F2 /* UnitType.swift in Sources */,
 				F100005200000000000000D2 /* DemoService.swift in Sources */,
 				F100002200000000000000A2 /* StyleConfig.swift in Sources */,
@@ -775,6 +789,8 @@
 				W10000090000000000000009 /* SavedQuery+Wrapped.swift in Sources */,
 				W1000010000000000000000A /* Dashboard+Wrapped.swift in Sources */,
 				W1000011000000000000000B /* PanelCardView.swift in Sources */,
+				W1000022000000000000001C /* ChartExplorerView.swift in Sources */,
+				W1000023000000000000001D /* ChartExplorerState.swift in Sources */,
 				W1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */,
 				W1000013000000000000000D /* UnitType.swift in Sources */,
 				W1000014000000000000000E /* DemoService.swift in Sources */,

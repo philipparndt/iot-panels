@@ -11,6 +11,7 @@ struct DashboardView: View {
     @State private var renameText = ""
     @State private var isWiggling = false
     @State private var draggedPanel: DashboardPanel?
+    @State private var exploringPanel: DashboardPanel?
     @StateObject private var heatmapSelection = HeatmapSelectionState()
 
     var body: some View {
@@ -75,6 +76,9 @@ struct DashboardView: View {
                 .environment(\.managedObjectContext, viewContext)
                 .environmentObject(heatmapSelection)
         }
+        .fullScreenCover(item: $exploringPanel) { panel in
+            ChartExplorerView(panel: panel)
+        }
     }
 
     // MARK: - Normal Mode
@@ -97,6 +101,12 @@ struct DashboardView: View {
                         PanelCardView(panel: panel)
                             .id("\(panel.objectID)-\(refreshID)")
                             .contextMenu {
+                                Button {
+                                    exploringPanel = panel
+                                } label: {
+                                    Label("Explore", systemImage: "arrow.up.left.and.arrow.down.right")
+                                }
+
                                 Button {
                                     editingPanel = panel
                                 } label: {

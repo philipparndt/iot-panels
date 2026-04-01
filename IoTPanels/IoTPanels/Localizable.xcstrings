@@ -1413,6 +1413,9 @@
         }
       }
     },
+    "Close" : {
+
+    },
     "Cold → Hot" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2509,6 +2512,9 @@
           }
         }
       }
+    },
+    "Explore" : {
+
     },
     "Fahrenheit" : {
       "extractionState" : "stale",
@@ -4302,6 +4308,9 @@
           }
         }
       }
+    },
+    "No data available" : {
+
     },
     "No Data Sources" : {
       "localizations" : {
@@ -6430,6 +6439,9 @@
           }
         }
       }
+    },
+    "Viewing historical data" : {
+
     },
     "Volt" : {
       "extractionState" : "stale",

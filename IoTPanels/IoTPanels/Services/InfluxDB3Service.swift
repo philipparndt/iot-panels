@@ -22,7 +22,7 @@ struct InfluxDB3Service: DataSourceServiceProtocol {
     func testConnection() async throws -> Bool {
         if database.isEmpty {
             // No database configured yet — just check the server is reachable
-            let dbs = try await fetchDatabases()
+            _ = try await fetchDatabases()
             return true
         }
         let result = try await executeSQL("SELECT 1")
