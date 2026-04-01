@@ -104,8 +104,7 @@ struct DataSourceDetailView: View {
                         Text(type.displayName).tag(type)
                     }
                 }
-                TextField(backendType.displayName, text: $name)
-                    .focused($nameFieldFocused)
+                TextField("Name", text: $name)
             }
 
             if backendType == .demo {
@@ -339,7 +338,7 @@ struct DataSourceDetailView: View {
                                 .disabled(!canSave)
                         }
                     }
-                    .onAppear { nameFieldFocused = true }
+                    .onAppear { }
             }
         }
     }

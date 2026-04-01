@@ -102,7 +102,7 @@ struct QueryBuilderView: View {
                                 icon: "line.3.horizontal.decrease",
                                 title: "Filters",
                                 value: selectedFilterCount > 0 ? "\(selectedFilterCount) active" : nil,
-                                done: true,
+                                done: selectedFilterCount > 0,
                                 optional: true
                             )
                         }

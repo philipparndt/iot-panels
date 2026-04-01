@@ -61,9 +61,9 @@ struct InfluxDB3Service: DataSourceServiceProtocol {
         let result = try await executeSQL("SHOW COLUMNS FROM \"\(escapeSQLIdentifier(measurement))\"")
         return result.rows.compactMap { row in
             let name = row.values["column_name"] ?? row.values["name"] ?? ""
-            let type = (row.values["data_type"] ?? row.values["type"] ?? "").lowercased()
+            let type = row.values["data_type"] ?? row.values["type"] ?? ""
             if name == "time" { return nil }
-            if type == "dictionary" || type == "utf8" { return nil }
+            if Self.isTagType(type) { return nil }
             return name.isEmpty ? nil : name
         }
     }
@@ -72,13 +72,18 @@ struct InfluxDB3Service: DataSourceServiceProtocol {
         let result = try await executeSQL("SHOW COLUMNS FROM \"\(escapeSQLIdentifier(measurement))\"")
         return result.rows.compactMap { row in
             let name = row.values["column_name"] ?? row.values["name"] ?? ""
-            let type = (row.values["data_type"] ?? row.values["type"] ?? "").lowercased()
+            let type = row.values["data_type"] ?? row.values["type"] ?? ""
             if name == "time" { return nil }
-            if type == "dictionary" || type == "utf8" {
+            if Self.isTagType(type) {
                 return name.isEmpty ? nil : name
             }
             return nil
         }
+    }
+
+    /// Tags in InfluxDB 3 use `Dictionary(Int32, Utf8)` data type.
+    private static func isTagType(_ dataType: String) -> Bool {
+        dataType.hasPrefix("Dictionary(")
     }
 
     func fetchTagValues(measurement: String, tag: String) async throws -> [String] {
