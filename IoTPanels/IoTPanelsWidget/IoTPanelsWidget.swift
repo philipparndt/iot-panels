@@ -198,8 +198,10 @@ struct WidgetCanvasFromEntry: View {
             series: group.series,
             compact: compact,
             textScale: textScale,
-            styleConfig: group.styleConfig
+            styleConfig: group.styleConfig,
+            fillHeight: true
         )
+        .frame(maxHeight: .infinity)
     }
 }
 
@@ -207,19 +209,12 @@ struct DesignWidgetView: View {
     let entry: WidgetDesignEntry
 
     var body: some View {
-        let refWidth = entry.sizeType == .small
-            ? WidgetDesignPreviewView.referenceWidth * 0.5
-            : WidgetDesignPreviewView.referenceWidth
-        let refHeight = refWidth / entry.sizeType.aspectRatio
-
-        ScaledWidgetContainer(referenceSize: CGSize(width: refWidth, height: refHeight)) {
-            WidgetCanvasFromEntry(
-                sizeType: entry.sizeType,
-                groups: entry.groups,
-                textScale: entry.textScale
-            )
-            .padding(10)
-        }
+        WidgetCanvasFromEntry(
+            sizeType: entry.sizeType,
+            groups: entry.groups,
+            textScale: entry.textScale
+        )
+        .padding(10)
     }
 }
 

@@ -44,9 +44,11 @@ struct PanelRenderer: View {
     let unit: String
     let textScale: CGFloat
     let styleConfig: StyleConfig
+    /// When true, chart fills available height instead of using a fixed height.
+    let fillHeight: Bool
 
     /// Single-series convenience init (backward compatible)
-    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default) {
+    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false) {
         self.title = title
         self.style = style
         self.series = [ChartSeries(id: "default", label: dataPoints.first?.field ?? "value", color: .accentColor, dataPoints: dataPoints)]
@@ -54,10 +56,11 @@ struct PanelRenderer: View {
         self.unit = unit
         self.textScale = textScale
         self.styleConfig = styleConfig
+        self.fillHeight = fillHeight
     }
 
     /// Multi-series init
-    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default) {
+    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false) {
         self.title = title
         self.style = style
         self.series = series
@@ -65,6 +68,7 @@ struct PanelRenderer: View {
         self.unit = unit
         self.textScale = textScale
         self.styleConfig = styleConfig
+        self.fillHeight = fillHeight
     }
 
     @State private var selectedTime: Date?
@@ -328,7 +332,7 @@ struct PanelRenderer: View {
             .chartXAxis(compact ? .hidden : .automatic)
             .chartYAxis(compact ? .hidden : .automatic)
             .chartXSelection(value: $selectedTime)
-            .frame(height: compact ? 40 : 160)
+            .frame(height: fillHeight ? nil : (compact ? 40 : 160))
 
             chartFooter(for: points)
         }
@@ -416,7 +420,7 @@ struct PanelRenderer: View {
             .chartYAxis(compact ? .hidden : .automatic)
             .chartLegend(.hidden)
             .chartXSelection(value: $selectedTime)
-            .frame(height: compact ? 40 : 160)
+            .frame(height: fillHeight ? nil : (compact ? 40 : 160))
 
             chartFooter(for: allDataPoints)
         }
@@ -631,7 +635,7 @@ struct PanelRenderer: View {
         .chartXAxis(compact ? .hidden : .automatic)
         .chartYAxis(compact ? .hidden : .automatic)
         .chartXSelection(value: $selectedTime)
-        .frame(height: compact ? 40 : 160)
+        .frame(height: fillHeight ? nil : (compact ? 40 : 160))
     }
 
     @ChartContentBuilder
