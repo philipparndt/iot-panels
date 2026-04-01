@@ -98,9 +98,12 @@ struct PanelRenderer: View {
         return nil
     }
 
-    /// The color of the first (primary) series, used for single-series rendering.
+    /// The color of the first (primary) series, resolved through thresholds if configured.
     private var primaryColor: Color {
-        series.first(where: { !$0.label.hasPrefix("cmp_") })?.color ?? .accentColor
+        let baseColor = series.first(where: { !$0.label.hasPrefix("cmp_") })?.color ?? .accentColor
+        let preferredSeries = series.first(where: { $0.label.hasSuffix("_mean") }) ?? series.first(where: { !$0.label.hasPrefix("cmp_") })
+        guard let lastValue = preferredSeries?.dataPoints.last?.value else { return baseColor }
+        return styleConfig.resolvedColor(for: lastValue, baseColor: baseColor)
     }
 
     private var isMultiSeries: Bool { series.filter { !$0.label.hasPrefix("cmp_") }.count > 1 }

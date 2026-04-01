@@ -492,6 +492,13 @@ struct EditPanelView: View {
                     }
                 }
 
+                if style != .gauge {
+                    ThresholdEditorView(thresholds: Binding(
+                        get: { styleConfig.thresholds ?? [] },
+                        set: { styleConfig.thresholds = $0.isEmpty ? nil : $0 }
+                    ))
+                }
+
                 Section("Preview") {
                     PanelCardView(panel: panel)
                         .listRowInsets(EdgeInsets())

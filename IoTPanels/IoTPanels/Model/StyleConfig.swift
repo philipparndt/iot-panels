@@ -13,6 +13,9 @@ struct StyleConfig: Codable, Equatable {
     var bandOpacity: Double?    // nil = default 0.2
     var bandColor: String?      // nil = use series accent color
 
+    // Threshold color rules
+    var thresholds: [ThresholdRule]?
+
     static let `default` = StyleConfig()
 
     var resolvedGaugeColorScheme: GaugeColorScheme {
@@ -26,6 +29,29 @@ struct StyleConfig: Codable, Equatable {
     var resolvedBandOpacity: Double {
         bandOpacity ?? 0.2
     }
+
+    /// Returns the threshold-resolved color for a given value, or the base color if no threshold matches.
+    func resolvedColor(for value: Double, baseColor: Color) -> Color {
+        guard let rules = thresholds, !rules.isEmpty else { return baseColor }
+        let sorted = rules.sorted { $0.value < $1.value }
+        var result = baseColor
+        for rule in sorted {
+            if value >= rule.value {
+                result = Color(hex: rule.colorHex)
+            } else {
+                break
+            }
+        }
+        return result
+    }
+}
+
+// MARK: - Threshold Rule
+
+struct ThresholdRule: Codable, Equatable, Identifiable {
+    var id: Double { value }
+    var value: Double
+    var colorHex: String
 }
 
 // MARK: - Heatmap Colors
