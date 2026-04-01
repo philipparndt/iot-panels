@@ -1,6 +1,7 @@
 import Foundation
 
 enum BackendType: String, CaseIterable, Identifiable {
+    case influxDB1
     case influxDB2
     case influxDB3
     case mqtt
@@ -10,6 +11,7 @@ enum BackendType: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .influxDB1: return "InfluxDB 1"
         case .influxDB2: return "InfluxDB 2"
         case .influxDB3: return "InfluxDB 3"
         case .mqtt: return "MQTT"

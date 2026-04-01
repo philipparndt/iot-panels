@@ -29,6 +29,8 @@ enum ServiceFactory {
         switch dataSource.wrappedBackendType {
         case .demo:
             return DemoService()
+        case .influxDB1:
+            return InfluxDB1Service(dataSource: dataSource)
         case .influxDB2:
             return InfluxDB2Service(dataSource: dataSource)
         case .influxDB3:

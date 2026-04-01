@@ -1645,6 +1645,9 @@
         }
       }
     },
+    "Connect to your InfluxDB 1.x server and select a database." : {
+
+    },
     "Connect to your InfluxDB 3 server and select a database." : {
 
     },
@@ -3095,6 +3098,18 @@
           }
         }
       }
+    },
+    "InfluxDB 1" : {
+
+    },
+    "InfluxDB 1 Settings" : {
+
+    },
+    "InfluxDB 1 Setup" : {
+
+    },
+    "InfluxDB 1.x typically runs on port 8086." : {
+
     },
     "InfluxDB 2" : {
       "localizations" : {
@@ -4586,6 +4601,9 @@
           }
         }
       }
+    },
+    "Password (optional)" : {
+
     },
     "Password is required for PKCS#12 files" : {
       "localizations" : {
@@ -6223,6 +6241,9 @@
     "Use API Token" : {
 
     },
+    "Use Authentication" : {
+
+    },
     "Used to discover topics when creating queries. Leave empty to subscribe to all topics (#)." : {
       "localizations" : {
         "de" : {
@@ -6254,6 +6275,9 @@
           }
         }
       }
+    },
+    "Username (optional)" : {
+
     },
     "Username & Password" : {
       "extractionState" : "stale",

@@ -44,6 +44,7 @@ struct DataSourceDetailView: View {
     @State private var testResult: TestResult?
     @State private var isTesting = false
     @State private var showingGuidedSetup = false
+    @State private var showingInflux1Setup = false
     @State private var showingInflux3Setup = false
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
@@ -59,6 +60,8 @@ struct DataSourceDetailView: View {
 
     private var canSave: Bool {
         switch backendType {
+        case .influxDB1:
+            return !url.isEmpty
         case .influxDB2:
             guard !url.isEmpty else { return false }
             switch influxAuthMethod {
@@ -79,6 +82,8 @@ struct DataSourceDetailView: View {
     private var canTest: Bool {
         guard !isTesting else { return false }
         switch backendType {
+        case .influxDB1:
+            return !url.isEmpty
         case .influxDB2:
             guard !url.isEmpty else { return false }
             switch influxAuthMethod {
@@ -112,6 +117,44 @@ struct DataSourceDetailView: View {
                     Label("This data source generates realistic demo data for testing. No network connection required.", systemImage: "info.circle")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+            }
+
+            if backendType == .influxDB1 && !isEditing {
+                Section {
+                    Button {
+                        showingInflux1Setup = true
+                    } label: {
+                        Label("Setup Wizard", systemImage: "wand.and.stars")
+                    }
+                } header: {
+                    Text("Guided Setup")
+                } footer: {
+                    Text("Connect to your InfluxDB 1.x server and select a database.")
+                }
+            }
+
+            if backendType == .influxDB1 {
+                Section("InfluxDB 1") {
+                    NavigationLink {
+                        InfluxDB1SettingsFormView(
+                            url: $url,
+                            username: $influxUsername,
+                            password: $influxPassword,
+                            database: $influx3Database
+                        )
+                    } label: {
+                        HStack {
+                            Label("Connection Settings", systemImage: "server.rack")
+                            Spacer()
+                            if !url.isEmpty {
+                                Text(url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -261,6 +304,18 @@ struct DataSourceDetailView: View {
                                 .textSelection(.enabled)
                         }
                     }
+                }
+            }
+        }
+        .sheet(isPresented: $showingInflux1Setup) {
+            InfluxDB1SetupView { result in
+                url = result.url
+                influxUsername = result.username
+                influxPassword = result.password
+                influx3Database = result.database
+                showingInflux1Setup = false
+                if name.isEmpty {
+                    name = result.database
                 }
             }
         }
@@ -415,7 +470,10 @@ struct DataSourceDetailView: View {
         target.ssl = mqttSsl
         target.untrustedSSL = mqttSsl && mqttUntrustedSSL
         target.wrappedAlpn = mqttAlpn
-        if backendType == .influxDB2 && influxAuthMethod == .usernamePassword {
+        if backendType == .influxDB1 {
+            target.username = influxUsername.isEmpty ? nil : influxUsername
+            target.password = influxPassword.isEmpty ? nil : influxPassword
+        } else if backendType == .influxDB2 && influxAuthMethod == .usernamePassword {
             target.username = influxUsername
             target.password = influxPassword
         } else {
@@ -469,6 +527,25 @@ struct DataSourceDetailView: View {
                 do {
                     let success = try await service.testConnection()
                     await MainActor.run {
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
+                }
+            }
+
+        case .influxDB1:
+            let resolvedUrl = normalizedInfluxUrl()
+            let influx1Service = InfluxDB1Service(url: resolvedUrl, database: influx3Database, username: influxUsername, password: influxPassword)
+            Task {
+                do {
+                    let success = try await influx1Service.testConnection()
+                    await MainActor.run {
+                        url = resolvedUrl
                         testResult = success ? .success : .failure("Connection refused")
                         isTesting = false
                     }

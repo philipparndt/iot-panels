@@ -123,6 +123,8 @@ extension SavedQuery {
     /// Builds the appropriate query string based on the data source backend type.
     func buildQuery(for dataSource: DataSource) -> String {
         switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            return buildInfluxQLQuery(database: dataSource.wrappedDatabase)
         case .influxDB2:
             return buildFluxQuery(bucket: dataSource.wrappedBucket)
         case .influxDB3:
@@ -271,6 +273,118 @@ extension SavedQuery {
         }
 
         return unions.joined(separator: "\n\n")
+    }
+
+    // MARK: - InfluxDB 1 InfluxQL Query Building
+
+    func buildInfluxQLQuery(database: String, timeRange: TimeRange? = nil, window: AggregateWindow? = nil, fn: AggregateFunction? = nil) -> String {
+        let tr = timeRange ?? wrappedTimeRange
+        let aw = window ?? wrappedAggregateWindow
+        let af = fn ?? wrappedAggregateFunction
+
+        let fields = wrappedFields.isEmpty ? ["*"] : wrappedFields.map { "\(influxQLFn(af))(\"\($0)\") AS \"\($0)\"" }
+        let measurement = "\"\(wrappedMeasurement)\""
+
+        var conditions = ["time > now() - \(tr.rawValue)"]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let tagFilter = tagValues.map { "\"\(tagKey)\" = '\($0)'" }.joined(separator: " OR ")
+            conditions.append("(\(tagFilter))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        if aw != .none && !wrappedFields.isEmpty {
+            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(aw.rawValue)) fill(none)"
+        }
+
+        let selectFields = wrappedFields.isEmpty ? "*" : wrappedFields.map { "\"\($0)\"" }.joined(separator: ", ")
+        return "SELECT \(selectFields) FROM \(measurement) WHERE \(whereClause)"
+    }
+
+    func buildBandInfluxQLQuery(database: String, timeRange: TimeRange? = nil, window: AggregateWindow? = nil) -> String {
+        let tr = timeRange ?? wrappedTimeRange
+        let aw = window ?? wrappedAggregateWindow
+        let effectiveWindow = aw == .none ? tr.minimumWindow : aw
+        let measurement = "\"\(wrappedMeasurement)\""
+
+        var conditions = ["time > now() - \(tr.rawValue)"]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let tagFilter = tagValues.map { "\"\(tagKey)\" = '\($0)'" }.joined(separator: " OR ")
+            conditions.append("(\(tagFilter))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        let fieldList = wrappedFields.isEmpty ? ["value"] : wrappedFields
+        let selectFields = fieldList.flatMap { field -> [String] in
+            [
+                "MIN(\"\(field)\") AS \"\(field)_min\"",
+                "MAX(\"\(field)\") AS \"\(field)_max\"",
+                "MEAN(\"\(field)\") AS \"\(field)_mean\""
+            ]
+        }
+
+        return "SELECT \(selectFields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(effectiveWindow.rawValue)) fill(none)"
+    }
+
+    func buildComparisonInfluxQLQuery(database: String, timeRange: TimeRange, window: AggregateWindow, fn: AggregateFunction, offset: ComparisonOffset) -> String {
+        let rangeSeconds = Int(timeRange.seconds)
+        let offsetSeconds = Int(offset.seconds)
+        let measurement = "\"\(wrappedMeasurement)\""
+
+        var conditions = [
+            "time > now() - \(rangeSeconds + offsetSeconds)s",
+            "time < now() - \(offsetSeconds)s"
+        ]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let tagFilter = tagValues.map { "\"\(tagKey)\" = '\($0)'" }.joined(separator: " OR ")
+            conditions.append("(\(tagFilter))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        if window != .none && !wrappedFields.isEmpty {
+            let fields = wrappedFields.map { "\(influxQLFn(fn))(\"\($0)\") AS \"\($0)\"" }
+            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(window.rawValue)) fill(none)"
+        }
+
+        let selectFields = wrappedFields.isEmpty ? "*" : wrappedFields.map { "\"\($0)\"" }.joined(separator: ", ")
+        return "SELECT \(selectFields) FROM \(measurement) WHERE \(whereClause)"
+    }
+
+    func buildComparisonBandInfluxQLQuery(database: String, timeRange: TimeRange, window: AggregateWindow, offset: ComparisonOffset) -> String {
+        let rangeSeconds = Int(timeRange.seconds)
+        let offsetSeconds = Int(offset.seconds)
+        let effectiveWindow = window == .none ? timeRange.minimumWindow : window
+        let measurement = "\"\(wrappedMeasurement)\""
+
+        var conditions = [
+            "time > now() - \(rangeSeconds + offsetSeconds)s",
+            "time < now() - \(offsetSeconds)s"
+        ]
+        for (tagKey, tagValues) in wrappedTagFilters where !tagValues.isEmpty {
+            let tagFilter = tagValues.map { "\"\(tagKey)\" = '\($0)'" }.joined(separator: " OR ")
+            conditions.append("(\(tagFilter))")
+        }
+        let whereClause = conditions.joined(separator: " AND ")
+
+        let fieldList = wrappedFields.isEmpty ? ["value"] : wrappedFields
+        let selectFields = fieldList.flatMap { field -> [String] in
+            [
+                "MIN(\"\(field)\") AS \"\(field)_min\"",
+                "MAX(\"\(field)\") AS \"\(field)_max\"",
+                "MEAN(\"\(field)\") AS \"\(field)_mean\""
+            ]
+        }
+
+        return "SELECT \(selectFields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(effectiveWindow.rawValue)) fill(none)"
+    }
+
+    private func influxQLFn(_ fn: AggregateFunction) -> String {
+        switch fn {
+        case .mean: return "MEAN"
+        case .last: return "LAST"
+        case .max: return "MAX"
+        case .min: return "MIN"
+        case .sum: return "SUM"
+        }
     }
 
     // MARK: - InfluxDB 3 SQL Query Building
@@ -483,6 +597,11 @@ extension SavedQuery {
         let af = panel.effectiveAggregateFunction
 
         switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            if panel.needsBandAggregates {
+                return buildBandInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
+            }
+            return buildInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
         case .influxDB2:
             if panel.needsBandAggregates {
                 return buildBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw)
@@ -516,6 +635,11 @@ extension SavedQuery {
         let af = panel.effectiveAggregateFunction
 
         switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            if panel.needsBandAggregates {
+                return buildComparisonBandInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
+            }
+            return buildComparisonInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
         case .influxDB2:
             if panel.needsBandAggregates {
                 return buildComparisonBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, offset: offset)

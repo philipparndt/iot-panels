@@ -264,10 +264,14 @@ struct QueryBuilderView: View {
     }
 
     private func buildPreviewQuery() -> String {
-        if dataSource.wrappedBackendType == .influxDB3 {
+        switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            return buildInfluxQLPreviewQuery()
+        case .influxDB3:
             return buildSQLPreviewQuery()
+        default:
+            return buildFluxPreviewQuery()
         }
-        return buildFluxPreviewQuery()
     }
 
     private func buildFluxPreviewQuery() -> String {
@@ -288,6 +292,25 @@ struct QueryBuilderView: View {
             query += "\n  |> aggregateWindow(every: \(aggregateWindow.rawValue), fn: \(aggregateFunction.rawValue), createEmpty: false)"
         }
         query += "\n  |> yield(name: \"results\")"
+        return query
+    }
+
+    private func buildInfluxQLPreviewQuery() -> String {
+        let fields = selectedFields.isEmpty ? "*" : selectedFields.sorted().map { "\"\($0)\"" }.joined(separator: ", ")
+        var query = "SELECT \(fields) FROM \"\(selectedMeasurement)\" WHERE time > now() - \(timeRange.rawValue)"
+        for (k, v) in selectedTagValues where !v.isEmpty {
+            let filter = v.sorted().map { "\"\(k)\" = '\($0)'" }.joined(separator: " OR ")
+            query += " AND (\(filter))"
+        }
+        if aggregateWindow != .none && !selectedFields.isEmpty {
+            let aggFields = selectedFields.sorted().map { "MEAN(\"\($0)\") AS \"\($0)\"" }.joined(separator: ", ")
+            query = "SELECT \(aggFields) FROM \"\(selectedMeasurement)\" WHERE time > now() - \(timeRange.rawValue)"
+            for (k, v) in selectedTagValues where !v.isEmpty {
+                let filter = v.sorted().map { "\"\(k)\" = '\($0)'" }.joined(separator: " OR ")
+                query += " AND (\(filter))"
+            }
+            query += " GROUP BY time(\(aggregateWindow.rawValue)) fill(none)"
+        }
         return query
     }
 
