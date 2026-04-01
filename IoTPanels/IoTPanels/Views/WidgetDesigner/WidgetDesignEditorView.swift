@@ -12,22 +12,18 @@ struct WidgetDesignEditorView: View {
     @State private var editItems: [WidgetDesignItem] = []
 
     var body: some View {
-        Group {
-            if isRearranging {
-                rearrangeContent
-            } else {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        sizePicker
-                        textScalePicker
-                        refreshPicker
-                        backgroundColorPicker
-                        previewSection
-                        itemsSection
-                    }
-                    .padding()
+        ScrollView {
+            VStack(spacing: 20) {
+                if !isRearranging {
+                    sizePicker
+                    textScalePicker
+                    refreshPicker
+                    backgroundColorPicker
                 }
+                previewSection
+                itemsSection
             }
+            .padding()
         }
         .navigationTitle(design.wrappedName)
         .toolbar {
@@ -217,7 +213,7 @@ struct WidgetDesignEditorView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.secondary)
                 Spacer()
-                if design.sortedItems.count > 1 {
+                if !isRearranging, design.sortedItems.count > 1 {
                     Button {
                         editItems = design.sortedItems
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -232,7 +228,21 @@ struct WidgetDesignEditorView: View {
 
             let items = design.sortedItems
 
-            if items.isEmpty {
+            if isRearranging {
+                List {
+                    ForEach(editItems, id: \.objectID) { item in
+                        rearrangeRow(item: item)
+                    }
+                    .onMove { from, to in
+                        editItems.move(fromOffsets: from, toOffset: to)
+                        saveItemOrder()
+                    }
+                }
+                .environment(\.editMode, .constant(.active))
+                .frame(minHeight: CGFloat(editItems.count) * 52)
+                .listStyle(.plain)
+                .scrollDisabled(true)
+            } else if items.isEmpty {
                 HStack {
                     Spacer()
                     VStack(spacing: 8) {
@@ -254,54 +264,40 @@ struct WidgetDesignEditorView: View {
         }
     }
 
-    // MARK: - Rearrange Mode
+    // MARK: - Rearrange Row
 
-    private var rearrangeContent: some View {
-        List {
-            ForEach(editItems, id: \.objectID) { item in
-                HStack(spacing: 12) {
-                    Button {
-                        withAnimation {
-                            if let idx = editItems.firstIndex(of: item) {
-                                editItems.remove(at: idx)
-                            }
-                            viewContext.delete(item)
-                            design.modifiedAt = Date()
-                            try? viewContext.save()
-                            WidgetHelper.reloadWidgets()
-                        }
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.red)
+    private func rearrangeRow(item: WidgetDesignItem) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                withAnimation {
+                    if let idx = editItems.firstIndex(of: item) {
+                        editItems.remove(at: idx)
                     }
-                    .buttonStyle(.plain)
-
-                    Circle()
-                        .fill(item.color)
-                        .frame(width: 12, height: 12)
-
-                    Text(item.wrappedTitle)
-                        .font(.subheadline.weight(.medium))
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Label(item.wrappedDisplayStyle.displayName, systemImage: item.wrappedDisplayStyle.icon)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    viewContext.delete(item)
+                    saveItemOrder()
                 }
-                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.red)
             }
-            .onMove { from, to in
-                editItems.move(fromOffsets: from, toOffset: to)
-                saveItemOrder()
-            }
+            .buttonStyle(.plain)
+
+            Circle()
+                .fill(item.color)
+                .frame(width: 12, height: 12)
+
+            Text(item.wrappedTitle)
+                .font(.subheadline.weight(.medium))
+                .lineLimit(1)
+
+            Spacer()
+
+            Label(item.wrappedDisplayStyle.displayName, systemImage: item.wrappedDisplayStyle.icon)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
-        .environment(\.editMode, .constant(.active))
-        .onAppear {
-            editItems = design.sortedItems
-        }
+        .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
     }
 
     private func saveItemOrder() {
