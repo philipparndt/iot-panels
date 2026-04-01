@@ -11,6 +11,7 @@ struct ChartExplorerView: View {
     @State private var state: ChartExplorerState
     @State private var exportCSVURL: URL?
     @State private var showingShareSheet = false
+    @State private var isExporting = false
 
     init(panel: DashboardPanel) {
         self.panel = panel
@@ -77,6 +78,23 @@ struct ChartExplorerView: View {
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportCSVURL {
                 DataShareSheetView(items: [url])
+            }
+        }
+        .overlay {
+            if isExporting {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Exporting...")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
             }
         }
         .onAppear {
@@ -147,16 +165,25 @@ struct ChartExplorerView: View {
     }
 
     private func exportExplorer(format: String) {
+        isExporting = true
         let name = state.title.isEmpty ? "export" : state.title
-        let url: URL?
-        if format == "json" {
-            url = DataExporter.tempJSONFile(name: name, from: state.dataPoints, comparisonPoints: state.comparisonDataPoints)
-        } else {
-            url = DataExporter.tempCSVFile(name: name, from: state.dataPoints, comparisonPoints: state.comparisonDataPoints)
-        }
-        if let url {
-            exportCSVURL = url
-            showingShareSheet = true
+        let points = state.dataPoints
+        let compPoints = state.comparisonDataPoints
+
+        Task.detached(priority: .userInitiated) {
+            let url: URL?
+            if format == "json" {
+                url = DataExporter.tempJSONFile(name: name, from: points, comparisonPoints: compPoints)
+            } else {
+                url = DataExporter.tempCSVFile(name: name, from: points, comparisonPoints: compPoints)
+            }
+            await MainActor.run {
+                isExporting = false
+                if let url {
+                    exportCSVURL = url
+                    showingShareSheet = true
+                }
+            }
         }
     }
 

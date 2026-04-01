@@ -90,6 +90,7 @@
 		F100005100000000000000D1 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */; };
+		BKUP00010000000000000001 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BKUP00020000000000000002 /* BackupService.swift */; };
 		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
 		M10000030000000000000003 /* MQTTFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000030000000000000003 /* MQTTFormView.swift */; };
@@ -259,6 +260,7 @@
 		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
 		MQSW00020000000000000002 /* MQTTSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTSetupView.swift; sourceTree = "<group>"; };
 		THRE00020000000000000002 /* ThresholdEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThresholdEditorView.swift; sourceTree = "<group>"; };
+		BKUP00020000000000000002 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		W20000010000000000000001 /* IoTPanelsWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchApp.swift; sourceTree = "<group>"; };
 		W20000020000000000000002 /* IoTPanelsWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchWidget.swift; sourceTree = "<group>"; };
 		W20000030000000000000003 /* IoTPanelsWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWatch.entitlements; sourceTree = "<group>"; };
@@ -375,6 +377,7 @@
 				F200005100000000000000D1 /* DemoService.swift */,
 				WDLD00020000000000000002 /* WidgetDataLoader.swift */,
 				THRE00020000000000000002 /* ThresholdEditorView.swift */,
+				BKUP00020000000000000002 /* BackupService.swift */,
 				M70000020000000000000002 /* BrokerImportExport.swift */,
 				A200000D0000000000000013 /* DemoSetup.swift */,
 				A200000E0000000000000014 /* HomeManager.swift */,
@@ -717,6 +720,7 @@
 				22CA48552F7CEF2400E2F2C9 /* ChartExplorerState.swift in Sources */,
 				F100004100000000000000C1 /* FluxSyntaxView.swift in Sources */,
 				THRE00010000000000000001 /* ThresholdEditorView.swift in Sources */,
+				BKUP00010000000000000001 /* BackupService.swift in Sources */,
 				F100005100000000000000D1 /* DemoService.swift in Sources */,
 				WDLD00010000000000000001 /* WidgetDataLoader.swift in Sources */,
 				F100001100000000000000F1 /* UnitType.swift in Sources */,

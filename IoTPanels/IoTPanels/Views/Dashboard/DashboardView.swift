@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var exploringPanel: DashboardPanel?
     @State private var exportCSVURL: URL?
     @State private var showingShareSheet = false
+    @State private var isExporting = false
     @StateObject private var heatmapSelection = HeatmapSelectionState()
 
     var body: some View {
@@ -84,6 +85,23 @@ struct DashboardView: View {
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportCSVURL {
                 DataShareSheetView(items: [url])
+            }
+        }
+        .overlay {
+            if isExporting {
+                ZStack {
+                    Color.black.opacity(0.3).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .controlSize(.large)
+                        Text("Exporting...")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
             }
         }
     }
@@ -310,17 +328,24 @@ struct DashboardView: View {
     enum ExportFormat { case csv, json }
 
     private func exportPanel(_ panel: DashboardPanel, format: ExportFormat) {
+        isExporting = true
         let points = panel.cachedDataPoints ?? []
         let compPoints = panel.cachedComparisonDataPoints ?? []
         let name = panel.wrappedTitle.isEmpty ? "panel" : panel.wrappedTitle
-        let url: URL?
-        switch format {
-        case .csv: url = DataExporter.tempCSVFile(name: name, from: points, comparisonPoints: compPoints)
-        case .json: url = DataExporter.tempJSONFile(name: name, from: points, comparisonPoints: compPoints)
-        }
-        if let url {
-            exportCSVURL = url
-            showingShareSheet = true
+
+        Task.detached(priority: .userInitiated) {
+            let url: URL?
+            switch format {
+            case .csv: url = DataExporter.tempCSVFile(name: name, from: points, comparisonPoints: compPoints)
+            case .json: url = DataExporter.tempJSONFile(name: name, from: points, comparisonPoints: compPoints)
+            }
+            await MainActor.run {
+                isExporting = false
+                if let url {
+                    exportCSVURL = url
+                    showingShareSheet = true
+                }
+            }
         }
     }
 

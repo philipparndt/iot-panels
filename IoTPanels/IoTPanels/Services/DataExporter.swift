@@ -96,7 +96,9 @@ enum DataExporter {
     static func tempFile(name: String, ext: String, content: String) -> URL? {
         let safeName = name.replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: " ", with: "_")
-        let fileName = "\(safeName)_\(ISO8601DateFormatter().string(from: Date())).\(ext)"
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+            .replacingOccurrences(of: ":", with: "-")
+        let fileName = "\(safeName)_\(timestamp).\(ext)"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         do {
             try content.write(to: url, atomically: true, encoding: .utf8)

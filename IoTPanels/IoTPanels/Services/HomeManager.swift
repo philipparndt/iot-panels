@@ -67,8 +67,25 @@ enum HomeManager {
             demo.createdAt = Date()
         }
 
+        // Remove orphaned entities (home == nil) from older app versions
+        deleteOrphans(of: Dashboard.self, context: context)
+        deleteOrphans(of: DataSource.self, context: context)
+        deleteOrphans(of: WidgetDesign.self, context: context)
+        deleteOrphans(of: SavedQuery.self, key: "dataSource", context: context)
+        deleteOrphans(of: DashboardPanel.self, key: "dashboard", context: context)
+        deleteOrphans(of: WidgetDesignItem.self, key: "widgetDesign", context: context)
+
         try? context.save()
         return myHome
+    }
+
+    private static func deleteOrphans<T: NSManagedObject>(of type: T.Type, key: String = "home", context: NSManagedObjectContext) {
+        let request = T.fetchRequest()
+        request.predicate = NSPredicate(format: "%K == nil", key)
+        guard let orphans = try? context.fetch(request) as? [T] else { return }
+        for orphan in orphans {
+            context.delete(orphan)
+        }
     }
 
     /// Returns the demo home, creating it if needed.
