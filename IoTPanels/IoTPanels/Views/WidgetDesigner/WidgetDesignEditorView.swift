@@ -20,7 +20,9 @@ struct WidgetDesignEditorView: View {
                     refreshPicker
                     backgroundColorPicker
                 }
-                previewSection
+                if !design.sortedItems.isEmpty {
+                    previewSection
+                }
                 itemsSection
             }
             .padding()
@@ -242,24 +244,34 @@ struct WidgetDesignEditorView: View {
                 .frame(minHeight: CGFloat(editItems.count) * 52)
                 .listStyle(.plain)
                 .scrollDisabled(true)
-            } else if items.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Image(systemName: "plus.circle.dashed")
-                            .font(.title2)
-                            .foregroundStyle(.tertiary)
-                        Text("No items yet")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 20)
-                    Spacer()
-                }
             } else {
                 ForEach(items, id: \.objectID) { item in
                     itemRow(item: item)
                 }
+
+                Button {
+                    showingAddItem = true
+                } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.secondary)
+                        Text("Add Item")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 100)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.secondarySystemGroupedBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [8, 6]))
+                            .foregroundStyle(.quaternary)
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
