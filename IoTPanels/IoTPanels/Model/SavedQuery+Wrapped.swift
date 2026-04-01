@@ -58,6 +58,16 @@ extension SavedQuery {
         set { unit = newValue }
     }
 
+    var wrappedRawQuery: String {
+        get { rawQuery ?? "" }
+        set { rawQuery = newValue }
+    }
+
+    var wrappedIsRawQuery: Bool {
+        get { isRawQuery }
+        set { isRawQuery = newValue }
+    }
+
     var wrappedCachedAt: Date? {
         get { cachedAt }
         set { cachedAt = newValue }
@@ -122,6 +132,7 @@ extension SavedQuery {
 
     /// Builds the appropriate query string based on the data source backend type.
     func buildQuery(for dataSource: DataSource) -> String {
+        if wrappedIsRawQuery { return wrappedRawQuery }
         switch dataSource.wrappedBackendType {
         case .influxDB1:
             return buildInfluxQLQuery(database: dataSource.wrappedDatabase)
@@ -592,6 +603,7 @@ extension SavedQuery {
 
     /// Build query using panel-local overrides for time range and aggregation.
     func buildQuery(for dataSource: DataSource, panel: DashboardPanel) -> String {
+        if wrappedIsRawQuery { return wrappedRawQuery }
         let tr = panel.effectiveTimeRange
         let aw = panel.effectiveAggregateWindow
         let af = panel.effectiveAggregateFunction
@@ -628,6 +640,7 @@ extension SavedQuery {
 
     /// Build comparison query for a panel with comparison offset.
     func buildComparisonQuery(for dataSource: DataSource, panel: DashboardPanel) -> String? {
+        if wrappedIsRawQuery { return nil }
         let offset = panel.wrappedComparisonOffset
         guard offset != .none else { return nil }
         let tr = panel.effectiveTimeRange

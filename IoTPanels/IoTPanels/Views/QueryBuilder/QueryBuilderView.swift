@@ -746,8 +746,10 @@ struct QueryPreviewPage: View {
 
     var body: some View {
         List {
-            Section("Flux Query") {
-                FluxSyntaxView(flux, fontSize: 10)
+            Section("Query") {
+                Text(flux)
+                    .font(.system(size: 10, design: .monospaced))
+                    .textSelection(.enabled)
             }
 
             Section {
@@ -772,6 +774,7 @@ struct QueryPreviewPage: View {
                 Section {
                     Label(errorMessage, systemImage: "xmark.circle.fill")
                         .foregroundStyle(.red)
+                        .textSelection(.enabled)
                 }
             }
         }
@@ -782,13 +785,9 @@ struct QueryPreviewPage: View {
     private func runPreview() {
         isLoading = true
         errorMessage = nil
-        let previewFlux = flux.replacingOccurrences(
-            of: "|> yield(name: \"results\")",
-            with: "|> limit(n: 100)\n  |> yield(name: \"results\")"
-        )
         Task {
             do {
-                let r = try await service.query(previewFlux)
+                let r = try await service.query(flux)
                 await MainActor.run { result = r; isLoading = false }
             } catch {
                 await MainActor.run { errorMessage = error.localizedDescription; isLoading = false }

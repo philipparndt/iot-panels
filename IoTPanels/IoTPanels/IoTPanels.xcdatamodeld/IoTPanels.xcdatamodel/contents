@@ -43,6 +43,8 @@
         <attribute name="tagFiltersJSON" optional="YES" attributeType="String"/>
         <attribute name="timeRange" optional="YES" attributeType="String"/>
         <attribute name="unit" optional="YES" attributeType="String"/>
+        <attribute name="rawQuery" optional="YES" attributeType="String"/>
+        <attribute name="isRawQuery" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="cachedResultJSON" optional="YES" attributeType="String"/>
         <attribute name="cachedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="dataSource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="DataSource" inverseName="savedQueries" inverseEntity="DataSource"/>

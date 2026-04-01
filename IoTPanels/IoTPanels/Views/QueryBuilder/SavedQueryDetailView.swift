@@ -29,9 +29,22 @@ struct SavedQueryDetailView: View {
                         LabeledContent("Unit", value: savedQuery.wrappedUnit)
                     }
                 }
+            } else if savedQuery.wrappedIsRawQuery {
+                Section("Manual Query") {
+                    Text(savedQuery.wrappedRawQuery)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                }
+                if !savedQuery.wrappedUnit.isEmpty {
+                    Section("Parameters") {
+                        LabeledContent("Unit", value: savedQuery.wrappedUnit)
+                    }
+                }
             } else {
                 Section("Query") {
-                    FluxSyntaxView(savedQuery.buildFluxQuery(bucket: dataSource.wrappedBucket), fontSize: 11)
+                    Text(savedQuery.buildQuery(for: dataSource))
+                        .font(.system(size: 11, design: .monospaced))
+                        .textSelection(.enabled)
                 }
 
                 Section("Parameters") {
@@ -102,6 +115,8 @@ struct SavedQueryDetailView: View {
     private var queryEditorSheet: some View {
         if isMQTT {
             MQTTQueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
+        } else if savedQuery.wrappedIsRawQuery {
+            ManualQueryEditorView(dataSource: dataSource, existingQuery: savedQuery)
         } else {
             QueryBuilderView(dataSource: dataSource, existingQuery: savedQuery)
         }

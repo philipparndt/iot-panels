@@ -8,6 +8,7 @@ struct SavedQueryListView: View {
     @FetchRequest private var savedQueries: FetchedResults<SavedQuery>
 
     @State private var showingQueryBuilder = false
+    @State private var showingManualEditor = false
     @State private var selectedQuery: SavedQuery?
 
     init(dataSource: DataSource) {
@@ -47,8 +48,25 @@ struct SavedQueryListView: View {
         .navigationTitle("Queries")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingQueryBuilder = true }) {
-                    Label("Add", systemImage: "plus")
+                if isInfluxBackend {
+                    Menu {
+                        Button {
+                            showingQueryBuilder = true
+                        } label: {
+                            Label("Query Builder", systemImage: "list.bullet.rectangle")
+                        }
+                        Button {
+                            showingManualEditor = true
+                        } label: {
+                            Label("Manual Query", systemImage: "chevron.left.forwardslash.chevron.right")
+                        }
+                    } label: {
+                        Label("Add", systemImage: "plus")
+                    }
+                } else {
+                    Button(action: { showingQueryBuilder = true }) {
+                        Label("Add", systemImage: "plus")
+                    }
                 }
             }
         }
@@ -56,9 +74,22 @@ struct SavedQueryListView: View {
             queryBuilderSheet(existingQuery: nil)
                 .environment(\.managedObjectContext, viewContext)
         }
+        .sheet(isPresented: $showingManualEditor) {
+            ManualQueryEditorView(dataSource: dataSource, existingQuery: nil)
+                .environment(\.managedObjectContext, viewContext)
+        }
+    }
+
+    private var isInfluxBackend: Bool {
+        let bt = dataSource.wrappedBackendType
+        return bt == .influxDB1 || bt == .influxDB2 || bt == .influxDB3
     }
 
     private func querySummary(_ query: SavedQuery) -> String {
+        if query.wrappedIsRawQuery {
+            let preview = query.wrappedRawQuery.prefix(60)
+            return "Manual · \(preview)\(query.wrappedRawQuery.count > 60 ? "..." : "")"
+        }
         let fields = query.wrappedFields
         let fieldText = fields.isEmpty ? "" : fields.joined(separator: ", ")
         return "\(query.wrappedMeasurement) · \(fieldText) · \(query.wrappedTimeRange.displayName)"

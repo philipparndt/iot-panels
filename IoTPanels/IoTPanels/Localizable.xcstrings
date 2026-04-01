@@ -2592,6 +2592,7 @@
       }
     },
     "Flux Query" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2606,6 +2607,9 @@
           }
         }
       }
+    },
+    "Flux Reference" : {
+
     },
     "Foot" : {
       "extractionState" : "stale",
@@ -2835,6 +2839,9 @@
           }
         }
       }
+    },
+    "Help" : {
+
     },
     "Home" : {
       "extractionState" : "stale",
@@ -3167,6 +3174,9 @@
           }
         }
       }
+    },
+    "InfluxQL Reference" : {
+
     },
     "IoT Panels" : {
 
@@ -3660,6 +3670,9 @@
           }
         }
       }
+    },
+    "Manual Query" : {
+
     },
     "Max" : {
       "localizations" : {
@@ -4886,6 +4899,9 @@
         }
       }
     },
+    "Query Builder" : {
+
+    },
     "Query name" : {
       "localizations" : {
         "de" : {
@@ -5633,6 +5649,9 @@
           }
         }
       }
+    },
+    "SQL Reference (InfluxDB 3)" : {
+
     },
     "Stop" : {
       "localizations" : {

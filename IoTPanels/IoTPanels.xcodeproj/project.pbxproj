@@ -15,6 +15,7 @@
 		22CA48512F7CDCEA00E2F2C9 /* InfluxDB1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */; };
 		64707E62288CFC72ED734E1D /* InfluxDB1SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */; };
 		6E0F62D9ECD0950BC0D789C8 /* InfluxDB1SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB95FEE044E5D4BA157D84D0 /* InfluxDB1SettingsFormView.swift */; };
+		9CFE7053CA7F49B4AE44EC43 /* ManualQueryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */; };
 		A10000010000000000000001 /* IoTPanelsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000001 /* IoTPanelsApp.swift */; };
 		A10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		A10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
@@ -171,6 +172,7 @@
 
 /* Begin PBXFileReference section */
 		02032788A59A73707192C288 /* InfluxDB3SetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB3SetupView.swift; sourceTree = "<group>"; };
+		0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ManualQueryEditorView.swift; sourceTree = "<group>"; };
 		22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB3Service.swift; sourceTree = "<group>"; };
 		22CA484E2F7CDCEA00E2F2C9 /* InfluxDB1Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB1Service.swift; sourceTree = "<group>"; };
 		5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB1SetupView.swift; sourceTree = "<group>"; };
@@ -425,6 +427,7 @@
 				F200004100000000000000C1 /* FluxSyntaxView.swift */,
 				M20000040000000000000004 /* MQTTQueryBuilderView.swift */,
 				A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */,
+				0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */,
 			);
 			path = QueryBuilder;
 			sourceTree = "<group>";
@@ -706,6 +709,7 @@
 				D03DC25287DF29A9589976F3 /* InfluxDB3SetupView.swift in Sources */,
 				64707E62288CFC72ED734E1D /* InfluxDB1SetupView.swift in Sources */,
 				6E0F62D9ECD0950BC0D789C8 /* InfluxDB1SettingsFormView.swift in Sources */,
+				9CFE7053CA7F49B4AE44EC43 /* ManualQueryEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
