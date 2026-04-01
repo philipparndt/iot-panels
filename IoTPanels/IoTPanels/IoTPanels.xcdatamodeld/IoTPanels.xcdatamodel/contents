@@ -73,6 +73,10 @@
         <attribute name="sortOrder" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="styleConfigJSON" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="timeRange" optional="YES" attributeType="String"/>
+        <attribute name="aggregateWindow" optional="YES" attributeType="String"/>
+        <attribute name="aggregateFunction" optional="YES" attributeType="String"/>
+        <attribute name="comparisonOffset" optional="YES" attributeType="String"/>
         <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="widgetDesignItems" inverseEntity="SavedQuery"/>
         <relationship name="widgetDesign" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="WidgetDesign" inverseName="items" inverseEntity="WidgetDesign"/>
     </entity>

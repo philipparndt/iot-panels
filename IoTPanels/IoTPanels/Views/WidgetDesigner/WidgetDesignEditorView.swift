@@ -275,38 +275,9 @@ struct WidgetDesignEditorView: View {
 
     private func loadPreviewData() {
         isLoadingPreview = true
-        let groups = design.resolvedGroups
 
         Task {
-            var newData: [String: [ChartSeries]] = [:]
-
-            for group in groups {
-                var groupSeries: [ChartSeries] = []
-                for item in group.items {
-                    guard let query = item.savedQuery, let ds = query.dataSource else { continue }
-                    let service = ServiceFactory.service(for: ds)
-                    let flux = query.buildFluxQuery(bucket: ds.wrappedBucket)
-                    do {
-                        let result = try await service.query(flux)
-                        let points = ChartDataParser.parse(result: result)
-                        groupSeries.append(ChartSeries(
-                            id: item.wrappedId.uuidString,
-                            label: item.wrappedTitle,
-                            color: item.color,
-                            dataPoints: points
-                        ))
-                    } catch {
-                        groupSeries.append(ChartSeries(
-                            id: item.wrappedId.uuidString,
-                            label: item.wrappedTitle,
-                            color: item.color,
-                            dataPoints: []
-                        ))
-                    }
-                }
-                newData[group.id] = groupSeries
-            }
-
+            let newData = await WidgetDataLoader.fetchAllGroups(for: design)
             await MainActor.run {
                 seriesData = newData
                 isLoadingPreview = false

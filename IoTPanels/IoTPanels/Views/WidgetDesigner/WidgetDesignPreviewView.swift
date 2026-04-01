@@ -77,28 +77,14 @@ struct WidgetDesignPreviewView: View {
         let groupUnit = group.items.first?.savedQuery?.wrappedUnit ?? ""
         let config = group.items.first?.wrappedStyleConfig ?? .default
 
-        return Group {
-            if groupSeries.count <= 1 {
-                PanelRenderer(
-                    title: group.title,
-                    style: group.style,
-                    dataPoints: groupSeries.first?.dataPoints ?? [],
-                    compact: compact,
-                    unit: groupUnit,
-                    textScale: textScale,
-                    styleConfig: config
-                )
-            } else {
-                PanelRenderer(
-                    title: group.title,
-                    style: .chart,
-                    series: groupSeries,
-                    compact: compact,
-                    unit: groupUnit,
-                    textScale: textScale,
-                    styleConfig: config
-                )
-            }
-        }
+        return PanelRenderer(
+            title: group.title,
+            style: group.style,
+            series: groupSeries,
+            compact: compact,
+            unit: groupUnit,
+            textScale: textScale,
+            styleConfig: config
+        )
     }
 }

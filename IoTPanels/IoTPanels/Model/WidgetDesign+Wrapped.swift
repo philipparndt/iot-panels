@@ -247,6 +247,41 @@ extension WidgetDesignItem {
         set { styleConfigJSON = newValue.encode() }
     }
 
+    // MARK: - Query override properties (mirror DashboardPanel pattern)
+
+    var effectiveTimeRange: TimeRange {
+        get {
+            if let raw = timeRange, let val = TimeRange(rawValue: raw) { return val }
+            return savedQuery?.wrappedTimeRange ?? .twoHours
+        }
+        set { timeRange = newValue.rawValue }
+    }
+
+    var effectiveAggregateWindow: AggregateWindow {
+        get {
+            if let raw = aggregateWindow, let val = AggregateWindow(rawValue: raw) { return val }
+            return savedQuery?.wrappedAggregateWindow ?? .fiveMinutes
+        }
+        set { aggregateWindow = newValue.rawValue }
+    }
+
+    var effectiveAggregateFunction: AggregateFunction {
+        get {
+            if let raw = aggregateFunction, let val = AggregateFunction(rawValue: raw) { return val }
+            return savedQuery?.wrappedAggregateFunction ?? .mean
+        }
+        set { aggregateFunction = newValue.rawValue }
+    }
+
+    var wrappedComparisonOffset: ComparisonOffset {
+        get { ComparisonOffset(rawValue: comparisonOffset ?? "") ?? .none }
+        set { comparisonOffset = newValue == .none ? nil : newValue.rawValue }
+    }
+
+    var needsBandAggregates: Bool {
+        wrappedDisplayStyle == .bandChart
+    }
+
     var wrappedCreatedAt: Date {
         get { createdAt ?? Date() }
         set { createdAt = newValue }
@@ -255,5 +290,70 @@ extension WidgetDesignItem {
     var wrappedModifiedAt: Date {
         get { modifiedAt ?? Date() }
         set { modifiedAt = newValue }
+    }
+
+    // MARK: - Query building (mirrors SavedQuery.buildQuery(for:panel:))
+
+    func buildQuery(for dataSource: DataSource) -> String? {
+        guard let query = savedQuery else { return nil }
+        if query.wrappedIsRawQuery { return query.wrappedRawQuery }
+        let tr = effectiveTimeRange
+        let aw = effectiveAggregateWindow
+        let af = effectiveAggregateFunction
+
+        switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            return needsBandAggregates
+                ? query.buildBandInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
+                : query.buildInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
+        case .influxDB2:
+            return needsBandAggregates
+                ? query.buildBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw)
+                : query.buildFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, fn: af)
+        case .influxDB3:
+            return needsBandAggregates
+                ? query.buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
+                : query.buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
+        case .mqtt:
+            #if canImport(CocoaMQTT)
+            return query.buildMQTTQuery()
+            #else
+            return nil
+            #endif
+        case .demo:
+            return needsBandAggregates
+                ? query.buildBandFluxQuery(bucket: "demo", timeRange: tr, window: aw)
+                : query.buildFluxQuery(bucket: "demo", timeRange: tr, window: aw, fn: af)
+        }
+    }
+
+    func buildComparisonQuery(for dataSource: DataSource) -> String? {
+        guard let query = savedQuery, !query.wrappedIsRawQuery else { return nil }
+        let offset = wrappedComparisonOffset
+        guard offset != .none else { return nil }
+        let tr = effectiveTimeRange
+        let aw = effectiveAggregateWindow
+        let af = effectiveAggregateFunction
+
+        switch dataSource.wrappedBackendType {
+        case .influxDB1:
+            return needsBandAggregates
+                ? query.buildComparisonBandInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
+                : query.buildComparisonInfluxQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .influxDB2:
+            return needsBandAggregates
+                ? query.buildComparisonBandFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, offset: offset)
+                : query.buildComparisonFluxQuery(bucket: dataSource.wrappedBucket, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .influxDB3:
+            return needsBandAggregates
+                ? query.buildComparisonBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
+                : query.buildComparisonSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .mqtt:
+            return nil
+        case .demo:
+            return needsBandAggregates
+                ? query.buildComparisonBandFluxQuery(bucket: "demo", timeRange: tr, window: aw, offset: offset)
+                : query.buildComparisonFluxQuery(bucket: "demo", timeRange: tr, window: aw, fn: af, offset: offset)
+        }
     }
 }

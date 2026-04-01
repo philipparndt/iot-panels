@@ -139,18 +139,10 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
 
         var renderedGroups: [WidgetDesignEntry.RenderedGroup] = []
 
+        let allGroupData = await WidgetDataLoader.fetchAllGroups(for: design)
+
         for group in design.resolvedGroups {
-            var groupSeries: [ChartSeries] = []
-            for item in group.items {
-                guard let query = item.savedQuery, let ds = query.dataSource else { continue }
-                do {
-                    let result = try await ServiceFactory.service(for: ds).query(query.buildQuery(for: ds))
-                    let points = ChartDataParser.parse(result: result)
-                    groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: points))
-                } catch {
-                    groupSeries.append(ChartSeries(id: item.wrappedId.uuidString, label: item.wrappedTitle, color: item.color, dataPoints: []))
-                }
-            }
+            let groupSeries = allGroupData[group.id] ?? []
             let config = group.items.first?.wrappedStyleConfig ?? .default
             renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
         }
@@ -196,27 +188,15 @@ struct DesignWidgetView: View {
         }
     }
 
-    @ViewBuilder
     private func groupCell(_ group: WidgetDesignEntry.RenderedGroup, compact: Bool) -> some View {
-        if group.series.count <= 1 {
-            PanelRenderer(
-                title: group.title,
-                style: group.style,
-                dataPoints: group.series.first?.dataPoints ?? [],
-                compact: compact,
-                textScale: entry.textScale,
-                styleConfig: group.styleConfig
-            )
-        } else {
-            PanelRenderer(
-                title: group.title,
-                style: .chart,
-                series: group.series,
-                compact: compact,
-                textScale: entry.textScale,
-                styleConfig: group.styleConfig
-            )
-        }
+        PanelRenderer(
+            title: group.title,
+            style: group.style,
+            series: group.series,
+            compact: compact,
+            textScale: entry.textScale,
+            styleConfig: group.styleConfig
+        )
     }
 }
 
