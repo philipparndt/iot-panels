@@ -155,13 +155,39 @@ enum ComparisonOffset: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .none: return "None"
-        case .twentyFourHours: return "24 hours ago"
-        case .sevenDays: return "7 days ago"
-        case .fourteenDays: return "14 days ago"
-        case .thirtyDays: return "30 days ago"
-        case .ninetyDays: return "90 days ago"
-        case .oneYear: return "1 year ago"
+        case .none: return String(localized: "None")
+        case .twentyFourHours: return String(localized: "Yesterday")
+        case .sevenDays: return String(localized: "Last week")
+        case .fourteenDays: return String(localized: "2 weeks ago")
+        case .thirtyDays: return String(localized: "Last month")
+        case .ninetyDays: return String(localized: "3 months ago")
+        case .oneYear: return String(localized: "Last year")
+        }
+    }
+
+    /// Short label for the chart legend (e.g., "last week").
+    var legendLabel: String {
+        switch self {
+        case .none: return ""
+        case .twentyFourHours: return String(localized: "yesterday")
+        case .sevenDays: return String(localized: "last week")
+        case .fourteenDays: return String(localized: "2 weeks ago")
+        case .thirtyDays: return String(localized: "last month")
+        case .ninetyDays: return String(localized: "3 months ago")
+        case .oneYear: return String(localized: "last year")
+        }
+    }
+
+    /// Description for the edit panel picker.
+    var pickerDescription: String {
+        switch self {
+        case .none: return String(localized: "No comparison")
+        case .twentyFourHours: return String(localized: "Compare with the same period yesterday")
+        case .sevenDays: return String(localized: "Compare with the same period a week ago")
+        case .fourteenDays: return String(localized: "Compare with the same period 2 weeks ago")
+        case .thirtyDays: return String(localized: "Compare with the same period a month ago")
+        case .ninetyDays: return String(localized: "Compare with the same period 3 months ago")
+        case .oneYear: return String(localized: "Compare with the same period a year ago")
         }
     }
 

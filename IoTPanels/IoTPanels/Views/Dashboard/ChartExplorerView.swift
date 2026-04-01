@@ -103,7 +103,7 @@ struct ChartExplorerView: View {
                                     .stroke(style: StrokeStyle(lineWidth: 1, dash: [3, 2]))
                                     .foregroundStyle(Color.accentColor.complementary())
                             )
-                        Text("Previous \(state.comparisonOffset.fluxValue)")
+                        Text(state.comparisonOffset.legendLabel)
                             .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                     }

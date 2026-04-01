@@ -440,12 +440,19 @@ struct EditPanelView: View {
                 }
 
                 if style.isLineBased {
-                    Section("Compare With") {
+                    Section {
                         Picker("Comparison Period", selection: $comparisonOffset) {
                             ForEach(ComparisonOffset.allCases) { offset in
                                 Text(offset.displayName).tag(offset)
                             }
                         }
+                        if comparisonOffset != .none {
+                            Text(comparisonOffset.pickerDescription)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        Text("Compare With")
                     }
                 }
 
