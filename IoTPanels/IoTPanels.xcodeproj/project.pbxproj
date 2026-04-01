@@ -90,6 +90,7 @@
 		WDLD00040000000000000004 /* WidgetDataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = WDLD00020000000000000002 /* WidgetDataLoader.swift */; };
 		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		THRE00010000000000000001 /* ThresholdEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = THRE00020000000000000002 /* ThresholdEditorView.swift */; };
+		MQSW00010000000000000001 /* MQTTSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MQSW00020000000000000002 /* MQTTSetupView.swift */; };
 		FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */; };
 		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
@@ -250,6 +251,7 @@
 		M20000010000000000000001 /* MQTTModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTModels.swift; sourceTree = "<group>"; };
 		M20000020000000000000002 /* MQTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTService.swift; sourceTree = "<group>"; };
 		M20000030000000000000003 /* MQTTFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTFormView.swift; sourceTree = "<group>"; };
+		MQSW00020000000000000002 /* MQTTSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTSetupView.swift; sourceTree = "<group>"; };
 		M20000040000000000000004 /* MQTTQueryBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTQueryBuilderView.swift; sourceTree = "<group>"; };
 		M70000010000000000000001 /* BrokerFileType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerFileType.swift; sourceTree = "<group>"; };
 		M70000020000000000000002 /* BrokerImportExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokerImportExport.swift; sourceTree = "<group>"; };
@@ -396,6 +398,7 @@
 				A200000A0000000000000010 /* InfluxDB2SetupView.swift */,
 				A200000B0000000000000011 /* InfluxDBSettingsFormView.swift */,
 				M20000030000000000000003 /* MQTTFormView.swift */,
+				MQSW00020000000000000002 /* MQTTSetupView.swift */,
 				M80000020000000000000002 /* MQTTBrokerFormView.swift */,
 				667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */,
 				02032788A59A73707192C288 /* InfluxDB3SetupView.swift */,
@@ -723,6 +726,7 @@
 				M10000010000000000000001 /* MQTTModels.swift in Sources */,
 				M10000020000000000000002 /* MQTTService.swift in Sources */,
 				M10000030000000000000003 /* MQTTFormView.swift in Sources */,
+				MQSW00010000000000000001 /* MQTTSetupView.swift in Sources */,
 				M80000010000000000000001 /* MQTTBrokerFormView.swift in Sources */,
 				M10000040000000000000004 /* MQTTQueryBuilderView.swift in Sources */,
 				M60000010000000000000001 /* BrokerFileType.swift in Sources */,

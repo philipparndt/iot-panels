@@ -44,6 +44,7 @@ struct DataSourceDetailView: View {
     @State private var testResult: TestResult?
     @State private var isTesting = false
     @State private var showingGuidedSetup = false
+    @State private var showingMQTTSetup = false
     @State private var showingInflux1Setup = false
     @State private var showingInflux3Setup = false
     @State private var shareFileURL: URL?
@@ -169,6 +170,20 @@ struct DataSourceDetailView: View {
                     Text("Guided Setup")
                 } footer: {
                     Text("Connect to your InfluxDB server and select an organization and bucket.")
+                }
+            }
+
+            if backendType == .mqtt && !isEditing {
+                Section {
+                    Button {
+                        showingMQTTSetup = true
+                    } label: {
+                        Label("Setup Wizard", systemImage: "wand.and.stars")
+                    }
+                } header: {
+                    Text("Guided Setup")
+                } footer: {
+                    Text("Configure how to authenticate with the broker.")
                 }
             }
 
@@ -342,6 +357,31 @@ struct DataSourceDetailView: View {
                 showingInflux3Setup = false
                 if name.isEmpty {
                     name = result.database
+                }
+            }
+        }
+        .sheet(isPresented: $showingMQTTSetup) {
+            MQTTSetupView { result in
+                mqttHostname = result.hostname
+                mqttPort = result.port
+                mqttProtocolMethod = result.protocolMethod
+                mqttProtocolVersion = result.protocolVersion
+                mqttBasePath = result.basePath
+                mqttSsl = result.ssl
+                mqttUntrustedSSL = result.untrustedSSL
+                mqttCertServerCA = result.certServerCA
+                mqttAlpn = result.alpn
+                mqttUsernamePasswordAuth = result.usernamePasswordAuth
+                mqttUsername = result.username
+                mqttPassword = result.password
+                mqttCertificateAuth = result.certificateAuth
+                mqttCertP12 = result.certP12
+                mqttCertClientKeyPassword = result.certClientKeyPassword
+                mqttClientID = result.clientID
+                mqttBaseTopic = result.baseTopic
+                showingMQTTSetup = false
+                if name.isEmpty {
+                    name = result.hostname
                 }
             }
         }
