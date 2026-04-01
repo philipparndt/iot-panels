@@ -308,6 +308,15 @@ struct EditPanelView: View {
     @State private var comparisonOffset: ComparisonOffset = .none
     @State private var bandOpacityText = ""
 
+    // Original values for cancel/restore
+    @State private var originalTitle = ""
+    @State private var originalStyle: PanelDisplayStyle = .auto
+    @State private var originalStyleConfig = StyleConfig.default
+    @State private var originalTimeRange: TimeRange = .twoHours
+    @State private var originalAggregateWindow: AggregateWindow = .fiveMinutes
+    @State private var originalAggregateFunction: AggregateFunction = .mean
+    @State private var originalComparisonOffset: ComparisonOffset = .none
+
     var body: some View {
         NavigationStack {
             Form {
@@ -493,7 +502,18 @@ struct EditPanelView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        panel.title = originalTitle
+                        panel.wrappedDisplayStyle = originalStyle
+                        panel.wrappedStyleConfig = originalStyleConfig
+                        panel.effectiveTimeRange = originalTimeRange
+                        panel.effectiveAggregateWindow = originalAggregateWindow
+                        panel.effectiveAggregateFunction = originalAggregateFunction
+                        panel.wrappedComparisonOffset = originalComparisonOffset
+                        panel.modifiedAt = Date()
+                        try? viewContext.save()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -522,6 +542,15 @@ struct EditPanelView: View {
                 aggregateFunction = panel.effectiveAggregateFunction
                 comparisonOffset = panel.wrappedComparisonOffset
                 if let opacity = styleConfig.bandOpacity { bandOpacityText = String(format: "%.1f", opacity) }
+
+                // Save originals for cancel/restore
+                originalTitle = panel.wrappedTitle
+                originalStyle = panel.wrappedDisplayStyle
+                originalStyleConfig = panel.wrappedStyleConfig
+                originalTimeRange = panel.effectiveTimeRange
+                originalAggregateWindow = panel.effectiveAggregateWindow
+                originalAggregateFunction = panel.effectiveAggregateFunction
+                originalComparisonOffset = panel.wrappedComparisonOffset
             }
             .onChange(of: style) {
                 panel.wrappedDisplayStyle = style

@@ -215,6 +215,7 @@ extension SavedQuery {
         let offsetSeconds = offset.seconds
         let startSeconds = Int(rangeSeconds + offsetSeconds)
         let stopSeconds = Int(offsetSeconds)
+        let effectiveWindow = window == .none ? timeRange.minimumWindow : window
 
         var query = """
         from(bucket: "\(bucket)")
@@ -236,8 +237,8 @@ extension SavedQuery {
             query += "\n  |> filter(fn: (r) => \(tagFilter))"
         }
 
-        if window != .none {
-            query += "\n  |> aggregateWindow(every: \(window.rawValue), fn: \(fn.rawValue), createEmpty: false)"
+        if effectiveWindow != .none {
+            query += "\n  |> aggregateWindow(every: \(effectiveWindow.rawValue), fn: \(fn.rawValue), createEmpty: false)"
         }
 
         query += "\n  |> yield(name: \"comparison\")"
@@ -292,8 +293,8 @@ extension SavedQuery {
         let tr = timeRange ?? wrappedTimeRange
         let aw = window ?? wrappedAggregateWindow
         let af = fn ?? wrappedAggregateFunction
+        let effectiveWindow = aw == .none ? tr.minimumWindow : aw
 
-        let fields = wrappedFields.isEmpty ? ["*"] : wrappedFields.map { "\(influxQLFn(af))(\"\($0)\") AS \"\($0)\"" }
         let measurement = "\"\(wrappedMeasurement)\""
 
         var conditions = ["time > now() - \(tr.rawValue)"]
@@ -303,8 +304,9 @@ extension SavedQuery {
         }
         let whereClause = conditions.joined(separator: " AND ")
 
-        if aw != .none && !wrappedFields.isEmpty {
-            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(aw.rawValue)) fill(none)"
+        if effectiveWindow != .none && !wrappedFields.isEmpty {
+            let fields = wrappedFields.map { "\(influxQLFn(af))(\"\($0)\") AS \"\($0)\"" }
+            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(effectiveWindow.rawValue)) fill(none)"
         }
 
         let selectFields = wrappedFields.isEmpty ? "*" : wrappedFields.map { "\"\($0)\"" }.joined(separator: ", ")
@@ -339,6 +341,7 @@ extension SavedQuery {
     func buildComparisonInfluxQLQuery(database: String, timeRange: TimeRange, window: AggregateWindow, fn: AggregateFunction, offset: ComparisonOffset) -> String {
         let rangeSeconds = Int(timeRange.seconds)
         let offsetSeconds = Int(offset.seconds)
+        let effectiveWindow = window == .none ? timeRange.minimumWindow : window
         let measurement = "\"\(wrappedMeasurement)\""
 
         var conditions = [
@@ -351,9 +354,9 @@ extension SavedQuery {
         }
         let whereClause = conditions.joined(separator: " AND ")
 
-        if window != .none && !wrappedFields.isEmpty {
+        if effectiveWindow != .none && !wrappedFields.isEmpty {
             let fields = wrappedFields.map { "\(influxQLFn(fn))(\"\($0)\") AS \"\($0)\"" }
-            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(window.rawValue)) fill(none)"
+            return "SELECT \(fields.joined(separator: ", ")) FROM \(measurement) WHERE \(whereClause) GROUP BY time(\(effectiveWindow.rawValue)) fill(none)"
         }
 
         let selectFields = wrappedFields.isEmpty ? "*" : wrappedFields.map { "\"\($0)\"" }.joined(separator: ", ")
@@ -404,8 +407,8 @@ extension SavedQuery {
         let tr = timeRange ?? wrappedTimeRange
         let aw = window ?? wrappedAggregateWindow
         let af = fn ?? wrappedAggregateFunction
+        let effectiveWindow = aw == .none ? tr.minimumWindow : aw
 
-        let fields = wrappedFields.isEmpty ? ["*"] : wrappedFields.map { "\"\(escapeSQLId($0))\"" }
         let measurement = "\"\(escapeSQLId(wrappedMeasurement))\""
         let timeFilter = "time >= NOW() - INTERVAL '\(Int(tr.seconds)) seconds'"
 
@@ -416,11 +419,11 @@ extension SavedQuery {
         }
         let whereClause = conditions.joined(separator: " AND ")
 
-        if aw != .none {
+        if effectiveWindow != .none {
             let sqlFn = sqlAggregateFunction(af)
             let selectFields = wrappedFields.isEmpty ? ["\(sqlFn)(value) AS value"] : wrappedFields.map { "\(sqlFn)(\"\(escapeSQLId($0))\") AS \"\(escapeSQLId($0))\"" }
             return """
-            SELECT DATE_BIN(INTERVAL '\(Int(aw.seconds)) seconds', time) AS time, \(selectFields.joined(separator: ", "))
+            SELECT DATE_BIN(INTERVAL '\(Int(effectiveWindow.seconds)) seconds', time) AS time, \(selectFields.joined(separator: ", "))
             FROM \(measurement)
             WHERE \(whereClause)
             GROUP BY 1
@@ -428,6 +431,7 @@ extension SavedQuery {
             """
         }
 
+        let fields = wrappedFields.isEmpty ? ["*"] : wrappedFields.map { "\"\(escapeSQLId($0))\"" }
         return """
         SELECT time, \(fields.joined(separator: ", "))
         FROM \(measurement)
@@ -491,11 +495,12 @@ extension SavedQuery {
         let whereClause = conditions.joined(separator: " AND ")
         let sqlFn = sqlAggregateFunction(fn)
         let fields = wrappedFields.isEmpty ? ["value"] : wrappedFields
+        let effectiveWindow = window == .none ? timeRange.minimumWindow : window
 
-        if window != .none {
+        if effectiveWindow != .none {
             let selectFields = fields.map { "\(sqlFn)(\"\(escapeSQLId($0))\") AS \"\(escapeSQLId($0))\"" }
             return """
-            SELECT DATE_BIN(INTERVAL '\(Int(window.seconds)) seconds', time) + INTERVAL '\(offsetSeconds) seconds' AS time, \(selectFields.joined(separator: ", "))
+            SELECT DATE_BIN(INTERVAL '\(Int(effectiveWindow.seconds)) seconds', time) + INTERVAL '\(offsetSeconds) seconds' AS time, \(selectFields.joined(separator: ", "))
             FROM \(measurement)
             WHERE \(whereClause)
             GROUP BY 1
@@ -571,6 +576,7 @@ extension SavedQuery {
         let tr = timeRange ?? wrappedTimeRange
         let aw = window ?? wrappedAggregateWindow
         let af = fn ?? wrappedAggregateFunction
+        let effectiveWindow = aw == .none ? tr.minimumWindow : aw
 
         var query = """
         from(bucket: "\(bucket)")
@@ -592,8 +598,8 @@ extension SavedQuery {
             query += "\n  |> filter(fn: (r) => \(tagFilter))"
         }
 
-        if aw != .none {
-            query += "\n  |> aggregateWindow(every: \(aw.rawValue), fn: \(af.rawValue), createEmpty: false)"
+        if effectiveWindow != .none {
+            query += "\n  |> aggregateWindow(every: \(effectiveWindow.rawValue), fn: \(af.rawValue), createEmpty: false)"
         }
 
         query += "\n  |> yield(name: \"results\")"

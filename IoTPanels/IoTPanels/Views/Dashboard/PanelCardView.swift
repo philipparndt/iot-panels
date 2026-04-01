@@ -84,7 +84,9 @@ struct PanelRenderer: View {
     }
 
     private var lastValue: String? {
-        series.first?.dataPoints.last.map { formatValue($0.value) }
+        // For band charts, prefer the _mean series over _max/_min
+        let preferredSeries = series.first(where: { $0.label.hasSuffix("_mean") }) ?? series.first
+        return preferredSeries?.dataPoints.last.map { formatValue($0.value) }
     }
 
     private var fieldName: String? {
