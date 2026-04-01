@@ -310,6 +310,39 @@ extension WidgetDesignItem {
         set { modifiedAt = newValue }
     }
 
+    // MARK: - Data cache
+
+    func cacheResult(_ dataPoints: [ChartDataPoint]) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        cachedResultJSON = (try? String(data: encoder.encode(dataPoints), encoding: .utf8)) ?? "[]"
+        cachedAt = Date()
+    }
+
+    var cachedDataPoints: [ChartDataPoint]? {
+        guard let json = cachedResultJSON, !json.isEmpty, let data = json.data(using: .utf8) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode([ChartDataPoint].self, from: data)
+    }
+
+    func cacheComparisonResult(_ dataPoints: [ChartDataPoint]) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        cachedComparisonJSON = (try? String(data: encoder.encode(dataPoints), encoding: .utf8)) ?? "[]"
+    }
+
+    var cachedComparisonDataPoints: [ChartDataPoint]? {
+        guard let json = cachedComparisonJSON, !json.isEmpty, let data = json.data(using: .utf8) else { return nil }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode([ChartDataPoint].self, from: data)
+    }
+
+    func clearComparisonCache() {
+        cachedComparisonJSON = nil
+    }
+
     // MARK: - Query building (mirrors SavedQuery.buildQuery(for:panel:))
 
     func buildQuery(for dataSource: DataSource) -> String? {

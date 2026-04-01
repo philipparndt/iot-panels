@@ -141,7 +141,7 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
 
         var renderedGroups: [WidgetDesignEntry.RenderedGroup] = []
 
-        let allGroupData = await WidgetDataLoader.fetchAllGroups(for: design)
+        let allGroupData = await WidgetDataLoader.fetchAllGroups(for: design, cache: true)
 
         for group in design.resolvedGroups {
             let groupSeries = allGroupData[group.id] ?? []

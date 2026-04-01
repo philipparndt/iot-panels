@@ -373,10 +373,16 @@ struct WidgetDesignEditorView: View {
     }
 
     private func loadPreviewData() {
-        isLoadingPreview = true
+        // Show cached data immediately
+        let cachedData = WidgetDataLoader.cachedGroups(for: design)
+        if !cachedData.isEmpty {
+            seriesData = cachedData
+        }
 
+        // Fetch fresh data in background
+        isLoadingPreview = true
         Task {
-            let newData = await WidgetDataLoader.fetchAllGroups(for: design)
+            let newData = await WidgetDataLoader.fetchAllGroups(for: design, cache: true)
             await MainActor.run {
                 seriesData = newData
                 isLoadingPreview = false
