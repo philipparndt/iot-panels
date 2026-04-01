@@ -489,6 +489,18 @@ struct EditPanelView: View {
             .onChange(of: styleConfig) {
                 panel.wrappedStyleConfig = styleConfig
             }
+            .onChange(of: comparisonOffset) {
+                panel.wrappedComparisonOffset = comparisonOffset
+            }
+            .onChange(of: timeRange) {
+                panel.effectiveTimeRange = timeRange
+            }
+            .onChange(of: aggregateWindow) {
+                panel.effectiveAggregateWindow = aggregateWindow
+            }
+            .onChange(of: aggregateFunction) {
+                panel.effectiveAggregateFunction = aggregateFunction
+            }
         }
     }
 }

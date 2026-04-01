@@ -79,6 +79,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
     case fiveMinutes = "5m"
     case fifteenMinutes = "15m"
     case oneHour = "1h"
+    case twoHours = "2h"
+    case sixHours = "6h"
+    case twelveHours = "12h"
     case oneDay = "1d"
     case twoDays = "2d"
     case sevenDays = "7d"
@@ -93,6 +96,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fiveMinutes: return "5 minutes"
         case .fifteenMinutes: return "15 minutes"
         case .oneHour: return "1 hour"
+        case .twoHours: return "2 hours"
+        case .sixHours: return "6 hours"
+        case .twelveHours: return "12 hours"
         case .oneDay: return "1 day"
         case .twoDays: return "2 days"
         case .sevenDays: return "7 days"
@@ -107,6 +113,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fiveMinutes: return 300
         case .fifteenMinutes: return 900
         case .oneHour: return 3600
+        case .twoHours: return 7200
+        case .sixHours: return 21600
+        case .twelveHours: return 43200
         case .oneDay: return 86400
         case .twoDays: return 172800
         case .sevenDays: return 604800
@@ -122,10 +131,13 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .fiveMinutes: return 2
         case .fifteenMinutes: return 3
         case .oneHour: return 4
-        case .oneDay: return 5
-        case .twoDays: return 6
-        case .sevenDays: return 7
-        case .thirtyDays: return 8
+        case .twoHours: return 5
+        case .sixHours: return 6
+        case .twelveHours: return 7
+        case .oneDay: return 8
+        case .twoDays: return 9
+        case .sevenDays: return 10
+        case .thirtyDays: return 11
         }
     }
 }

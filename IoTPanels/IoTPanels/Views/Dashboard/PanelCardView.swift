@@ -661,13 +661,15 @@ struct PanelRenderer: View {
 
     @ChartContentBuilder
     private func bandComparisonMeanMarks(group: BandGroup, bandColor: Color?) -> some ChartContent {
-        let effectiveColor = bandColor ?? group.color
+        // group.color is already complementary from buildSeries(); only apply complementary if using custom bandColor
+        let comparisonColor = bandColor?.complementary() ?? group.color
         ForEach(Array(group.meanPoints.enumerated()), id: \.offset) { _, point in
             LineMark(
                 x: .value("Time", point.time),
-                y: .value("Mean", point.value)
+                y: .value("Mean", point.value),
+                series: .value("S", "comparison")
             )
-            .foregroundStyle(effectiveColor.complementary())
+            .foregroundStyle(comparisonColor)
             .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
         }
     }
@@ -1306,6 +1308,21 @@ struct PanelCardView: View {
                 mqttSubscription = nil
             }
         }
+        .onChange(of: panel.comparisonOffset) {
+            loadData()
+        }
+        .onChange(of: panel.displayStyle) {
+            loadData()
+        }
+        .onChange(of: panel.timeRange) {
+            loadData()
+        }
+        .onChange(of: panel.aggregateWindow) {
+            loadData()
+        }
+        .onChange(of: panel.aggregateFunction) {
+            loadData()
+        }
     }
 
     /// Builds series array including comparison data if available.
@@ -1460,17 +1477,65 @@ struct PanelCardView: View {
 
 enum ChartDataParser {
     nonisolated static func parse(result: QueryResult) -> [ChartDataPoint] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let fallback = ISO8601DateFormatter()
-        fallback.formatOptions = [.withInternetDateTime]
+        // Try Flux format first (_time, _value, _field)
+        let fluxPoints = parseFlux(result: result)
+        if !fluxPoints.isEmpty { return fluxPoints }
 
+        // Fall back to generic column format (time + named value columns)
+        return parseGeneric(result: result)
+    }
+
+    /// Parses InfluxDB 2 Flux format: rows have _time, _value, _field columns
+    private nonisolated static func parseFlux(result: QueryResult) -> [ChartDataPoint] {
+        let (fmt, fallback) = makeFormatters()
         return result.rows.compactMap { row in
             guard let timeStr = row.values["_time"],
                   let valueStr = row.values["_value"],
                   let value = Double(valueStr) else { return nil }
-            guard let time = formatter.date(from: timeStr) ?? fallback.date(from: timeStr) else { return nil }
+            guard let time = fmt.date(from: timeStr) ?? fallback.date(from: timeStr) else { return nil }
             return ChartDataPoint(time: time, value: value, field: row.values["_field"] ?? "value")
         }
+    }
+
+    /// Parses SQL / InfluxQL format: rows have a "time" column and one or more named value columns.
+    /// Each numeric non-time column produces a ChartDataPoint with the column name as field.
+    private nonisolated static func parseGeneric(result: QueryResult) -> [ChartDataPoint] {
+        let (fmt, fallback) = makeFormatters()
+        var points: [ChartDataPoint] = []
+
+        for row in result.rows {
+            let timeStr = row.values["time"] ?? row.values["_time"] ?? ""
+            guard let time = parseTime(timeStr, fmt: fmt, fallback: fallback) else { continue }
+
+            let valueColumns = row.values.filter { key, val in
+                key != "time" && key != "_time" && key != "iox::measurement" && Double(val) != nil
+            }
+
+            for (colName, valStr) in valueColumns {
+                guard let value = Double(valStr) else { continue }
+                points.append(ChartDataPoint(time: time, value: value, field: colName))
+            }
+        }
+        return points
+    }
+
+    private nonisolated static func parseTime(_ str: String, fmt: ISO8601DateFormatter, fallback: ISO8601DateFormatter) -> Date? {
+        if let d = fmt.date(from: str) ?? fallback.date(from: str) { return d }
+        // Try epoch seconds/nanoseconds (InfluxDB 1 returns epoch in some configs)
+        if let epoch = Double(str) {
+            if epoch > 1e18 { return Date(timeIntervalSince1970: epoch / 1e9) } // nanoseconds
+            if epoch > 1e15 { return Date(timeIntervalSince1970: epoch / 1e6) } // microseconds
+            if epoch > 1e12 { return Date(timeIntervalSince1970: epoch / 1e3) } // milliseconds
+            return Date(timeIntervalSince1970: epoch)
+        }
+        return nil
+    }
+
+    private nonisolated static func makeFormatters() -> (ISO8601DateFormatter, ISO8601DateFormatter) {
+        let fmt = ISO8601DateFormatter()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallback = ISO8601DateFormatter()
+        fallback.formatOptions = [.withInternetDateTime]
+        return (fmt, fallback)
     }
 }
