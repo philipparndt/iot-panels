@@ -1199,6 +1199,7 @@ struct PanelCardView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isCachedData = false
+    @State private var hasReceivedLiveData = false
     @State private var mqttSubscription: AnyCancellable?
 
     /// Whether this panel's data source is MQTT (push-based, needs live refresh).
@@ -1208,6 +1209,16 @@ struct PanelCardView: View {
         #else
         return false
         #endif
+    }
+
+    /// Whether the panel is showing stale/cached data.
+    /// For MQTT panels: stale until a real live message has been received.
+    /// For other panels: based on isCachedData flag from loadData.
+    private var isShowingStaleData: Bool {
+        if isMQTT {
+            return !hasReceivedLiveData
+        }
+        return isCachedData
     }
 
     private var mqttConnectionKey: String? {
@@ -1297,14 +1308,19 @@ struct PanelCardView: View {
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 4)
-                    .opacity(isCachedData ? 1 : 0)
+                    .opacity(isShowingStaleData ? 1 : 0)
                 }
             }
         }
         .frame(minHeight: 100)
         .padding()
         .background(PanelCardBackground())
+        .opacity(isShowingStaleData ? 0.7 : 1)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Color.orange.opacity(isShowingStaleData ? 0.4 : 0), lineWidth: 1.5)
+        )
         .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
         .transaction { $0.animation = nil }
         .onAppear {
@@ -1317,11 +1333,14 @@ struct PanelCardView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                loadData()
+                if !isMQTT || dataPoints.isEmpty {
+                    loadData()
+                }
                 subscribeMQTTUpdates()
             } else {
                 mqttSubscription?.cancel()
                 mqttSubscription = nil
+                if isMQTT { hasReceivedLiveData = false }
             }
         }
         .onChange(of: panel.comparisonOffset) {
@@ -1400,6 +1419,10 @@ struct PanelCardView: View {
                     await MainActor.run {
                         dataPoints = parsed
                         isCachedData = false
+                        hasReceivedLiveData = true
+                        // Cache MQTT results so they survive view recreation
+                        panel.cacheResult(parsed)
+                        try? panel.managedObjectContext?.save()
                     }
                 }
             }
