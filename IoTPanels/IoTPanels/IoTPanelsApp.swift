@@ -7,6 +7,8 @@ struct IoTPanelsApp: App {
     @State private var importAlertMessage: String?
     @State private var showImportAlert = false
 
+    static let isUITesting = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+
     var body: some Scene {
         WindowGroup {
             if persistenceController.isLoaded {
@@ -14,8 +16,14 @@ struct IoTPanelsApp: App {
                     .environment(\.managedObjectContext, persistenceController.container.viewContext)
                     .environment(navigationState)
                     .onAppear {
-                        if navigationState.selectedHome == nil {
-                            let home = HomeManager.bootstrap(context: persistenceController.container.viewContext)
+                        let context = persistenceController.container.viewContext
+                        if Self.isUITesting {
+                            // Ensure demo home exists and select it
+                            DemoSetup.install(context: context)
+                            let home = HomeManager.demoHome(context: context)
+                            navigationState.selectedHome = home
+                        } else if navigationState.selectedHome == nil {
+                            let home = HomeManager.bootstrap(context: context)
                             navigationState.selectedHome = home
                         }
                     }

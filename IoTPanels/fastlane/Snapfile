@@ -1,0 +1,6 @@
+devices(JSON.parse(File.read(ENV['DEVICES_JSON_PATH'] || 'devices.json')))
+concurrent_simulators(false)
+languages(["en-US"])
+clear_previous_screenshots(true)
+override_status_bar(true)
+xcargs "-only-testing:IoTPanelsUITests/ScreenshotTests"

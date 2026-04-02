@@ -1,4 +1,4 @@
-.PHONY: build test clean help icon check-translations
+.PHONY: build test clean help icon check-translations screenshots
 
 SCHEME = IoTPanels
 PROJECT = IoTPanels/IoTPanels.xcodeproj
@@ -13,6 +13,7 @@ help:
 	@echo "  clean  - Clean build artifacts"
 	@echo "  icon   - Generate app icon from icon/ exports"
 	@echo "  check-translations - Check for missing translations"
+	@echo "  screenshots        - Generate App Store screenshots (dark + light)"
 	@echo "  bump-major         - Bump major version (X.0.0)"
 	@echo "  bump-minor         - Bump minor version (x.X.0)"
 	@echo "  bump-patch         - Bump patch version (x.x.X)"
@@ -52,3 +53,6 @@ bump-minor:
 
 bump-patch:
 	@python3 scripts/bump-version.py patch
+
+screenshots:
+	./scripts/create-screenshots.sh

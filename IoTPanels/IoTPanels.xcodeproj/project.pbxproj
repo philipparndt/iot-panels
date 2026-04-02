@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -49,6 +49,7 @@
 		B10000040000000000000004 /* QueryResultTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000040000000000000004 /* QueryResultTableView.swift */; };
 		B10000050000000000000005 /* SavedQueryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000050000000000000005 /* SavedQueryListView.swift */; };
 		B10000060000000000000006 /* SavedQueryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000060000000000000006 /* SavedQueryDetailView.swift */; };
+		BKUP00010000000000000001 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BKUP00020000000000000002 /* BackupService.swift */; };
 		C10000010000000000000001 /* Dashboard+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000010000000000000001 /* Dashboard+Wrapped.swift */; };
 		C10000020000000000000002 /* DashboardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000020000000000000002 /* DashboardListView.swift */; };
 		C10000030000000000000003 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20000030000000000000003 /* DashboardView.swift */; };
@@ -90,7 +91,6 @@
 		F100005100000000000000D1 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */; };
-		BKUP00010000000000000001 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BKUP00020000000000000002 /* BackupService.swift */; };
 		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
 		M10000030000000000000003 /* MQTTFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000030000000000000003 /* MQTTFormView.swift */; };
@@ -137,6 +137,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		22D283412F7E674E008CFD8E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A50000010000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A40000010000000000000001;
+			remoteInfo = IoTPanels;
+		};
 		A30000010000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A50000010000000000000001 /* Project object */;
@@ -193,6 +200,7 @@
 		22CA48522F7CEF2400E2F2C9 /* ChartExplorerState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartExplorerState.swift; sourceTree = "<group>"; };
 		22CA48532F7CEF2400E2F2C9 /* ChartExplorerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartExplorerView.swift; sourceTree = "<group>"; };
 		22D283332F7D5849008CFD8E /* DataExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExporter.swift; sourceTree = "<group>"; };
+		22D2833B2F7E674E008CFD8E /* IoTPanelsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IoTPanelsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB1SetupView.swift; sourceTree = "<group>"; };
 		667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB3SettingsFormView.swift; sourceTree = "<group>"; };
 		A20000010000000000000001 /* IoTPanelsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsApp.swift; sourceTree = "<group>"; };
@@ -227,6 +235,7 @@
 		B20000040000000000000004 /* QueryResultTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryResultTableView.swift; sourceTree = "<group>"; };
 		B20000050000000000000005 /* SavedQueryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryListView.swift; sourceTree = "<group>"; };
 		B20000060000000000000006 /* SavedQueryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQueryDetailView.swift; sourceTree = "<group>"; };
+		BKUP00020000000000000002 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		C20000010000000000000001 /* Dashboard+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dashboard+Wrapped.swift"; sourceTree = "<group>"; };
 		C20000020000000000000002 /* DashboardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardListView.swift; sourceTree = "<group>"; };
 		C20000030000000000000003 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -260,7 +269,6 @@
 		M80000020000000000000002 /* MQTTBrokerFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTBrokerFormView.swift; sourceTree = "<group>"; };
 		MQSW00020000000000000002 /* MQTTSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTSetupView.swift; sourceTree = "<group>"; };
 		THRE00020000000000000002 /* ThresholdEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThresholdEditorView.swift; sourceTree = "<group>"; };
-		BKUP00020000000000000002 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		W20000010000000000000001 /* IoTPanelsWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchApp.swift; sourceTree = "<group>"; };
 		W20000020000000000000002 /* IoTPanelsWatchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsWatchWidget.swift; sourceTree = "<group>"; };
 		W20000030000000000000003 /* IoTPanelsWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanelsWatch.entitlements; sourceTree = "<group>"; };
@@ -270,7 +278,18 @@
 		WDLD00020000000000000002 /* WidgetDataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataLoader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = IoTPanelsUITests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		22D283382F7E674E008CFD8E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A60000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -321,6 +340,7 @@
 				D70000010000000000000001 /* IoTPanelsWidget */,
 				W80000010000000000000001 /* IoTPanelsWatch */,
 				W80000020000000000000002 /* IoTPanelsWatchWidget */,
+				22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */,
 				A70000090000000000000009 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -440,6 +460,7 @@
 				D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */,
 				W40000010000000000000001 /* IoTPanelsWatch.app */,
 				W40000020000000000000002 /* IoTPanelsWatchWidgetExtension.appex */,
+				22D2833B2F7E674E008CFD8E /* IoTPanelsUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -516,6 +537,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		22D2833A2F7E674E008CFD8E /* IoTPanelsUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22D283452F7E674E008CFD8E /* Build configuration list for PBXNativeTarget "IoTPanelsUITests" */;
+			buildPhases = (
+				22D283372F7E674E008CFD8E /* Sources */,
+				22D283382F7E674E008CFD8E /* Frameworks */,
+				22D283392F7E674E008CFD8E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				22D283422F7E674E008CFD8E /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */,
+			);
+			name = IoTPanelsUITests;
+			packageProductDependencies = (
+			);
+			productName = IoTPanelsUITests;
+			productReference = 22D2833B2F7E674E008CFD8E /* IoTPanelsUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		A40000010000000000000001 /* IoTPanels */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A80000030000000000000003 /* Build configuration list for PBXNativeTarget "IoTPanels" */;
@@ -617,9 +661,13 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1540;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
+					22D2833A2F7E674E008CFD8E = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = A40000010000000000000001;
+					};
 					A40000010000000000000001 = {
 						CreatedOnToolsVersion = 15.4;
 					};
@@ -661,11 +709,19 @@
 				D40000010000000000000001 /* IoTPanelsWidgetExtension */,
 				W60000010000000000000001 /* IoTPanelsWatch */,
 				W60000020000000000000002 /* IoTPanelsWatchWidgetExtension */,
+				22D2833A2F7E674E008CFD8E /* IoTPanelsUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		22D283392F7E674E008CFD8E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AA0000010000000000000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -680,6 +736,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		22D283372F7E674E008CFD8E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A90000010000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -835,6 +898,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		22D283422F7E674E008CFD8E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A40000010000000000000001 /* IoTPanels */;
+			targetProxy = 22D283412F7E674E008CFD8E /* PBXContainerItemProxy */;
+		};
 		AB0000010000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A40000010000000000000001 /* IoTPanels */;
@@ -853,6 +921,51 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		22D283432F7E674E008CFD8E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd.IoTPanelsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = IoTPanels;
+			};
+			name = Debug;
+		};
+		22D283442F7E674E008CFD8E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.rnd.IoTPanelsUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = IoTPanels;
+			};
+			name = Release;
+		};
 		AC0000010000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1050,6 +1163,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
@@ -1068,6 +1182,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 643R6YSRER;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
@@ -1249,6 +1364,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		22D283452F7E674E008CFD8E /* Build configuration list for PBXNativeTarget "IoTPanelsUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22D283432F7E674E008CFD8E /* Debug */,
+				22D283442F7E674E008CFD8E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A80000010000000000000001 /* Build configuration list for PBXProject "IoTPanels" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

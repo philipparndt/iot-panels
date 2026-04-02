@@ -129,7 +129,8 @@ enum DemoSetup {
         let widget = createWidgetDesign(context: context, name: "Home Overview", size: .medium, home: home)
         addWidgetItem(context: context, design: widget, query: tempLiving, title: "Temperature", style: .singleValue, color: "#4A90D9", order: 0)
         addWidgetItem(context: context, design: widget, query: humidityLiving, title: "Humidity", style: .singleValue, color: "#2ECC71", order: 1)
-        addWidgetItem(context: context, design: widget, query: batteryLevel, title: "Battery", style: .gauge, color: "#F39C12", order: 2)
+        let batteryWidget = addWidgetItem(context: context, design: widget, query: batteryLevel, title: "Battery", style: .gauge, color: "#F39C12", order: 2)
+        batteryWidget.wrappedStyleConfig = StyleConfig(gaugeMin: 0, gaugeMax: 100, gaugeColorScheme: GaugeColorScheme.greenToRed.rawValue)
 
         try? context.save()
         WidgetHelper.reloadWidgets()

@@ -44,6 +44,30 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A40000020000000000000002"
+               BuildableName = "IoTPanelsTests.xctest"
+               BlueprintName = "IoTPanelsTests"
+               ReferencedContainer = "container:IoTPanels.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "22D2833A2F7E674E008CFD8E"
+               BuildableName = "IoTPanelsUITests.xctest"
+               BlueprintName = "IoTPanelsUITests"
+               ReferencedContainer = "container:IoTPanels.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

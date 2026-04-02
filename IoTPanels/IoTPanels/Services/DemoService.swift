@@ -1,6 +1,6 @@
 import Foundation
 
-/// Generates realistic demo IoT data for offline use / demonstration.
+/// Generates realistic, deterministic demo IoT data for offline use / demonstration.
 struct DemoService: DataSourceServiceProtocol {
 
     func testConnection() async throws -> Bool {
@@ -8,11 +8,16 @@ struct DemoService: DataSourceServiceProtocol {
     }
 
     func query(_ queryString: String) async throws -> QueryResult {
-        // Parse the query to determine what data to generate
         let measurement = extractValue(from: queryString, key: "_measurement")
         let fields = extractFields(from: queryString)
-        let rangeMinutes = extractRange(from: queryString)
+        let (rangeMinutes, stopMinutes) = extractRangeWithStop(from: queryString)
         let windowMinutes = extractWindow(from: queryString)
+        let yieldNames = extractYieldNames(from: queryString)
+        let isBandQuery = !yieldNames.isEmpty
+
+        #if DEBUG
+        print("[DemoService] measurement=\(measurement) fields=\(fields) range=\(rangeMinutes)m stop=\(stopMinutes)m window=\(windowMinutes)m yields=\(yieldNames) band=\(isBandQuery)")
+        #endif
 
         let effectiveFields = fields.isEmpty ? demoFields(for: measurement) : fields
         let interval = windowMinutes > 0 ? windowMinutes * 60.0 : 300.0
@@ -20,22 +25,49 @@ struct DemoService: DataSourceServiceProtocol {
 
         var rows: [QueryResult.Row] = []
         let now = Date()
+        let stopOffset = stopMinutes * 60.0
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         for field in effectiveFields {
-            let generator = dataGenerator(measurement: measurement, field: field)
-            for i in 0..<count {
-                let time = now.addingTimeInterval(-Double(count - i) * interval)
-                let value = generator(Double(i) / Double(max(count - 1, 1)), time)
-                rows.append(QueryResult.Row(values: [
-                    "_time": formatter.string(from: time),
-                    "_measurement": measurement,
-                    "_field": field,
-                    "_value": String(format: "%.2f", value),
-                    "result": "_result",
-                    "table": "0"
-                ]))
+            let gen = dataGenerator(measurement: measurement, field: field)
+
+            if isBandQuery {
+                // Generate min/max/mean series with correct field suffixes
+                for yieldName in yieldNames {
+                    for i in 0..<count {
+                        let time = now.addingTimeInterval(-Double(count - i) * interval - stopOffset)
+                        let meanVal = gen(time)
+                        let spread = spreadForField(measurement: measurement, field: field, time: time)
+                        let value: Double
+                        switch yieldName {
+                        case "min": value = meanVal - spread
+                        case "max": value = meanVal + spread
+                        default: value = meanVal // mean
+                        }
+                        rows.append(QueryResult.Row(values: [
+                            "_time": formatter.string(from: time),
+                            "_measurement": measurement,
+                            "_field": "\(field)_\(yieldName)",
+                            "_value": String(format: "%.2f", value),
+                            "result": yieldName,
+                            "table": "0"
+                        ]))
+                    }
+                }
+            } else {
+                for i in 0..<count {
+                    let time = now.addingTimeInterval(-Double(count - i) * interval - stopOffset)
+                    let value = gen(time)
+                    rows.append(QueryResult.Row(values: [
+                        "_time": formatter.string(from: time),
+                        "_measurement": measurement,
+                        "_field": field,
+                        "_value": String(format: "%.2f", value),
+                        "result": "_result",
+                        "table": "0"
+                    ]))
+                }
             }
         }
 
@@ -84,6 +116,39 @@ struct DemoService: DataSourceServiceProtocol {
         }
     }
 
+    // MARK: - Deterministic Noise
+
+    /// Produces a deterministic value between 0 and 1 from a timestamp and seed.
+    /// Same inputs always produce the same output.
+    private func noise(for date: Date, seed: Int = 0) -> Double {
+        let t = Int(date.timeIntervalSince1970)
+        let hash = (t &+ seed) &* 2654435761
+        return Double(abs(hash) % 10000) / 10000.0
+    }
+
+    /// Produces a deterministic value in a range, varying smoothly over time.
+    private func smoothNoise(for date: Date, seed: Int, period: TimeInterval) -> Double {
+        let t = date.timeIntervalSince1970
+        let bucket = t / period
+        let frac = bucket - bucket.rounded(.down)
+
+        let n0 = noise(for: Date(timeIntervalSince1970: bucket.rounded(.down) * period), seed: seed)
+        let n1 = noise(for: Date(timeIntervalSince1970: (bucket.rounded(.down) + 1) * period), seed: seed)
+
+        // Smooth interpolation (cosine)
+        let blend = (1 - cos(frac * .pi)) / 2
+        return n0 * (1 - blend) + n1 * blend
+    }
+
+    /// Stable hash from a string, used to derive base values.
+    private func stableHash(_ string: String) -> Int {
+        var hash = 5381
+        for char in string.utf8 {
+            hash = ((hash << 5) &+ hash) &+ Int(char)
+        }
+        return abs(hash)
+    }
+
     // MARK: - Demo Data Definitions
 
     private func demoFields(for measurement: String) -> [String] {
@@ -102,123 +167,200 @@ struct DemoService: DataSourceServiceProtocol {
         }
     }
 
-    /// Returns a closure that generates realistic values for a given measurement + field.
-    private func dataGenerator(measurement: String, field: String) -> (Double, Date) -> Double {
+    /// Spread for band chart min/max around the mean value.
+    private func spreadForField(measurement: String, field: String, time: Date) -> Double {
+        let variation = smoothNoise(for: time, seed: stableHash("\(measurement)_\(field)_spread"), period: 1800)
+        switch (measurement, field) {
+        case ("temperature", _): return 0.8 + variation * 1.5
+        case ("humidity", _): return 3 + variation * 5
+        case ("solar", _): return 100 + variation * 400
+        case ("energy", "power"): return 30 + variation * 80
+        case ("weather", "temperature"): return 1 + variation * 2
+        case ("weather", "wind_speed"), ("weather", "wind_gust"): return 1 + variation * 3
+        default: return 1 + variation * 5
+        }
+    }
+
+    /// Deterministic daily variation — each day gets a different offset (±range).
+    private func dailyOffset(for date: Date, seed: Int, range: Double) -> Double {
+        let dayIndex = Int(date.timeIntervalSince1970 / 86400)
+        let hash = (dayIndex &+ seed) &* 2654435761
+        return (Double(abs(hash) % 10000) / 10000.0 - 0.5) * 2 * range
+    }
+
+    /// Returns a closure that generates a deterministic value for a given timestamp.
+    private func dataGenerator(measurement: String, field: String) -> (Date) -> Double {
+        let seed = stableHash("\(measurement)_\(field)")
+
         switch (measurement, field) {
 
-        // Temperature
+        // Temperature — stable base with day/night cycle + daily variation
         case ("temperature", "value"):
-            let base = Double.random(in: 18...24)
-            return { progress, date in
+            let base = 19.0 + Double(stableHash("temp_base") % 500) / 100.0 // 19-24°C, stable
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
                 let dayWave = sin(Double(hour) / 24.0 * .pi * 2 - .pi / 2) * 3
-                return base + dayWave + sin(progress * .pi * 6) * 0.5 + Double.random(in: -0.2...0.2)
+                let daily = dailyOffset(for: date, seed: seed, range: 2.0) // ±2°C per day
+                let variation = (smoothNoise(for: date, seed: seed, period: 1800) - 0.5) * 1.0
+                return base + dayWave + daily + variation
             }
         case ("temperature", "setpoint"):
-            return { _, _ in 21.0 }
+            return { _ in 21.0 }
 
         // Humidity
         case ("humidity", "relative"):
-            let base = Double.random(in: 40...65)
-            return { progress, _ in base + sin(progress * .pi * 4) * 8 + Double.random(in: -2...2) }
+            return { [self] date in
+                let hour = Calendar.current.component(.hour, from: date)
+                let base = 52.0
+                let dayWave = sin(Double(hour) / 24.0 * .pi * 2 + .pi / 3) * 10
+                let daily = dailyOffset(for: date, seed: seed, range: 5.0)
+                let variation = (smoothNoise(for: date, seed: seed, period: 2400) - 0.5) * 6
+                return base + dayWave + daily + variation
+            }
         case ("humidity", "absolute"):
-            return { progress, _ in 8.0 + sin(progress * .pi * 3) * 2 + Double.random(in: -0.5...0.5) }
+            return { [self] date in
+                8.0 + (smoothNoise(for: date, seed: seed, period: 3600) - 0.5) * 3
+            }
 
         // Energy
         case ("energy", "power"):
-            return { _, date in
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
                 let base: Double = (6...22).contains(hour) ? 400 : 150
-                return base + Double.random(in: -50...200)
+                let variation = (smoothNoise(for: date, seed: seed, period: 600) - 0.3) * 300
+                return max(50, base + variation)
             }
         case ("energy", "consumption"):
-            return { progress, _ in progress * 12.5 + Double.random(in: 0...0.1) }
+            return { [self] date in
+                let hours = date.timeIntervalSince1970.truncatingRemainder(dividingBy: 86400) / 3600
+                return hours * 0.52 + smoothNoise(for: date, seed: seed, period: 3600) * 0.5
+            }
         case ("energy", "voltage"):
-            return { _, _ in 230.0 + Double.random(in: -3...3) }
+            return { [self] date in
+                230.0 + (smoothNoise(for: date, seed: seed, period: 600) - 0.5) * 6
+            }
 
         // Solar
         case ("solar", "production"):
-            return { _, date in
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
                 let sun = max(0, sin((Double(hour) - 6) / 12 * .pi)) * 5000
-                return sun * Double.random(in: 0.7...1.0)
+                let clouds = smoothNoise(for: date, seed: seed, period: 1800) * 0.3 + 0.7
+                return sun * clouds
             }
         case ("solar", "feed_in"):
-            return { _, date in
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
-                return max(0, sin((Double(hour) - 6) / 12 * .pi) * 3000 * Double.random(in: 0.5...1.0) - 400)
+                let production = max(0, sin((Double(hour) - 6) / 12 * .pi)) * 5000
+                let clouds = smoothNoise(for: date, seed: seed, period: 1800) * 0.3 + 0.7
+                return max(0, production * clouds - 400)
             }
         case ("solar", "self_consumption"):
-            return { _, date in
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
                 let base: Double = (6...22).contains(hour) ? 400 : 150
-                return min(base + Double.random(in: 0...200), max(0, sin((Double(hour) - 6) / 12 * .pi)) * 5000)
+                let production = max(0, sin((Double(hour) - 6) / 12 * .pi)) * 5000
+                return min(base + smoothNoise(for: date, seed: seed, period: 900) * 200, production * 0.9)
             }
 
         // Battery
         case ("battery", "level"):
-            return { progress, _ in max(0, min(100, 80 + sin(progress * .pi * 2) * 30 + Double.random(in: -2...2))) }
+            return { [self] date in
+                let wave = sin(date.timeIntervalSince1970 / 7200 * .pi * 2) * 30
+                return max(0, min(100, 65 + wave + (smoothNoise(for: date, seed: seed, period: 3600) - 0.5) * 10))
+            }
         case ("battery", "voltage"):
-            return { progress, _ in 3.2 + sin(progress * .pi * 2) * 0.6 + Double.random(in: -0.05...0.05) }
+            return { [self] date in
+                3.5 + sin(date.timeIntervalSince1970 / 7200 * .pi * 2) * 0.5 + (smoothNoise(for: date, seed: seed, period: 1800) - 0.5) * 0.1
+            }
         case ("battery", "charging"):
-            return { _, _ in Double.random(in: 0...1) > 0.5 ? 1 : 0 }
+            return { [self] date in noise(for: date, seed: seed) > 0.5 ? 1 : 0 }
 
         // Air quality
         case ("air_quality", "co2"):
-            return { progress, _ in 400 + sin(progress * .pi * 3) * 300 + Double.random(in: -20...20) }
+            return { [self] date in
+                let hour = Calendar.current.component(.hour, from: date)
+                let occupied = (8...22).contains(hour) ? 300.0 : 0.0
+                return 400 + occupied + (smoothNoise(for: date, seed: seed, period: 1800) - 0.5) * 100
+            }
         case ("air_quality", "pm25"):
-            return { _, _ in Double.random(in: 5...35) }
+            return { [self] date in
+                10 + smoothNoise(for: date, seed: seed, period: 3600) * 20
+            }
         case ("air_quality", "voc"):
-            return { progress, _ in 50 + sin(progress * .pi * 2) * 40 + Double.random(in: -5...5) }
+            return { [self] date in
+                50 + (smoothNoise(for: date, seed: seed, period: 2400) - 0.5) * 60
+            }
 
         // Appliance
         case ("appliance", "remaining_min"):
-            return { progress, _ in max(0, 90 * (1 - progress) + Double.random(in: -1...1)) }
+            return { [self] date in
+                let cycle = date.timeIntervalSince1970.truncatingRemainder(dividingBy: 5400) // 90 min cycle
+                return max(0, 90 - cycle / 60)
+            }
         case ("appliance", "power"):
-            return { progress, _ in progress < 0.8 ? Double.random(in: 1800...2200) : Double.random(in: 0...5) }
+            return { [self] date in
+                let cycle = date.timeIntervalSince1970.truncatingRemainder(dividingBy: 5400)
+                return cycle < 4320 ? 1800 + smoothNoise(for: date, seed: seed, period: 300) * 400 : 2.0
+            }
         case ("appliance", "state"):
-            return { progress, _ in progress < 0.8 ? 1 : 0 }
+            return { [self] date in
+                let cycle = date.timeIntervalSince1970.truncatingRemainder(dividingBy: 5400)
+                return cycle < 4320 ? 1 : 0
+            }
 
         // Motion
         case ("motion", "detected"):
-            return { _, _ in Double.random(in: 0...1) > 0.7 ? 1 : 0 }
+            return { [self] date in noise(for: date, seed: seed) > 0.7 ? 1 : 0 }
         case ("motion", "count"):
-            return { _, _ in Double(Int.random(in: 0...5)) }
+            return { [self] date in Double(Int(noise(for: date, seed: seed) * 5)) }
 
         // Water
         case ("water", "flow_rate"):
-            return { _, _ in Double.random(in: 0...1) > 0.6 ? Double.random(in: 5...15) : 0 }
+            return { [self] date in noise(for: date, seed: seed) > 0.6 ? 5 + smoothNoise(for: date, seed: seed &+ 1, period: 300) * 10 : 0 }
         case ("water", "total"):
-            return { progress, _ in 1234.5 + progress * 2.5 }
+            return { date in
+                1234.5 + date.timeIntervalSince1970.truncatingRemainder(dividingBy: 86400) / 86400 * 2.5
+            }
 
         // Weather
         case ("weather", "temperature"):
-            let base = Double.random(in: 8...18)
-            return { progress, date in
+            let base = 12.0
+            return { [self] date in
                 let hour = Calendar.current.component(.hour, from: date)
                 let dayWave = sin(Double(hour) / 24.0 * .pi * 2 - .pi / 2) * 5
-                return base + dayWave + Double.random(in: -0.5...0.5)
+                let daily = dailyOffset(for: date, seed: seed, range: 3.0)
+                return base + dayWave + daily + (smoothNoise(for: date, seed: seed, period: 3600) - 0.5) * 1.5
             }
         case ("weather", "wind_speed"):
-            return { progress, _ in max(0, 5 + sin(progress * .pi * 6) * 8 + Double.random(in: -2...2)) }
+            return { [self] date in
+                max(0, 5 + (smoothNoise(for: date, seed: seed, period: 1800) - 0.5) * 12)
+            }
         case ("weather", "wind_gust"):
-            return { progress, _ in max(0, 10 + sin(progress * .pi * 6) * 15 + Double.random(in: -3...5)) }
+            return { [self] date in
+                max(0, 10 + (smoothNoise(for: date, seed: seed, period: 1200) - 0.5) * 20)
+            }
         case ("weather", "rain"):
-            return { _, _ in Double.random(in: 0...1) > 0.7 ? Double.random(in: 0.1...4.0) : 0 }
+            return { [self] date in noise(for: date, seed: seed) > 0.75 ? smoothNoise(for: date, seed: seed &+ 1, period: 600) * 4 : 0 }
         case ("weather", "humidity"):
-            return { progress, _ in 60 + sin(progress * .pi * 3) * 20 + Double.random(in: -3...3) }
+            return { [self] date in
+                60 + (smoothNoise(for: date, seed: seed, period: 3600) - 0.5) * 30
+            }
         case ("weather", "pressure"):
-            return { progress, _ in 1013 + sin(progress * .pi * 2) * 8 + Double.random(in: -1...1) }
+            return { [self] date in
+                1013 + (smoothNoise(for: date, seed: seed, period: 7200) - 0.5) * 16
+            }
 
         default:
-            return { progress, _ in sin(progress * .pi * 4) * 50 + 50 + Double.random(in: -5...5) }
+            return { [self] date in
+                50 + (smoothNoise(for: date, seed: seed, period: 1800) - 0.5) * 40
+            }
         }
     }
 
     // MARK: - Query Parsing
 
     private func extractValue(from query: String, key: String) -> String {
-        // Match r["_key"] == "value"
         let pattern = "r\\[\"" + NSRegularExpression.escapedPattern(for: key) + "\"\\]\\s*==\\s*\"([^\"]+)\""
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: query, range: NSRange(query.startIndex..., in: query)),
@@ -230,26 +372,55 @@ struct DemoService: DataSourceServiceProtocol {
         let pattern = "r\\[\"_field\"\\]\\s*==\\s*\"([^\"]+)\""
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
         let matches = regex.matches(in: query, range: NSRange(query.startIndex..., in: query))
-        return matches.compactMap { match in
+        let fields = matches.compactMap { match -> String? in
             guard let range = Range(match.range(at: 1), in: query) else { return nil }
             return String(query[range])
         }
+        // Deduplicate (band queries repeat the field filter 3 times)
+        return Array(Set(fields)).sorted()
     }
 
-    private func extractRange(from query: String) -> Double {
-        // Match range(start: -1h) or -24h, -7d etc
-        let pattern = "range\\(start:\\s*-([0-9]+)([mhd])"
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: query, range: NSRange(query.startIndex..., in: query)),
-              let numRange = Range(match.range(at: 1), in: query),
-              let unitRange = Range(match.range(at: 2), in: query),
-              let num = Double(query[numRange]) else { return 60 }
-        switch query[unitRange] {
-        case "m": return num
-        case "h": return num * 60
-        case "d": return num * 1440
-        default: return 60
+    /// Extracts range in minutes and optional stop offset in minutes.
+    /// Supports: range(start: -2h), range(start: -172800s, stop: -86400s)
+    private func extractRangeWithStop(from query: String) -> (range: Double, stop: Double) {
+        // Try seconds-based format with stop: range(start: -Xs, stop: -Ys)
+        let secStopPattern = "range\\(start:\\s*-([0-9]+)s,\\s*stop:\\s*-([0-9]+)s"
+        if let regex = try? NSRegularExpression(pattern: secStopPattern),
+           let match = regex.firstMatch(in: query, range: NSRange(query.startIndex..., in: query)),
+           let startRange = Range(match.range(at: 1), in: query),
+           let stopRange = Range(match.range(at: 2), in: query),
+           let startSec = Double(query[startRange]),
+           let stopSec = Double(query[stopRange]) {
+            return (range: (startSec - stopSec) / 60.0, stop: stopSec / 60.0)
         }
+
+        // Try seconds-based format without stop: range(start: -Xs)
+        let secPattern = "range\\(start:\\s*-([0-9]+)s[,\\)]"
+        if let regex = try? NSRegularExpression(pattern: secPattern),
+           let match = regex.firstMatch(in: query, range: NSRange(query.startIndex..., in: query)),
+           let startRange = Range(match.range(at: 1), in: query),
+           let startSec = Double(query[startRange]) {
+            return (range: startSec / 60.0, stop: 0)
+        }
+
+        // Fall back to duration format: range(start: -2h)
+        let durPattern = "range\\(start:\\s*-([0-9]+)([mhd])"
+        if let regex = try? NSRegularExpression(pattern: durPattern),
+           let match = regex.firstMatch(in: query, range: NSRange(query.startIndex..., in: query)),
+           let numRange = Range(match.range(at: 1), in: query),
+           let unitRange = Range(match.range(at: 2), in: query),
+           let num = Double(query[numRange]) {
+            let minutes: Double
+            switch query[unitRange] {
+            case "m": minutes = num
+            case "h": minutes = num * 60
+            case "d": minutes = num * 1440
+            default: minutes = 60
+            }
+            return (range: minutes, stop: 0)
+        }
+
+        return (range: 60, stop: 0)
     }
 
     private func extractWindow(from query: String) -> Double {
@@ -265,5 +436,17 @@ struct DemoService: DataSourceServiceProtocol {
         case "d": return num * 1440
         default: return 0
         }
+    }
+
+    /// Detects band query yield names: yield(name: "min"), yield(name: "max"), yield(name: "mean")
+    private func extractYieldNames(from query: String) -> [String] {
+        let pattern = "yield\\(name:\\s*\"(min|max|mean)\"\\)"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let matches = regex.matches(in: query, range: NSRange(query.startIndex..., in: query))
+        let names = matches.compactMap { match -> String? in
+            guard let range = Range(match.range(at: 1), in: query) else { return nil }
+            return String(query[range])
+        }
+        return Array(Set(names)).sorted() // deduplicate
     }
 }

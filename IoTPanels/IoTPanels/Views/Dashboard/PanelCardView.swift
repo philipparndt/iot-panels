@@ -362,7 +362,8 @@ struct PanelRenderer: View {
             case .bar:
                 BarMark(
                     x: .value("Time", point.time),
-                    y: .value("Value", point.value)
+                    y: .value("Value", point.value),
+                    width: .ratio(0.6)
                 )
                 .foregroundStyle(by: .value("Series", s.label))
 
