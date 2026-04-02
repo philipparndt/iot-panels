@@ -104,8 +104,9 @@ struct AboutView: View {
 
     private func performBackup() {
         isProcessing = true
+        let context = viewContext
         Task.detached(priority: .userInitiated) {
-            let url = BackupService.exportToFile(context: viewContext)
+            let url = BackupService.exportToFile(context: context)
             await MainActor.run {
                 isProcessing = false
                 if let url {
@@ -121,9 +122,10 @@ struct AboutView: View {
 
     private func performRestore(from url: URL) {
         isProcessing = true
+        let context = viewContext
         Task.detached(priority: .userInitiated) {
             do {
-                try BackupService.restoreFromFile(url: url, context: viewContext)
+                try BackupService.restoreFromFile(url: url, context: context)
                 await MainActor.run {
                     isProcessing = false
                     resultMessage = "Restore complete"
