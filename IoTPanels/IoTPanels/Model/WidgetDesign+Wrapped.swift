@@ -165,13 +165,18 @@ extension WidgetDesign {
         set { textScale = newValue.rawValue }
     }
 
+    static let adaptiveBackgroundHex = "#ADAPTIVE"
+
     var wrappedBackgroundColorHex: String {
         get { backgroundColorHex ?? "#1C1C1E" }
         set { backgroundColorHex = newValue }
     }
 
     var backgroundColor: Color {
-        Color(hex: wrappedBackgroundColorHex)
+        if wrappedBackgroundColorHex == Self.adaptiveBackgroundHex {
+            return Color(uiColor: .systemBackground)
+        }
+        return Color(hex: wrappedBackgroundColorHex)
     }
 
     var wrappedRefreshInterval: RefreshInterval {

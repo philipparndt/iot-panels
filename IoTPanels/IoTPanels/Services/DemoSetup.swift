@@ -216,6 +216,7 @@ enum DemoSetup {
         w.name = name
         w.sizeType = size.rawValue
         w.isDemo = true
+        w.backgroundColorHex = WidgetDesign.adaptiveBackgroundHex
         w.home = home
         w.createdAt = Date()
         w.modifiedAt = Date()

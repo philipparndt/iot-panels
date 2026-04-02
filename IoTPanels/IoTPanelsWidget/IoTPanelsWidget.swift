@@ -233,7 +233,13 @@ struct IoTPanelsWidget: Widget {
             DesignWidgetView(entry: entry)
                 .environmentObject(HeatmapSelectionState())
                 .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
-                .containerBackground(for: .widget) { Color(hex: entry.backgroundColorHex) }
+                .containerBackground(for: .widget) {
+                    if entry.backgroundColorHex == WidgetDesign.adaptiveBackgroundHex {
+                        Color(uiColor: .systemBackground)
+                    } else {
+                        Color(hex: entry.backgroundColorHex)
+                    }
+                }
         }
         .contentMarginsDisabled()
         .configurationDisplayName("IoT Panel")

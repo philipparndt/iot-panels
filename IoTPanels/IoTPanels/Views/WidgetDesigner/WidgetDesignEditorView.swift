@@ -133,11 +133,14 @@ struct WidgetDesignEditorView: View {
 
     // MARK: - Background Color
 
+    /// Special sentinel for adaptive background (black in dark mode, light in light mode).
+    private static let adaptiveBackground = "#ADAPTIVE"
+
     private static let backgroundPresets: [(String, String)] = [
+        (adaptiveBackground, "Auto"),
         ("#1C1C1E", "Dark"),
         ("#000000", "Black"),
         ("#2C2C2E", "Charcoal"),
-        ("#3A3A3C", "Gray"),
         ("#F2F2F7", "Light"),
         ("#FFFFFF", "White"),
     ]
@@ -151,16 +154,30 @@ struct WidgetDesignEditorView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
                 ForEach(Self.backgroundPresets, id: \.0) { hex, label in
                     VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(hex: hex))
-                            .frame(height: 36)
-                            .overlay(
+                        Group {
+                            if hex == Self.adaptiveBackground {
+                                GeometryReader { geo in
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8).fill(Color.white)
+                                        RoundedRectangle(cornerRadius: 8).fill(Color.black)
+                                            .mask(Rectangle().offset(x: geo.size.width / 2))
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .strokeBorder(Color.gray.opacity(0.4), lineWidth: 0.5)
+                                    }
+                                }
+                            } else {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .strokeBorder(
-                                        design.wrappedBackgroundColorHex == hex ? Color.accentColor : Color.secondary.opacity(0.3),
-                                        lineWidth: design.wrappedBackgroundColorHex == hex ? 2 : 1
-                                    )
-                            )
+                                    .fill(Color(hex: hex))
+                            }
+                        }
+                        .frame(height: 36)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(
+                                    design.wrappedBackgroundColorHex == hex ? Color.accentColor : Color.secondary.opacity(0.3),
+                                    lineWidth: design.wrappedBackgroundColorHex == hex ? 2 : 1
+                                )
+                        )
                             .onTapGesture {
                                 design.wrappedBackgroundColorHex = hex
                                 design.modifiedAt = Date()
