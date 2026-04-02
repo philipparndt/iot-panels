@@ -1,5 +1,5 @@
 devices(JSON.parse(File.read(ENV['DEVICES_JSON_PATH'] || 'devices.json')))
-concurrent_simulators(false)
+concurrent_simulators(true)
 languages(["en-US"])
 clear_previous_screenshots(true)
 override_status_bar(true)

@@ -4,6 +4,8 @@ struct ScreenshotIds {
     static let ENERGY = "Energy"
     static let EXPLORER = "Explorer"
     static let WIDGETS = "Widgets"
+    static let WIDGET_PREVIEW = "Widget Preview"
     static let DATA_SOURCES = "Data Sources"
+    static let CLIMATE_BAND = "Climate Band"
     static let ABOUT = "About"
 }

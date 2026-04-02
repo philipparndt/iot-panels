@@ -16,3 +16,5 @@ build/
 # Source icon exports
 icon/
 .idea
+screenshots
+IoTPanels/fastlane/report.xml

@@ -68,11 +68,11 @@ enum DemoSetup {
 
         // Dashboard: Climate
         let climate = createDashboard(context: context, name: "Climate", home: home)
-        addPanel(context: context, dashboard: climate, query: tempLiving, title: "Living Room", style: .chart, order: 0)
-        addPanel(context: context, dashboard: climate, query: tempBedroom, title: "Bedroom", style: .chart, order: 1)
-        addPanel(context: context, dashboard: climate, query: humidityLiving, title: "Humidity", style: .chart, order: 2)
-        addPanel(context: context, dashboard: climate, query: airCO2, title: "CO₂", style: .chart, order: 3)
-        addPanel(context: context, dashboard: climate, query: airPM25, title: "PM2.5", style: .chart, order: 4)
+        addPanel(context: context, dashboard: climate, query: tempLiving, title: "Living Room", style: .chart, order: 2)
+        addPanel(context: context, dashboard: climate, query: tempBedroom, title: "Bedroom", style: .chart, order: 3)
+        addPanel(context: context, dashboard: climate, query: humidityLiving, title: "Humidity", style: .chart, order: 4)
+        addPanel(context: context, dashboard: climate, query: airCO2, title: "CO₂", style: .chart, order: 5)
+        addPanel(context: context, dashboard: climate, query: airPM25, title: "PM2.5", style: .chart, order: 6)
 
         // Dashboard: Energy
         let energy = createDashboard(context: context, name: "Energy", home: home)
@@ -110,11 +110,11 @@ enum DemoSetup {
                                     tags: ["location": ["living_room"]],
                                     timeRange: .twentyFourHours, window: .fifteenMinutes, unit: "°C")
 
-        // Band chart panel on Climate dashboard
-        addPanel(context: context, dashboard: climate, query: tempRange, title: "Temperature Band", style: .bandChart, order: 5)
-
         // Comparison demo: same as Living Room but with comparison offset
-        let compPanel = addPanel(context: context, dashboard: climate, query: tempLiving, title: "Temperature (vs. Yesterday)", style: .chart, order: 6)
+        let compPanel = addPanel(context: context, dashboard: climate, query: tempLiving, title: "Temperature (vs. Yesterday)", style: .chart, order: 0)
+
+        // Band chart panel on Climate dashboard
+        addPanel(context: context, dashboard: climate, query: tempRange, title: "Temperature Band", style: .bandChart, order: 1)
         compPanel.comparisonOffset = ComparisonOffset.twentyFourHours.rawValue
 
         // Dashboard: Garden

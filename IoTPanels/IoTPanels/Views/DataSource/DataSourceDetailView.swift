@@ -110,6 +110,7 @@ struct DataSourceDetailView: View {
                         Text(type.displayName).tag(type)
                     }
                 }
+                .accessibilityIdentifier("backendTypePicker")
                 TextField("Name", text: $name)
             }
 

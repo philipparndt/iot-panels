@@ -18,8 +18,8 @@ struct IoTPanelsApp: App {
                     .onAppear {
                         let context = persistenceController.container.viewContext
                         if Self.isUITesting {
-                            // Ensure demo home exists and select it
-                            DemoSetup.install(context: context)
+                            // Reset demo data to avoid duplicates across runs
+                            DemoSetup.reset(context: context)
                             let home = HomeManager.demoHome(context: context)
                             navigationState.selectedHome = home
                         } else if navigationState.selectedHome == nil {
