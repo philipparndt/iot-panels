@@ -228,6 +228,9 @@ final class ChartExplorerState {
             return needsBandAggregates
                 ? buildWindowSQLBandQuery(query: query, database: dataSource.wrappedDatabase)
                 : buildWindowSQLQuery(query: query, database: dataSource.wrappedDatabase)
+        case .prometheus:
+            let promql = query.wrappedRawQuery.isEmpty ? query.wrappedMeasurement : query.wrappedRawQuery
+            return "TIMERANGE:\(windowStartSecondsAgo)|\(promql)"
         case .mqtt:
             #if canImport(CocoaMQTT)
             return query.buildMQTTQuery()
@@ -262,6 +265,8 @@ final class ChartExplorerState {
             return needsBandAggregates
                 ? buildWindowSQLBandQuery(query: query, database: dataSource.wrappedDatabase, startAgo: cmpStartSecondsAgo, stopAgo: cmpStopSecondsAgo)
                 : buildWindowSQLQuery(query: query, database: dataSource.wrappedDatabase, startAgo: cmpStartSecondsAgo, stopAgo: cmpStopSecondsAgo)
+        case .prometheus:
+            return nil
         case .mqtt:
             return nil
         case .demo:

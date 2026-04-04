@@ -35,6 +35,8 @@ enum ServiceFactory {
             return InfluxDB2Service(dataSource: dataSource)
         case .influxDB3:
             return InfluxDB3Service(dataSource: dataSource)
+        case .prometheus:
+            return PrometheusService(dataSource: dataSource)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return MQTTService(dataSource: dataSource)

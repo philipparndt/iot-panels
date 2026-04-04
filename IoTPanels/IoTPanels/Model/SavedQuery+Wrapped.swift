@@ -132,7 +132,9 @@ extension SavedQuery {
 
     /// Builds the appropriate query string based on the data source backend type.
     func buildQuery(for dataSource: DataSource) -> String {
-        if wrappedIsRawQuery { return wrappedRawQuery }
+        if wrappedIsRawQuery && dataSource.wrappedBackendType != .prometheus {
+            return wrappedRawQuery
+        }
         switch dataSource.wrappedBackendType {
         case .influxDB1:
             return buildInfluxQLQuery(database: dataSource.wrappedDatabase)
@@ -140,6 +142,8 @@ extension SavedQuery {
             return buildFluxQuery(bucket: dataSource.wrappedBucket)
         case .influxDB3:
             return buildSQLQuery(database: dataSource.wrappedDatabase)
+        case .prometheus:
+            return buildPrometheusQuery(timeRange: wrappedTimeRange)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -285,6 +289,16 @@ extension SavedQuery {
         }
 
         return unions.joined(separator: "\n\n")
+    }
+
+    // MARK: - Prometheus Query Building
+
+    /// Builds a Prometheus query string with time range prefix.
+    /// Format: `TIMERANGE:<seconds>|<promql>`
+    func buildPrometheusQuery(timeRange: TimeRange? = nil) -> String {
+        let tr = timeRange ?? wrappedTimeRange
+        let promql = wrappedRawQuery.isEmpty ? wrappedMeasurement : wrappedRawQuery
+        return "TIMERANGE:\(Int(tr.seconds))|\(promql)"
     }
 
     // MARK: - InfluxDB 1 InfluxQL Query Building
@@ -609,7 +623,9 @@ extension SavedQuery {
 
     /// Build query using panel-local overrides for time range and aggregation.
     func buildQuery(for dataSource: DataSource, panel: DashboardPanel) -> String {
-        if wrappedIsRawQuery { return wrappedRawQuery }
+        if wrappedIsRawQuery && dataSource.wrappedBackendType != .prometheus {
+            return wrappedRawQuery
+        }
         let tr = panel.effectiveTimeRange
         let aw = panel.effectiveAggregateWindow
         let af = panel.effectiveAggregateFunction
@@ -630,6 +646,8 @@ extension SavedQuery {
                 return buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
             }
             return buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
+        case .prometheus:
+            return buildPrometheusQuery(timeRange: tr)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -669,6 +687,8 @@ extension SavedQuery {
                 return buildComparisonBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
             }
             return buildComparisonSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .prometheus:
+            return nil
         case .mqtt:
             return nil
         case .demo:

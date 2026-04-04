@@ -269,6 +269,8 @@ struct QueryBuilderView: View {
             return buildInfluxQLPreviewQuery()
         case .influxDB3:
             return buildSQLPreviewQuery()
+        case .prometheus:
+            return PromQLBuilder.build(metric: selectedMeasurement, labelFilters: selectedTagValues, aggregateFunction: nil)
         default:
             return buildFluxPreviewQuery()
         }

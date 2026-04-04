@@ -180,10 +180,13 @@ struct DashboardListView: View {
         } message: {
             Text("This will permanently delete this home and all its dashboards, data sources, and widgets.")
         }
-        .alert("New Dashboard", isPresented: $showingAdd) {
-            DashboardNameAlert { name in
-                createDashboard(name: name)
-            }
+        .sheet(isPresented: $showingAdd) {
+            DashboardTemplatePickerView(
+                home: navigationState.selectedHome,
+                dataSources: Array(dataSources),
+                onCreated: { _ in }
+            )
+            .environment(\.managedObjectContext, viewContext)
         }
         .sheet(isPresented: $showingIconPicker) {
             HomeIconPickerView(currentIcon: home?.wrappedIcon ?? "house") { icon in

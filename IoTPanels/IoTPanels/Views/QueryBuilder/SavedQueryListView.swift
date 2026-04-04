@@ -48,7 +48,7 @@ struct SavedQueryListView: View {
         .navigationTitle("Queries")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                if isInfluxBackend {
+                if isInfluxBackend || isPrometheusBackend {
                     Menu {
                         Button {
                             showingQueryBuilder = true
@@ -85,6 +85,10 @@ struct SavedQueryListView: View {
         return bt == .influxDB1 || bt == .influxDB2 || bt == .influxDB3
     }
 
+    private var isPrometheusBackend: Bool {
+        dataSource.wrappedBackendType == .prometheus
+    }
+
     private func querySummary(_ query: SavedQuery) -> String {
         if query.wrappedIsRawQuery {
             let preview = query.wrappedRawQuery.prefix(60)
@@ -99,6 +103,8 @@ struct SavedQueryListView: View {
     private func queryBuilderSheet(existingQuery: SavedQuery?) -> some View {
         if dataSource.wrappedBackendType == .mqtt {
             MQTTQueryBuilderView(dataSource: dataSource, existingQuery: existingQuery)
+        } else if dataSource.wrappedBackendType == .prometheus {
+            PrometheusQueryBuilderView(dataSource: dataSource, existingQuery: existingQuery)
         } else {
             QueryBuilderView(dataSource: dataSource, existingQuery: existingQuery)
         }

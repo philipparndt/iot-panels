@@ -25,6 +25,7 @@ struct ManualQueryEditorView: View {
         case .influxDB1: return "InfluxQL"
         case .influxDB2: return "Flux"
         case .influxDB3: return "SQL"
+        case .prometheus: return "PromQL"
         default: return "Query"
         }
     }
@@ -120,6 +121,8 @@ struct ManualQueryEditorView: View {
             return "from(bucket: \"my-bucket\") |> range(start: -2h) |> filter(...)"
         case .influxDB3:
             return "SELECT * FROM \"measurement\" WHERE time >= NOW() - INTERVAL '2 hours'"
+        case .prometheus:
+            return "rate(http_requests_total{job=\"api\"}[5m])"
         default:
             return ""
         }
@@ -136,6 +139,8 @@ struct ManualQueryEditorView: View {
             fluxReference
         case .influxDB3:
             sqlReference
+        case .prometheus:
+            promqlReference
         default:
             EmptyView()
         }
@@ -239,6 +244,37 @@ struct ManualQueryEditorView: View {
                 "  FROM \"sensors\"",
                 "  WHERE time >= NOW() - INTERVAL '2 hours'",
                 "  ORDER BY time"
+            ])
+        }
+    }
+
+    private var promqlReference: some View {
+        Section("PromQL Reference") {
+            referenceGroup("Basic Query", [
+                "metric_name",
+                "metric_name{label=\"value\"}",
+                "metric_name{job=~\"api.*\"}"
+            ])
+            referenceGroup("Rate & Increase", [
+                "rate(http_requests_total[5m])",
+                "increase(errors_total[1h])",
+                "irate(cpu_usage[5m])"
+            ])
+            referenceGroup("Aggregation", [
+                "sum(metric_name) by (label)",
+                "avg(metric_name) by (job)",
+                "max(metric_name)",
+                "count(metric_name)"
+            ])
+            referenceGroup("Math", [
+                "metric_a / metric_b",
+                "metric_name * 100",
+                "metric_name offset 1h"
+            ])
+            referenceGroup("Functions", [
+                "histogram_quantile(0.95, ...)",
+                "delta(metric_name[5m])",
+                "predict_linear(metric[1h], 3600)"
             ])
         }
     }

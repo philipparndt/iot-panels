@@ -83,22 +83,12 @@
         }
       }
     },
-    "%@–%@%@" : {
+    "%@–%@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@–%2$@%3$@"
-          }
-        }
-      }
-    },
-    "%@–%@%@%@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@–%2$@%3$@%4$@"
+            "value" : "%1$@–%2$@"
           }
         }
       }
@@ -307,6 +297,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 个面板"
+          }
+        }
+      }
+    },
+    "%lld panels · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld panels · %2$@"
           }
         }
       }
@@ -1643,6 +1643,7 @@
       }
     },
     "Add a data source to connect to InfluxDB, MQTT, or use the built-in demo data." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1687,6 +1688,9 @@
           }
         }
       }
+    },
+    "Add a data source to connect to InfluxDB, Prometheus, MQTT, or use the built-in demo data." : {
+
     },
     "Add Data Source" : {
       "localizations" : {
@@ -1963,6 +1967,9 @@
           }
         }
       }
+    },
+    "Aggregate" : {
+
     },
     "Aggregate Function" : {
       "localizations" : {
@@ -2241,6 +2248,9 @@
           }
         }
       }
+    },
+    "Allow Untrusted Certificates" : {
+
     },
     "ALPN" : {
       "localizations" : {
@@ -3173,6 +3183,9 @@
         }
       }
     },
+    "Bearer Token" : {
+
+    },
     "Black" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3219,6 +3232,9 @@
           }
         }
       }
+    },
+    "Blank Dashboard" : {
+
     },
     "Broker" : {
       "localizations" : {
@@ -4010,6 +4026,9 @@
           }
         }
       }
+    },
+    "Choose Data Source" : {
+
     },
     "Choose Icon" : {
       "localizations" : {
@@ -5584,6 +5603,9 @@
           }
         }
       }
+    },
+    "Connect to your Prometheus server and test the connection." : {
+
     },
     "Connect without authentication. Suitable for local installations." : {
 
@@ -7960,6 +7982,9 @@
         }
       }
     },
+    "Enter a valid PromQL expression (e.g., rate(http_requests_total[5m]))" : {
+
+    },
     "Enter an API token for authenticated access." : {
 
     },
@@ -8008,6 +8033,9 @@
           }
         }
       }
+    },
+    "Enter the Prometheus server URL (e.g., http://prometheus:9090)" : {
+
     },
     "Error" : {
       "localizations" : {
@@ -15354,6 +15382,21 @@
         }
       }
     },
+    "Prometheus" : {
+
+    },
+    "Prometheus Settings" : {
+
+    },
+    "Prometheus Setup" : {
+
+    },
+    "PromQL" : {
+
+    },
+    "PromQL Reference" : {
+
+    },
     "Protocol" : {
       "localizations" : {
         "de" : {
@@ -15771,6 +15814,9 @@
           }
         }
       }
+    },
+    "Raw PromQL" : {
+
     },
     "Rearrange" : {
 
@@ -16933,7 +16979,6 @@
       }
     },
     "Security" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17021,6 +17066,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择"
+          }
+        }
+      }
+    },
+    "Select a %@ data source for the \"%@\" template." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select a %1$@ data source for the \"%2$@\" template."
           }
         }
       }
@@ -17861,6 +17916,9 @@
     "SQL Reference (InfluxDB 3)" : {
 
     },
+    "Start from scratch" : {
+
+    },
     "Stop" : {
       "localizations" : {
         "de" : {
@@ -18418,6 +18476,9 @@
           }
         }
       }
+    },
+    "Templates" : {
+
     },
     "Test Connection" : {
       "localizations" : {
@@ -19621,10 +19682,19 @@
         }
       }
     },
+    "Use a bearer token for authenticated access." : {
+
+    },
     "Use API Token" : {
 
     },
     "Use Authentication" : {
+
+    },
+    "Use HTTP basic authentication." : {
+
+    },
+    "Use SSL" : {
 
     },
     "Used to discover topics when creating queries. Leave empty to subscribe to all topics (#)." : {

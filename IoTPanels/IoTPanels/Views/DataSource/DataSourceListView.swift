@@ -37,7 +37,7 @@ struct DataSourceListView: View {
                 ContentUnavailableView {
                     Label("No Data Sources", systemImage: "server.rack")
                 } description: {
-                    Text("Add a data source to connect to InfluxDB, MQTT, or use the built-in demo data.")
+                    Text("Add a data source to connect to InfluxDB, Prometheus, MQTT, or use the built-in demo data.")
                 } actions: {
                     Button("Add Data Source") {
                         showingAddSheet = true

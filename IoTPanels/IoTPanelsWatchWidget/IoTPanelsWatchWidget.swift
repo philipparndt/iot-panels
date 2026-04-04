@@ -130,7 +130,11 @@ struct WatchValueTimelineProvider: AppIntentTimelineProvider {
 // MARK: - Helpers
 
 private func formatValue(_ value: Double) -> String {
-    abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+    UnitFormatter.smartFormat(value)
+}
+
+private func formatParts(_ value: Double, unit: String) -> UnitFormatter.FormattedValue {
+    UnitFormatter.format(value: value, unit: unit)
 }
 
 // MARK: - Single Value View
