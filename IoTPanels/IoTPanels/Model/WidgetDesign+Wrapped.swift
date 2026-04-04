@@ -370,6 +370,8 @@ extension WidgetDesignItem {
             return needsBandAggregates
                 ? query.buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
                 : query.buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
+        case .prometheus:
+            return query.wrappedRawQuery.isEmpty ? query.wrappedMeasurement : query.wrappedRawQuery
         case .mqtt:
             #if canImport(CocoaMQTT)
             return query.buildMQTTQuery()
@@ -404,6 +406,8 @@ extension WidgetDesignItem {
             return needsBandAggregates
                 ? query.buildComparisonBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
                 : query.buildComparisonSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .prometheus:
+            return nil
         case .mqtt:
             return nil
         case .demo:

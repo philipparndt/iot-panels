@@ -1,6 +1,6 @@
 # IoT Panels
 
-A native iOS app for visualizing IoT sensor data. Build customizable dashboards and home screen widgets to monitor your smart home in real time — powered by InfluxDB and MQTT.
+A native iOS app for visualizing IoT sensor data. Build customizable dashboards and home screen widgets to monitor your smart home in real time — powered by InfluxDB, Prometheus, and MQTT.
 
 Built with SwiftUI, Core Data, and CloudKit.
 
@@ -51,13 +51,24 @@ IoT Panels supports multiple backends:
 | **InfluxDB 1.x** | HTTP API | InfluxQL |
 | **InfluxDB 2.x** | HTTP API | Flux |
 | **InfluxDB 3.x** | HTTP API | SQL |
+| **Prometheus** | HTTP API | PromQL |
 | **MQTT** | Native / WebSocket | Topic subscription |
 
 ### Query Builder
 - GUI-based query builder for InfluxDB (measurements, fields, tags, time ranges)
-- Raw query editor for Flux and SQL
+- Prometheus metric picker with label filter builder and aggregate function selector
+- Raw query editor for Flux, SQL, and PromQL
 - MQTT topic discovery with live schema browser
 - Saved queries for reuse across dashboards and widgets
+
+### Prometheus
+- Query via the Prometheus HTTP API (`/api/v1/query_range`, `/api/v1/query`)
+- Metric discovery and label-based filtering
+- Guided query builder with metric selection, label filters, and aggregation
+- Raw PromQL editor for advanced queries (e.g., `rate()`, `histogram_quantile()`)
+- Authentication: none, HTTP basic auth, or bearer token
+- TLS/SSL with support for self-signed certificates
+- Auto-calculated query step based on time range for optimal data density
 
 ### MQTT
 - MQTT 3.1.1 and 5.0 protocol support
@@ -125,7 +136,7 @@ IoTPanels/
 │   ├── IoTPanelsApp.swift      # App entry point
 │   ├── Persistence.swift       # Core Data + CloudKit setup
 │   ├── Model/                  # Data models and Core Data wrappers
-│   ├── Services/               # Backend services (InfluxDB, MQTT, Demo)
+│   ├── Services/               # Backend services (InfluxDB, Prometheus, MQTT, Demo)
 │   ├── Views/                  # SwiftUI views
 │   │   ├── Dashboard/          # Dashboard and panel views
 │   │   ├── DataSource/         # Backend configuration

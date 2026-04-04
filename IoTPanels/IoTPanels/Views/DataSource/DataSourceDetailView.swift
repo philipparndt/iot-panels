@@ -22,6 +22,14 @@ struct DataSourceDetailView: View {
     // InfluxDB 3 fields
     @State private var influx3Database = ""
 
+    // Prometheus fields
+    @State private var prometheusUrl = ""
+    @State private var prometheusToken = ""
+    @State private var prometheusUsername = ""
+    @State private var prometheusPassword = ""
+    @State private var prometheusSsl = false
+    @State private var prometheusUntrustedSSL = false
+
     // MQTT fields
     @State private var mqttHostname = ""
     @State private var mqttPort = "1883"
@@ -47,6 +55,7 @@ struct DataSourceDetailView: View {
     @State private var showingMQTTSetup = false
     @State private var showingInflux1Setup = false
     @State private var showingInflux3Setup = false
+    @State private var showingPrometheusSetup = false
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
     @State private var didLoad = false
@@ -73,6 +82,8 @@ struct DataSourceDetailView: View {
             }
         case .influxDB3:
             return !url.isEmpty
+        case .prometheus:
+            return !prometheusUrl.isEmpty
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -95,6 +106,8 @@ struct DataSourceDetailView: View {
             }
         case .influxDB3:
             return !url.isEmpty
+        case .prometheus:
+            return !prometheusUrl.isEmpty
         case .mqtt:
             return !mqttHostname.isEmpty
         case .demo:
@@ -171,6 +184,46 @@ struct DataSourceDetailView: View {
                     Text("Guided Setup")
                 } footer: {
                     Text("Connect to your InfluxDB server and select an organization and bucket.")
+                }
+            }
+
+            if backendType == .prometheus && !isEditing {
+                Section {
+                    Button {
+                        showingPrometheusSetup = true
+                    } label: {
+                        Label("Setup Wizard", systemImage: "wand.and.stars")
+                    }
+                } header: {
+                    Text("Guided Setup")
+                } footer: {
+                    Text("Connect to your Prometheus server and test the connection.")
+                }
+            }
+
+            if backendType == .prometheus {
+                Section("Prometheus") {
+                    NavigationLink {
+                        PrometheusFormView(
+                            url: $prometheusUrl,
+                            token: $prometheusToken,
+                            username: $prometheusUsername,
+                            password: $prometheusPassword,
+                            ssl: $prometheusSsl,
+                            untrustedSSL: $prometheusUntrustedSSL
+                        )
+                    } label: {
+                        HStack {
+                            Label("Connection Settings", systemImage: "server.rack")
+                            Spacer()
+                            if !prometheusUrl.isEmpty {
+                                Text(prometheusUrl.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: ""))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -361,6 +414,18 @@ struct DataSourceDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingPrometheusSetup) {
+            PrometheusSetupView { result in
+                prometheusUrl = result.url
+                prometheusToken = result.authMethod == .bearerToken ? result.token : ""
+                prometheusUsername = result.authMethod == .basicAuth ? result.username : ""
+                prometheusPassword = result.authMethod == .basicAuth ? result.password : ""
+                showingPrometheusSetup = false
+                if name.isEmpty {
+                    name = "Prometheus"
+                }
+            }
+        }
         .sheet(isPresented: $showingMQTTSetup) {
             MQTTSetupView { result in
                 mqttHostname = result.hostname
@@ -457,6 +522,16 @@ struct DataSourceDetailView: View {
         // InfluxDB 3
         influx3Database = dataSource.wrappedDatabase
 
+        // Prometheus
+        if backendType == .prometheus {
+            prometheusUrl = dataSource.wrappedUrl
+            prometheusToken = dataSource.wrappedToken
+            prometheusUsername = dataSource.wrappedUsername
+            prometheusPassword = dataSource.wrappedPassword
+            prometheusSsl = dataSource.wrappedSsl
+            prometheusUntrustedSSL = dataSource.wrappedUntrustedSSL
+        }
+
         // MQTT
         mqttHostname = dataSource.wrappedHostname
         mqttPort = "\(dataSource.wrappedPort)"
@@ -491,11 +566,20 @@ struct DataSourceDetailView: View {
         target.modifiedAt = Date()
 
         // InfluxDB fields
-        target.url = url
+        if backendType == .prometheus {
+            target.url = prometheusUrl
+            target.token = prometheusToken.isEmpty ? nil : prometheusToken
+            target.ssl = prometheusSsl
+            target.untrustedSSL = prometheusSsl && prometheusUntrustedSSL
+        } else {
+            target.url = url
+            target.ssl = mqttSsl
+            target.untrustedSSL = mqttSsl && mqttUntrustedSSL
+        }
         target.influxAuthMethod = influxAuthMethod.rawValue
         if backendType == .influxDB3 {
             target.token = token
-        } else {
+        } else if backendType != .prometheus {
             target.token = influxAuthMethod == .token ? token : nil
         }
         target.organization = organization
@@ -508,8 +592,10 @@ struct DataSourceDetailView: View {
         target.protocolMethod = mqttProtocolMethod.rawValue
         target.protocolVersion = mqttProtocolVersion.rawValue
         target.basePath = mqttBasePath
-        target.ssl = mqttSsl
-        target.untrustedSSL = mqttSsl && mqttUntrustedSSL
+        if backendType != .prometheus {
+            target.ssl = mqttSsl
+            target.untrustedSSL = mqttSsl && mqttUntrustedSSL
+        }
         target.wrappedAlpn = mqttAlpn
         if backendType == .influxDB1 {
             target.username = influxUsername.isEmpty ? nil : influxUsername
@@ -517,6 +603,9 @@ struct DataSourceDetailView: View {
         } else if backendType == .influxDB2 && influxAuthMethod == .usernamePassword {
             target.username = influxUsername
             target.password = influxPassword
+        } else if backendType == .prometheus {
+            target.username = prometheusUsername.isEmpty ? nil : prometheusUsername
+            target.password = prometheusPassword.isEmpty ? nil : prometheusPassword
         } else {
             target.username = mqttUsernamePasswordAuth ? mqttUsername : nil
             target.password = mqttUsernamePasswordAuth ? mqttPassword : nil
@@ -630,6 +719,37 @@ struct DataSourceDetailView: View {
                     let success = try await influx3Service.testConnection()
                     await MainActor.run {
                         url = resolvedUrl
+                        testResult = success ? .success : .failure("Connection refused")
+                        isTesting = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        testResult = .failure(error.localizedDescription)
+                        isTesting = false
+                    }
+                }
+            }
+
+        case .prometheus:
+            let resolvedUrl = {
+                let trimmed = prometheusUrl.hasSuffix("/") ? String(prometheusUrl.dropLast()) : prometheusUrl
+                if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+                    return trimmed
+                }
+                return "http://\(trimmed)"
+            }()
+            let promService = PrometheusService(
+                url: resolvedUrl,
+                authMethod: !prometheusToken.isEmpty ? .bearerToken : (!prometheusUsername.isEmpty ? .basicAuth : .none),
+                token: prometheusToken,
+                username: prometheusUsername,
+                password: prometheusPassword
+            )
+            Task {
+                do {
+                    let success = try await promService.testConnection()
+                    await MainActor.run {
+                        prometheusUrl = resolvedUrl
                         testResult = success ? .success : .failure("Connection refused")
                         isTesting = false
                     }

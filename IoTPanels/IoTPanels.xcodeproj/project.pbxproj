@@ -43,6 +43,7 @@
 		A1000012000000000000000C /* IoTPanels.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C /* IoTPanels.xcdatamodeld */; };
 		A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */; };
 		A1000013000000000000000D /* IoTPanelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013000000000000000D /* IoTPanelsTests.swift */; };
+		PR0200070000000000000007 /* PrometheusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100050000000000000005 /* PrometheusServiceTests.swift */; };
 		B10000010000000000000001 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* TimeRange.swift */; };
 		B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
 		B10000030000000000000003 /* QueryBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000030000000000000003 /* QueryBuilderView.swift */; };
@@ -91,6 +92,12 @@
 		F100005100000000000000D1 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		F100005200000000000000D2 /* DemoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F200005100000000000000D1 /* DemoService.swift */; };
 		FCFC6C22020470429E17F5CF /* InfluxDB3SettingsFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 667E925D55A6658A3C7CD846 /* InfluxDB3SettingsFormView.swift */; };
+		PR0200010000000000000001 /* PrometheusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100010000000000000001 /* PrometheusService.swift */; };
+		PR0200020000000000000002 /* PrometheusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100010000000000000001 /* PrometheusService.swift */; };
+		PR0200030000000000000003 /* PrometheusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100010000000000000001 /* PrometheusService.swift */; };
+		PR0200040000000000000004 /* PrometheusSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100020000000000000002 /* PrometheusSetupView.swift */; };
+		PR0200050000000000000005 /* PrometheusFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100030000000000000003 /* PrometheusFormView.swift */; };
+		PR0200060000000000000006 /* PrometheusQueryBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100040000000000000004 /* PrometheusQueryBuilderView.swift */; };
 		M10000010000000000000001 /* MQTTModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000010000000000000001 /* MQTTModels.swift */; };
 		M10000020000000000000002 /* MQTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000020000000000000002 /* MQTTService.swift */; };
 		M10000030000000000000003 /* MQTTFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = M20000030000000000000003 /* MQTTFormView.swift */; };
@@ -224,6 +231,7 @@
 		A20000110000000000000017 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTTopicDiscoveryPage.swift; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
+		PR0100050000000000000005 /* PrometheusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusServiceTests.swift; sourceTree = "<group>"; };
 		A2000014000000000000000E /* IoTPanels.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IoTPanels.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000015000000000000000F /* IoTPanelsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IoTPanelsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000160000000000000010 /* IoTPanels.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IoTPanels.entitlements; sourceTree = "<group>"; };
@@ -260,6 +268,10 @@
 		F200004100000000000000C1 /* FluxSyntaxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FluxSyntaxView.swift; sourceTree = "<group>"; };
 		F200005100000000000000D1 /* DemoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoService.swift; sourceTree = "<group>"; };
 		FB95FEE044E5D4BA157D84D0 /* InfluxDB1SettingsFormView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = InfluxDB1SettingsFormView.swift; sourceTree = "<group>"; };
+		PR0100010000000000000001 /* PrometheusService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusService.swift; sourceTree = "<group>"; };
+		PR0100020000000000000002 /* PrometheusSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusSetupView.swift; sourceTree = "<group>"; };
+		PR0100030000000000000003 /* PrometheusFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusFormView.swift; sourceTree = "<group>"; };
+		PR0100040000000000000004 /* PrometheusQueryBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusQueryBuilderView.swift; sourceTree = "<group>"; };
 		M20000010000000000000001 /* MQTTModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTModels.swift; sourceTree = "<group>"; };
 		M20000020000000000000002 /* MQTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTService.swift; sourceTree = "<group>"; };
 		M20000030000000000000003 /* MQTTFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTFormView.swift; sourceTree = "<group>"; };
@@ -391,6 +403,7 @@
 				A20000060000000000000006 /* InfluxDB2Service.swift */,
 				22279B3F2F7C5A5000BA02B0 /* InfluxDB3Service.swift */,
 				M20000020000000000000002 /* MQTTService.swift */,
+				PR0100010000000000000001 /* PrometheusService.swift */,
 				A20000050000000000000005 /* DataSourceService.swift */,
 				E20000010000000000000001 /* WidgetHelper.swift */,
 				F200003100000000000000B1 /* NavigationState.swift */,
@@ -432,6 +445,8 @@
 				02032788A59A73707192C288 /* InfluxDB3SetupView.swift */,
 				5795638C48C9B5242D91CB12 /* InfluxDB1SetupView.swift */,
 				FB95FEE044E5D4BA157D84D0 /* InfluxDB1SettingsFormView.swift */,
+				PR0100020000000000000002 /* PrometheusSetupView.swift */,
+				PR0100030000000000000003 /* PrometheusFormView.swift */,
 			);
 			path = DataSource;
 			sourceTree = "<group>";
@@ -448,6 +463,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000013000000000000000D /* IoTPanelsTests.swift */,
+				PR0100050000000000000005 /* PrometheusServiceTests.swift */,
 			);
 			path = IoTPanelsTests;
 			sourceTree = "<group>";
@@ -476,6 +492,7 @@
 				M20000040000000000000004 /* MQTTQueryBuilderView.swift */,
 				A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */,
 				0543B8AC1D824D28AF711403 /* ManualQueryEditorView.swift */,
+				PR0100040000000000000004 /* PrometheusQueryBuilderView.swift */,
 			);
 			path = QueryBuilder;
 			sourceTree = "<group>";
@@ -809,6 +826,10 @@
 				64707E62288CFC72ED734E1D /* InfluxDB1SetupView.swift in Sources */,
 				6E0F62D9ECD0950BC0D789C8 /* InfluxDB1SettingsFormView.swift in Sources */,
 				9CFE7053CA7F49B4AE44EC43 /* ManualQueryEditorView.swift in Sources */,
+				PR0200010000000000000001 /* PrometheusService.swift in Sources */,
+				PR0200040000000000000004 /* PrometheusSetupView.swift in Sources */,
+				PR0200050000000000000005 /* PrometheusFormView.swift in Sources */,
+				PR0200060000000000000006 /* PrometheusQueryBuilderView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -817,6 +838,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000013000000000000000D /* IoTPanelsTests.swift in Sources */,
+				PR0200070000000000000007 /* PrometheusServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -852,6 +874,7 @@
 				22D283352F7D5849008CFD8E /* DataExporter.swift in Sources */,
 				M60000040000000000000004 /* BrokerImportExport.swift in Sources */,
 				D10000130000000000000013 /* SingleValueWidget.swift in Sources */,
+				PR0200020000000000000002 /* PrometheusService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -890,6 +913,7 @@
 				W10000170000000000000011 /* ColorUtilities.swift in Sources */,
 				W10000180000000000000012 /* MQTTModels.swift in Sources */,
 				22279B412F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
+				PR0200030000000000000003 /* PrometheusService.swift in Sources */,
 				W1000020000000000000001A /* BrokerFileType.swift in Sources */,
 				W1000021000000000000001B /* BrokerImportExport.swift in Sources */,
 			);

@@ -140,6 +140,8 @@ extension SavedQuery {
             return buildFluxQuery(bucket: dataSource.wrappedBucket)
         case .influxDB3:
             return buildSQLQuery(database: dataSource.wrappedDatabase)
+        case .prometheus:
+            return wrappedRawQuery.isEmpty ? wrappedMeasurement : wrappedRawQuery
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -630,6 +632,8 @@ extension SavedQuery {
                 return buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
             }
             return buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
+        case .prometheus:
+            return wrappedRawQuery.isEmpty ? wrappedMeasurement : wrappedRawQuery
         case .mqtt:
             #if canImport(CocoaMQTT)
             return buildMQTTQuery()
@@ -669,6 +673,8 @@ extension SavedQuery {
                 return buildComparisonBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, offset: offset)
             }
             return buildComparisonSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af, offset: offset)
+        case .prometheus:
+            return nil
         case .mqtt:
             return nil
         case .demo:
