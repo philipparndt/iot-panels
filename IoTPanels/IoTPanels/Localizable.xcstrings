@@ -311,6 +311,16 @@
         }
       }
     },
+    "%lld panels · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld panels · %2$@"
+          }
+        }
+      }
+    },
     "%lld rows" : {
       "localizations" : {
         "de" : {
@@ -3233,6 +3243,9 @@
         }
       }
     },
+    "Blank Dashboard" : {
+
+    },
     "Broker" : {
       "localizations" : {
         "de" : {
@@ -4023,6 +4036,9 @@
           }
         }
       }
+    },
+    "Choose Data Source" : {
+
     },
     "Choose Icon" : {
       "localizations" : {
@@ -17064,6 +17080,16 @@
         }
       }
     },
+    "Select a %@ data source for the \"%@\" template." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select a %1$@ data source for the \"%2$@\" template."
+          }
+        }
+      }
+    },
     "Select Bucket" : {
       "localizations" : {
         "de" : {
@@ -17900,6 +17926,9 @@
     "SQL Reference (InfluxDB 3)" : {
 
     },
+    "Start from scratch" : {
+
+    },
     "Stop" : {
       "localizations" : {
         "de" : {
@@ -18457,6 +18486,9 @@
           }
         }
       }
+    },
+    "Templates" : {
+
     },
     "Test Connection" : {
       "localizations" : {

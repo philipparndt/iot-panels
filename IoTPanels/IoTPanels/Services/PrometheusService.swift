@@ -68,12 +68,29 @@ struct PrometheusService: DataSourceServiceProtocol {
 
     // MARK: - Query
 
+    /// The query string may contain a time range prefix: `TIMERANGE:<seconds>|<promql>`.
+    /// If no prefix is present, defaults to last 2 hours.
     func query(_ queryString: String) async throws -> QueryResult {
+        let (promql, rangeSeconds) = Self.parseQueryString(queryString)
         let now = Date()
-        let start = now.addingTimeInterval(-7200) // Default: last 2 hours
-        let step = stepForRange(seconds: 7200)
+        let start = now.addingTimeInterval(-rangeSeconds)
+        let step = stepForRange(seconds: rangeSeconds)
 
-        return try await queryRange(query: queryString, start: start, end: now, step: step)
+        return try await queryRange(query: promql, start: start, end: now, step: step)
+    }
+
+    /// Parses a query string that may contain a `TIMERANGE:<seconds>|` prefix.
+    /// Returns the PromQL expression and time range in seconds.
+    static func parseQueryString(_ queryString: String) -> (promql: String, rangeSeconds: TimeInterval) {
+        if queryString.hasPrefix("TIMERANGE:"),
+           let pipeIndex = queryString.firstIndex(of: "|") {
+            let rangeStr = queryString[queryString.index(queryString.startIndex, offsetBy: 10)..<pipeIndex]
+            let promql = String(queryString[queryString.index(after: pipeIndex)...])
+            if let seconds = TimeInterval(rangeStr) {
+                return (promql, seconds)
+            }
+        }
+        return (queryString, 7200) // Default: 2 hours
     }
 
     // MARK: - Schema Discovery
@@ -270,14 +287,16 @@ struct PrometheusService: DataSourceServiceProtocol {
 
     /// Auto-calculates step based on the time range duration.
     func stepForRange(seconds: TimeInterval) -> String {
+        // Target ~200-300 data points per query
         switch seconds {
-        case ..<3600:         return "15s"    // < 1h
-        case ..<21600:        return "15s"    // < 6h
-        case ..<86400:        return "1m"     // < 24h
-        case ..<604800:       return "5m"     // < 7d
-        case ..<2592000:      return "15m"    // < 30d
-        case ..<7776000:      return "1h"     // < 90d
-        default:              return "6h"     // 90d+
+        case ..<3600:         return "15s"    // < 1h  → ~240 points
+        case ..<10800:        return "30s"    // < 3h  → ~360 points
+        case ..<21600:        return "1m"     // < 6h  → ~360 points
+        case ..<86400:        return "5m"     // < 24h → ~288 points
+        case ..<604800:       return "30m"    // < 7d  → ~336 points
+        case ..<2592000:      return "2h"     // < 30d → ~360 points
+        case ..<7776000:      return "6h"     // < 90d → ~360 points
+        default:              return "1d"     // 90d+  → variable
         }
     }
 

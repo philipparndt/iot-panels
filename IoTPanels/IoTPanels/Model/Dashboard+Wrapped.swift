@@ -12,6 +12,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case calendarHeatmap
     case calendarHeatmapDense
     case bandChart
+    case circularGauge
+    case text
 
     var id: String { rawValue }
 
@@ -27,6 +29,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .calendarHeatmap: return "Calendar"
         case .calendarHeatmapDense: return "Calendar Dense"
         case .bandChart: return "Band"
+        case .circularGauge: return "Circular Gauge"
+        case .text: return "Text"
         }
     }
 
@@ -42,6 +46,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .calendarHeatmap: return "calendar"
         case .calendarHeatmapDense: return "calendar.badge.clock"
         case .bandChart: return "chart.line.flattrend.xyaxis"
+        case .circularGauge: return "gauge.open.with.lines.needle.33percent"
+        case .text: return "textformat"
         }
     }
 

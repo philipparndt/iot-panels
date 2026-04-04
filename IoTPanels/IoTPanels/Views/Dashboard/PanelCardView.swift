@@ -128,6 +128,10 @@ struct PanelRenderer: View {
             calendarHeatmapBody(dense: true)
         case .bandChart:
             bandChartBody
+        case .circularGauge:
+            circularGaugeBody
+        case .text:
+            textBody
         }
     }
 
@@ -984,6 +988,122 @@ struct PanelRenderer: View {
                 .font(.system(size: sz(compact ? 8 : 10)))
                 .foregroundStyle(.secondary)
         }
+    }
+
+    // MARK: - Circular Gauge
+
+    private var circularGaugeBody: some View {
+        let allDataValues = series.flatMap { $0.dataPoints.map(\.value) }
+        let scheme = styleConfig.resolvedGaugeColorScheme
+        let dataMin = allDataValues.min() ?? 0
+        let dataMax = allDataValues.max() ?? 100
+        let padding = max((dataMax - dataMin) * 0.1, 1)
+        let autoMin = dataMin - padding
+        let autoMax = dataMax + padding
+        let minVal = styleConfig.gaugeMin ?? autoMin
+        let maxVal = styleConfig.gaugeMax ?? autoMax
+        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+        let range = maxVal - minVal
+
+        return VStack(spacing: compact ? 4 : 8) {
+            Text(title)
+                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            if allDataValues.isEmpty {
+                Text("—")
+                    .font(.system(size: sz(18), weight: .medium))
+                    .foregroundStyle(.tertiary)
+            } else {
+                let lastValue = series.first?.dataPoints.last?.value ?? 0
+                let progress = range > 0 ? (lastValue - minVal) / range : 0.5
+                let clampedProgress = max(0, min(1, progress))
+                let ringColor = scheme.color(at: clampedProgress)
+
+                ZStack {
+                    Circle()
+                        .stroke(Color.secondary.opacity(0.15), lineWidth: compact ? 6 : 10)
+                    Circle()
+                        .trim(from: 0, to: clampedProgress)
+                        .stroke(ringColor, style: StrokeStyle(lineWidth: compact ? 6 : 10, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeInOut(duration: 0.4), value: clampedProgress)
+
+                    VStack(spacing: 0) {
+                        Text(formatValue(lastValue))
+                            .font(.system(size: sz(compact ? 14 : 22), weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(ringColor)
+                            .minimumScaleFactor(0.5)
+                            .lineLimit(1)
+                        if !unitSuffix.isEmpty {
+                            Text(unit)
+                                .font(.system(size: sz(compact ? 7 : 10)))
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+                .aspectRatio(1, contentMode: .fit)
+                .frame(maxHeight: compact ? 60 : 120)
+
+                // Multi-series legend
+                if isMultiSeries {
+                    ForEach(Array(series.enumerated()), id: \.offset) { _, s in
+                        if let last = s.dataPoints.last {
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(s.color)
+                                    .frame(width: sz(6), height: sz(6))
+                                Text(s.label)
+                                    .font(.system(size: sz(compact ? 8 : 10)))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text(formatValue(last.value) + unitSuffix)
+                                    .font(.system(size: sz(compact ? 10 : 14), weight: .semibold, design: .rounded).monospacedDigit())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Text Panel
+
+    private var textBody: some View {
+        VStack(alignment: compact ? .center : .leading, spacing: compact ? 2 : 6) {
+            Text(title)
+                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: compact ? .infinity : nil, alignment: compact ? .center : .leading)
+
+            if let rawValue = series.first?.dataPoints.last {
+                let displayText = formatTextValue(rawValue.value)
+                let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
+                Text(displayText + unitSuffix)
+                    .font(.system(size: sz(compact ? 20 : 36), weight: .semibold, design: .rounded))
+                    .foregroundStyle(primaryColor)
+                    .minimumScaleFactor(0.3)
+                    .lineLimit(2)
+                    .frame(maxWidth: compact ? .infinity : nil, alignment: compact ? .center : .leading)
+            } else {
+                Text("—")
+                    .font(.system(size: sz(18), weight: .medium))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    private func formatTextValue(_ value: Double) -> String {
+        // If the value is a whole number or very close to one, show no decimals
+        if abs(value - value.rounded()) < 0.001 {
+            return String(format: "%.0f", value)
+        }
+        // Otherwise show up to 1 decimal
+        return String(format: "%.1f", value)
     }
 
     // MARK: - Trend

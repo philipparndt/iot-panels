@@ -371,7 +371,7 @@ extension WidgetDesignItem {
                 ? query.buildBandSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw)
                 : query.buildSQLQuery(database: dataSource.wrappedDatabase, timeRange: tr, window: aw, fn: af)
         case .prometheus:
-            return query.wrappedRawQuery.isEmpty ? query.wrappedMeasurement : query.wrappedRawQuery
+            return query.buildPrometheusQuery(timeRange: effectiveTimeRange)
         case .mqtt:
             #if canImport(CocoaMQTT)
             return query.buildMQTTQuery()
