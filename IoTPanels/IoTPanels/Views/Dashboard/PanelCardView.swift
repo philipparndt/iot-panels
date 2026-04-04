@@ -90,10 +90,16 @@ struct PanelRenderer: View {
     private var lastValue: String? {
         // For band charts, prefer the _mean series over _max/_min
         let preferredSeries = series.first(where: { $0.label.hasSuffix("_mean") }) ?? series.first
-        return preferredSeries?.dataPoints.last.map { formatValue($0.value) }
+        return preferredSeries?.dataPoints.last.map { formatParts($0.value).value }
     }
 
     private var fieldName: String? {
+        // Use auto-scaled unit from the last value if available
+        let preferredSeries = series.first(where: { $0.label.hasSuffix("_mean") }) ?? series.first
+        if let lastPoint = preferredSeries?.dataPoints.last {
+            let parts = formatParts(lastPoint.value)
+            return parts.unit.isEmpty ? nil : parts.unit
+        }
         if !unit.isEmpty { return unit }
         return nil
     }
@@ -148,12 +154,12 @@ struct PanelRenderer: View {
     @ViewBuilder
     private var selectionTooltip: some View {
         if let selectedTime, let point = closestPoint(to: selectedTime) {
-            let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
             HStack(spacing: 6) {
                 Text(formatTime(point.time))
                     .font(.system(size: sz(10)).monospacedDigit())
                     .foregroundStyle(.secondary)
-                Text(formatValue(point.value) + unitSuffix)
+                Text(formatWithUnit(point.value))
                     .font(.system(size: sz(12), weight: .semibold).monospacedDigit())
             }
             .padding(.horizontal, 8)
@@ -180,7 +186,7 @@ struct PanelRenderer: View {
         VStack(spacing: compact ? 4 : 8) {
             // Title row — shows selection tooltip when dragging, otherwise title + last value
             if let selectedTime, !compact, let point = closestPoint(to: selectedTime) {
-                let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+    
                 HStack(alignment: .firstTextBaseline) {
                     Text(title)
                         .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
@@ -193,7 +199,7 @@ struct PanelRenderer: View {
                         Text(formatTime(point.time))
                             .font(.system(size: sz(12)).monospacedDigit())
                             .foregroundStyle(.secondary)
-                        Text(formatValue(point.value) + unitSuffix)
+                        Text(formatWithUnit(point.value))
                             .font(.system(size: sz(compact ? 14 : 22), weight: .semibold, design: .default).monospacedDigit())
                     }
                 }
@@ -308,7 +314,7 @@ struct PanelRenderer: View {
             .foregroundStyle(.blue)
             .symbolSize(compact ? 15 : 30)
             .annotation(position: .bottom, spacing: 2) {
-                Text(formatValue(minMax.min.value))
+                Text(formatWithUnit(minMax.min.value))
                     .font(.system(size: 8).monospacedDigit())
                     .foregroundStyle(.blue)
             }
@@ -316,7 +322,7 @@ struct PanelRenderer: View {
             .foregroundStyle(.red)
             .symbolSize(compact ? 15 : 30)
             .annotation(position: .top, spacing: 2) {
-                Text(formatValue(minMax.max.value))
+                Text(formatWithUnit(minMax.max.value))
                     .font(.system(size: 8).monospacedDigit())
                     .foregroundStyle(.red)
             }
@@ -342,7 +348,13 @@ struct PanelRenderer: View {
                 selectionRuleMark
             }
             .chartXAxis(compact ? .hidden : .automatic)
-            .chartYAxis(compact ? .hidden : .automatic)
+            .chartYAxis {
+                if compact {
+                    AxisMarks(preset: .extended) { _ in }
+                } else {
+                    scaledYAxis
+                }
+            }
             .chartXSelection(value: $selectedTime)
             .frame(height: fillHeight ? nil : (compact ? 40 : 160))
 
@@ -430,7 +442,13 @@ struct PanelRenderer: View {
             }
             .chartForegroundStyleScale(domain: seriesLabels, range: seriesColors)
             .chartXAxis(compact ? .hidden : .automatic)
-            .chartYAxis(compact ? .hidden : .automatic)
+            .chartYAxis {
+                if compact {
+                    AxisMarks(preset: .extended) { _ in }
+                } else {
+                    scaledYAxis
+                }
+            }
             .chartLegend(.hidden)
             .chartXSelection(value: $selectedTime)
             .frame(height: fillHeight ? nil : (compact ? 40 : 160))
@@ -443,7 +461,7 @@ struct PanelRenderer: View {
         let times = points.map(\.time).sorted()
         let values = points.map(\.value)
         let fontSize: CGFloat = sz(compact ? 9 : 11)
-        let unitSuffix = unit.isEmpty ? "" : unit
+
 
         return HStack {
             if let first = times.first {
@@ -453,7 +471,7 @@ struct PanelRenderer: View {
             }
             Spacer()
             if let minVal = values.min(), let maxVal = values.max(), maxVal - minVal > 0.01 {
-                Text("\(formatValue(minVal))–\(formatValue(maxVal))\(unitSuffix.isEmpty ? "" : " ")\(unitSuffix)")
+                Text("\(formatWithUnit(minVal))–\(formatWithUnit(maxVal))")
                     .font(.system(size: fontSize).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -553,7 +571,7 @@ struct PanelRenderer: View {
     }
 
     private func bandChartSelectionHeader(groups: [BandGroup], selectedTime: Date, point: ChartDataPoint) -> some View {
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
         let closestMin: ChartDataPoint? = groups.first.flatMap { g in
             g.minPoints.min(by: { abs($0.time.timeIntervalSince(selectedTime)) < abs($1.time.timeIntervalSince(selectedTime)) })
         }
@@ -575,14 +593,14 @@ struct PanelRenderer: View {
                     .foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     if let minVal = closestMin {
-                        Text("↓\(formatValue(minVal.value))")
+                        Text("↓\(formatWithUnit(minVal.value))")
                             .font(.system(size: sz(12)).monospacedDigit())
                             .foregroundStyle(.blue)
                     }
-                    Text(formatValue(point.value) + unitSuffix)
+                    Text(formatWithUnit(point.value))
                         .font(.system(size: sz(18), weight: .semibold).monospacedDigit())
                     if let maxVal = closestMax {
-                        Text("↑\(formatValue(maxVal.value))")
+                        Text("↑\(formatWithUnit(maxVal.value))")
                             .font(.system(size: sz(12)).monospacedDigit())
                             .foregroundStyle(.red)
                     }
@@ -646,7 +664,13 @@ struct PanelRenderer: View {
             selectionRuleMark
         }
         .chartXAxis(compact ? .hidden : .automatic)
-        .chartYAxis(compact ? .hidden : .automatic)
+        .chartYAxis {
+                if compact {
+                    AxisMarks(preset: .extended) { _ in }
+                } else {
+                    scaledYAxis
+                }
+            }
         .chartXSelection(value: $selectedTime)
         .frame(height: fillHeight ? nil : (compact ? 40 : 160))
     }
@@ -741,7 +765,7 @@ struct PanelRenderer: View {
     }
 
     private func bandLegend(groups: [BandGroup]) -> some View {
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
         let fontSize: CGFloat = sz(compact ? 8 : 10)
 
         return HStack(spacing: compact ? 6 : 10) {
@@ -755,7 +779,7 @@ struct PanelRenderer: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                     if let last = group.meanPoints.last {
-                        Text(formatValue(last.value) + unitSuffix)
+                        Text(formatWithUnit(last.value))
                             .font(.system(size: fontSize, weight: .semibold).monospacedDigit())
                             .foregroundStyle(.primary)
                     }
@@ -771,7 +795,7 @@ struct PanelRenderer: View {
     }
 
     private var customLegend: some View {
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
         let fontSize: CGFloat = sz(compact ? 8 : 10)
         let primarySeries = series.filter { !$0.label.hasPrefix("cmp_") }
 
@@ -789,14 +813,14 @@ struct PanelRenderer: View {
                         let min = s.dataPoints.map(\.value).min() ?? last.value
                         let max = s.dataPoints.map(\.value).max() ?? last.value
                         if compact {
-                            Text("\(formatValue(last.value))\(unitSuffix)")
+                            Text(formatWithUnit(last.value))
                                 .font(.system(size: fontSize).monospacedDigit())
                                 .foregroundStyle(.primary)
                         } else {
-                            Text("\(formatValue(min))–\(formatValue(max))\(unitSuffix)")
+                            Text("\(formatWithUnit(min))–\(formatWithUnit(max))")
                                 .font(.system(size: fontSize).monospacedDigit())
                                 .foregroundStyle(.tertiary)
-                            Text(formatValue(last.value) + unitSuffix)
+                            Text(formatWithUnit(last.value))
                                 .font(.system(size: fontSize, weight: .semibold).monospacedDigit())
                                 .foregroundStyle(.primary)
                         }
@@ -839,7 +863,7 @@ struct PanelRenderer: View {
     }
 
     private var multiValueBody: some View {
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
         let valueFontSize = sz(compact ? 18 : 28)
         let labelFontSize = sz(compact ? 8 : 10)
 
@@ -856,7 +880,7 @@ struct PanelRenderer: View {
 
                 Spacer()
 
-                Text((s.dataPoints.last.map { formatValue($0.value) } ?? "—") + unitSuffix)
+                Text(s.dataPoints.last.map { formatWithUnit($0.value) } ?? "—")
                     .font(.system(size: valueFontSize, weight: .semibold, design: .rounded).monospacedDigit())
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
@@ -877,7 +901,7 @@ struct PanelRenderer: View {
         let autoMax = dataMax + padding
         let minVal = styleConfig.gaugeMin ?? autoMin
         let maxVal = styleConfig.gaugeMax ?? autoMax
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
+
         let range = maxVal - minVal
 
         return VStack(alignment: .leading, spacing: compact ? 2 : 6) {
@@ -904,7 +928,7 @@ struct PanelRenderer: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                             Spacer()
-                            Text(formatValue(last.value) + unitSuffix)
+                            Text(formatWithUnit(last.value))
                                 .font(.system(size: sz(compact ? 14 : 18), weight: .semibold, design: .rounded).monospacedDigit())
                                 .foregroundStyle(scheme.color(at: progress))
                         }
@@ -916,19 +940,20 @@ struct PanelRenderer: View {
                     s.dataPoints.last.map { (value: $0.value, color: s.color) }
                 }, minVal: minVal, maxVal: maxVal, scheme: scheme)
 
-                gaugeLabelRow(minVal: minVal, maxVal: maxVal, unitSuffix: unitSuffix)
+                gaugeLabelRow(minVal: minVal, maxVal: maxVal)
             } else {
                 // Single series
                 let last = series.first!.dataPoints.last!
                 let progress = range > 0 ? (last.value - minVal) / range : 0.5
                 let dotColor = scheme.color(at: progress)
 
+                let parts = formatParts(last.value)
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(formatValue(last.value))
+                    Text(parts.value)
                         .font(.system(size: sz(compact ? 16 : 24), weight: .semibold, design: .rounded).monospacedDigit())
                         .foregroundStyle(dotColor)
-                    if !unitSuffix.isEmpty {
-                        Text(unit)
+                    if !parts.unit.isEmpty {
+                        Text(parts.unit)
                             .font(.system(size: sz(compact ? 8 : 10)))
                             .foregroundStyle(.tertiary)
                     }
@@ -936,7 +961,7 @@ struct PanelRenderer: View {
 
                 gaugeBar(values: [(value: last.value, color: scheme.color(at: progress))], minVal: minVal, maxVal: maxVal, scheme: scheme)
 
-                gaugeLabelRow(minVal: minVal, maxVal: maxVal, unitSuffix: unitSuffix)
+                gaugeLabelRow(minVal: minVal, maxVal: maxVal)
             }
         }
     }
@@ -978,13 +1003,13 @@ struct PanelRenderer: View {
         .frame(height: compact ? 12 : 16)
     }
 
-    private func gaugeLabelRow(minVal: Double, maxVal: Double, unitSuffix: String) -> some View {
+    private func gaugeLabelRow(minVal: Double, maxVal: Double) -> some View {
         HStack {
-            Text(formatValue(minVal) + unitSuffix)
+            Text(formatWithUnit(minVal))
                 .font(.system(size: sz(compact ? 8 : 10)))
                 .foregroundStyle(.secondary)
             Spacer()
-            Text(formatValue(maxVal) + unitSuffix)
+            Text(formatWithUnit(maxVal))
                 .font(.system(size: sz(compact ? 8 : 10)))
                 .foregroundStyle(.secondary)
         }
@@ -1002,7 +1027,6 @@ struct PanelRenderer: View {
         let autoMax = dataMax + padding
         let minVal = styleConfig.gaugeMin ?? autoMin
         let maxVal = styleConfig.gaugeMax ?? autoMax
-        let unitSuffix = unit.isEmpty ? "" : " \(unit)"
         let range = maxVal - minVal
 
         return VStack(spacing: compact ? 4 : 8) {
@@ -1020,6 +1044,7 @@ struct PanelRenderer: View {
                 let progress = range > 0 ? (lastValue - minVal) / range : 0.5
                 let clampedProgress = max(0, min(1, progress))
                 let ringColor = scheme.color(at: clampedProgress)
+                let parts = formatParts(lastValue)
 
                 ZStack {
                     Circle()
@@ -1031,13 +1056,13 @@ struct PanelRenderer: View {
                         .animation(.easeInOut(duration: 0.4), value: clampedProgress)
 
                     VStack(spacing: 0) {
-                        Text(formatValue(lastValue))
+                        Text(parts.value)
                             .font(.system(size: sz(compact ? 14 : 22), weight: .bold, design: .rounded).monospacedDigit())
                             .foregroundStyle(ringColor)
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
-                        if !unitSuffix.isEmpty {
-                            Text(unit)
+                        if !parts.unit.isEmpty {
+                            Text(parts.unit)
                                 .font(.system(size: sz(compact ? 7 : 10)))
                                 .foregroundStyle(.tertiary)
                         }
@@ -1059,7 +1084,7 @@ struct PanelRenderer: View {
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                                 Spacer()
-                                Text(formatValue(last.value) + unitSuffix)
+                                Text(formatWithUnit(last.value))
                                     .font(.system(size: sz(compact ? 10 : 14), weight: .semibold, design: .rounded).monospacedDigit())
                             }
                         }
@@ -1080,10 +1105,7 @@ struct PanelRenderer: View {
                 .frame(maxWidth: compact ? .infinity : nil, alignment: compact ? .center : .leading)
 
             if let rawValue = series.first?.dataPoints.last {
-                let displayText = formatTextValue(rawValue.value)
-                let unitSuffix = unit.isEmpty ? "" : " \(unit)"
-
-                Text(displayText + unitSuffix)
+                Text(formatWithUnit(rawValue.value))
                     .font(.system(size: sz(compact ? 20 : 36), weight: .semibold, design: .rounded))
                     .foregroundStyle(primaryColor)
                     .minimumScaleFactor(0.3)
@@ -1104,6 +1126,21 @@ struct PanelRenderer: View {
         }
         // Otherwise show up to 1 decimal
         return String(format: "%.1f", value)
+    }
+
+    // MARK: - Y-Axis
+
+    private var scaledYAxis: some AxisContent {
+        AxisMarks { axisValue in
+            AxisGridLine()
+            AxisTick()
+            if let v = axisValue.as(Double.self) {
+                AxisValueLabel {
+                    Text(formatWithUnit(v))
+                        .font(.system(size: 9))
+                }
+            }
+        }
     }
 
     // MARK: - Trend
@@ -1158,7 +1195,17 @@ struct PanelRenderer: View {
     }
 
     private func formatValue(_ value: Double) -> String {
-        abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+        UnitFormatter.smartFormat(value)
+    }
+
+    /// Formats a value with auto-scaled unit, returning "4.94 GB" style string.
+    private func formatWithUnit(_ value: Double) -> String {
+        UnitFormatter.formatDisplay(value: value, unit: unit)
+    }
+
+    /// Formats a value with auto-scaled unit, returning the parts separately.
+    private func formatParts(_ value: Double) -> UnitFormatter.FormattedValue {
+        UnitFormatter.format(value: value, unit: unit)
     }
 }
 
@@ -1185,7 +1232,15 @@ private struct CalendarHeatmapView: View {
     private func sz(_ base: CGFloat) -> CGFloat { base * textScale }
 
     private func formatValue(_ value: Double) -> String {
-        abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+        UnitFormatter.smartFormat(value)
+    }
+
+    private func formatWithUnit(_ value: Double) -> String {
+        UnitFormatter.formatDisplay(value: value, unit: unit)
+    }
+
+    private func formatParts(_ value: Double) -> UnitFormatter.FormattedValue {
+        UnitFormatter.format(value: value, unit: unit)
     }
 
     var body: some View {
@@ -1209,7 +1264,7 @@ private struct CalendarHeatmapView: View {
                         Text(sel.formatted(.dateTime.day().month(.abbreviated).year()))
                             .font(.system(size: sz(12)).monospacedDigit())
                             .foregroundStyle(.secondary)
-                        Text(formatValue(val) + (unit.isEmpty ? "" : " \(unit)"))
+                        Text(formatWithUnit(val))
                             .font(.system(size: sz(22), weight: .semibold, design: .default).monospacedDigit())
                     }
                 }
@@ -1223,11 +1278,12 @@ private struct CalendarHeatmapView: View {
                     Spacer()
 
                     if let val = lastValue {
+                        let parts = formatParts(val)
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
-                            Text(formatValue(val))
+                            Text(parts.value)
                                 .font(.system(size: sz(compact ? 14 : 22), weight: .semibold, design: .default).monospacedDigit())
-                            if !unit.isEmpty {
-                                Text(unit)
+                            if !parts.unit.isEmpty {
+                                Text(parts.unit)
                                     .font(.system(size: sz(compact ? 8 : 10)))
                                     .foregroundStyle(.tertiary)
                                 }

@@ -28,6 +28,7 @@
 		A10000010000000000000001 /* IoTPanelsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000001 /* IoTPanelsApp.swift */; };
 		A10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		A10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
+		UF0000010000000000000001 /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = UF0000020000000000000002 /* UnitFormatter.swift */; };
 		A10000040000000000000004 /* DataSource+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000040000000000000004 /* DataSource+Wrapped.swift */; };
 		A10000050000000000000005 /* DataSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000050000000000000005 /* DataSourceService.swift */; };
 		A10000060000000000000006 /* InfluxDB2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000060000000000000006 /* InfluxDB2Service.swift */; };
@@ -48,6 +49,7 @@
 		A10000120000000000000018 /* MQTTTopicDiscoveryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */; };
 		A1000013000000000000000D /* IoTPanelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013000000000000000D /* IoTPanelsTests.swift */; };
 		PR0200070000000000000007 /* PrometheusServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = PR0100050000000000000005 /* PrometheusServiceTests.swift */; };
+		UF0200060000000000000006 /* UnitFormatterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UF0100050000000000000005 /* UnitFormatterTests.swift */; };
 		DT0200080000000000000008 /* DashboardTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DT0100070000000000000007 /* DashboardTemplateTests.swift */; };
 		B10000010000000000000001 /* TimeRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000010000000000000001 /* TimeRange.swift */; };
 		B10000020000000000000002 /* SavedQuery+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000020000000000000002 /* SavedQuery+Wrapped.swift */; };
@@ -65,6 +67,7 @@
 		D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000010000000000000001 /* IoTPanelsWidget.swift */; };
 		D10000020000000000000002 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		D10000030000000000000003 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
+		UF0000030000000000000003 /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = UF0000020000000000000002 /* UnitFormatter.swift */; };
 		D10000040000000000000004 /* DataSource+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000040000000000000004 /* DataSource+Wrapped.swift */; };
 		D10000050000000000000005 /* DataSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000050000000000000005 /* DataSourceService.swift */; };
 		D10000060000000000000006 /* InfluxDB2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000060000000000000006 /* InfluxDB2Service.swift */; };
@@ -124,6 +127,7 @@
 		W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = W20000020000000000000002 /* IoTPanelsWatchWidget.swift */; };
 		W10000030000000000000003 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000020000000000000002 /* Persistence.swift */; };
 		W10000040000000000000004 /* BackendType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000030000000000000003 /* BackendType.swift */; };
+		UF0000040000000000000004 /* UnitFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = UF0000020000000000000002 /* UnitFormatter.swift */; };
 		W10000050000000000000005 /* DataSource+Wrapped.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000040000000000000004 /* DataSource+Wrapped.swift */; };
 		W10000060000000000000006 /* DataSourceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000050000000000000005 /* DataSourceService.swift */; };
 		W10000070000000000000007 /* InfluxDB2Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000060000000000000006 /* InfluxDB2Service.swift */; };
@@ -220,6 +224,7 @@
 		A20000010000000000000001 /* IoTPanelsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsApp.swift; sourceTree = "<group>"; };
 		A20000020000000000000002 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		A20000030000000000000003 /* BackendType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendType.swift; sourceTree = "<group>"; };
+		UF0000020000000000000002 /* UnitFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatter.swift; sourceTree = "<group>"; };
 		A20000040000000000000004 /* DataSource+Wrapped.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DataSource+Wrapped.swift"; sourceTree = "<group>"; };
 		A20000050000000000000005 /* DataSourceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceService.swift; sourceTree = "<group>"; };
 		A20000060000000000000006 /* InfluxDB2Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfluxDB2Service.swift; sourceTree = "<group>"; };
@@ -239,6 +244,7 @@
 		A20000120000000000000018 /* MQTTTopicDiscoveryPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MQTTTopicDiscoveryPage.swift; sourceTree = "<group>"; };
 		A2000013000000000000000D /* IoTPanelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IoTPanelsTests.swift; sourceTree = "<group>"; };
 		PR0100050000000000000005 /* PrometheusServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrometheusServiceTests.swift; sourceTree = "<group>"; };
+		UF0100050000000000000005 /* UnitFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitFormatterTests.swift; sourceTree = "<group>"; };
 		DT0100070000000000000007 /* DashboardTemplateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardTemplateTests.swift; sourceTree = "<group>"; };
 		A2000014000000000000000E /* IoTPanels.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IoTPanels.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2000015000000000000000F /* IoTPanelsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IoTPanelsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -388,6 +394,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000030000000000000003 /* BackendType.swift */,
+				UF0000020000000000000002 /* UnitFormatter.swift */,
 				A20000040000000000000004 /* DataSource+Wrapped.swift */,
 				B20000010000000000000001 /* TimeRange.swift */,
 				B20000020000000000000002 /* SavedQuery+Wrapped.swift */,
@@ -473,6 +480,7 @@
 			children = (
 				A2000013000000000000000D /* IoTPanelsTests.swift */,
 				PR0100050000000000000005 /* PrometheusServiceTests.swift */,
+				UF0100050000000000000005 /* UnitFormatterTests.swift */,
 				DT0100070000000000000007 /* DashboardTemplateTests.swift */,
 			);
 			path = IoTPanelsTests;
@@ -779,6 +787,7 @@
 				22D283342F7D5849008CFD8E /* DataExporter.swift in Sources */,
 				A10000020000000000000002 /* Persistence.swift in Sources */,
 				A10000030000000000000003 /* BackendType.swift in Sources */,
+				UF0000010000000000000001 /* UnitFormatter.swift in Sources */,
 				A10000040000000000000004 /* DataSource+Wrapped.swift in Sources */,
 				A10000050000000000000005 /* DataSourceService.swift in Sources */,
 				A10000060000000000000006 /* InfluxDB2Service.swift in Sources */,
@@ -852,6 +861,7 @@
 			files = (
 				A1000013000000000000000D /* IoTPanelsTests.swift in Sources */,
 				PR0200070000000000000007 /* PrometheusServiceTests.swift in Sources */,
+				UF0200060000000000000006 /* UnitFormatterTests.swift in Sources */,
 				DT0200080000000000000008 /* DashboardTemplateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -864,6 +874,7 @@
 				22279B402F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
 				D10000020000000000000002 /* Persistence.swift in Sources */,
 				D10000030000000000000003 /* BackendType.swift in Sources */,
+				UF0000030000000000000003 /* UnitFormatter.swift in Sources */,
 				D10000040000000000000004 /* DataSource+Wrapped.swift in Sources */,
 				D10000050000000000000005 /* DataSourceService.swift in Sources */,
 				D10000060000000000000006 /* InfluxDB2Service.swift in Sources */,
@@ -908,6 +919,7 @@
 				W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */,
 				W10000030000000000000003 /* Persistence.swift in Sources */,
 				W10000040000000000000004 /* BackendType.swift in Sources */,
+				UF0000040000000000000004 /* UnitFormatter.swift in Sources */,
 				22D283362F7D5849008CFD8E /* DataExporter.swift in Sources */,
 				W10000050000000000000005 /* DataSource+Wrapped.swift in Sources */,
 				W10000060000000000000006 /* DataSourceService.swift in Sources */,

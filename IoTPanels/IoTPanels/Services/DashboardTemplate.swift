@@ -41,17 +41,26 @@ extension DashboardTemplate {
         dashboard.modifiedAt = Date()
 
         for panel in panels {
-            let query = SavedQuery(context: context)
-            query.id = UUID()
-            query.name = panel.query.name
-            query.isRawQuery = true
-            query.rawQuery = panel.query.rawQuery
-            query.wrappedTimeRange = panel.query.timeRange
-            query.wrappedAggregateWindow = panel.query.aggregateWindow
-            query.unit = panel.query.unit
-            query.dataSource = dataSource
-            query.createdAt = Date()
-            query.modifiedAt = Date()
+            // Reuse existing query if one matches by name and rawQuery on the same datasource
+            let query = Self.findExistingQuery(
+                name: panel.query.name,
+                rawQuery: panel.query.rawQuery,
+                dataSource: dataSource,
+                context: context
+            ) ?? {
+                let q = SavedQuery(context: context)
+                q.id = UUID()
+                q.name = panel.query.name
+                q.isRawQuery = true
+                q.rawQuery = panel.query.rawQuery
+                q.wrappedTimeRange = panel.query.timeRange
+                q.wrappedAggregateWindow = panel.query.aggregateWindow
+                q.unit = panel.query.unit
+                q.dataSource = dataSource
+                q.createdAt = Date()
+                q.modifiedAt = Date()
+                return q
+            }()
 
             let p = DashboardPanel(context: context)
             p.id = UUID()
@@ -70,6 +79,21 @@ extension DashboardTemplate {
 
         try? context.save()
         return dashboard
+    }
+
+    private static func findExistingQuery(
+        name: String,
+        rawQuery: String,
+        dataSource: DataSource,
+        context: NSManagedObjectContext
+    ) -> SavedQuery? {
+        let request = SavedQuery.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "name == %@ AND rawQuery == %@ AND dataSource == %@",
+            name, rawQuery, dataSource
+        )
+        request.fetchLimit = 1
+        return (try? context.fetch(request))?.first
     }
 }
 

@@ -197,7 +197,15 @@ struct SingleValueTimelineProvider: AppIntentTimelineProvider {
 // MARK: - Shared Helpers
 
 private func formatValue(_ value: Double) -> String {
-    abs(value - value.rounded()) < 0.01 ? String(format: "%.0f", value) : String(format: "%.1f", value)
+    UnitFormatter.smartFormat(value)
+}
+
+private func formatValue(_ value: Double, unit: String) -> String {
+    UnitFormatter.formatDisplay(value: value, unit: unit)
+}
+
+private func formatParts(_ value: Double, unit: String) -> UnitFormatter.FormattedValue {
+    UnitFormatter.format(value: value, unit: unit)
 }
 
 // MARK: - Single Value View
@@ -224,19 +232,20 @@ struct SingleValueWidgetView: View {
     }
 
     private var homeScreenView: some View {
-        VStack(spacing: 2) {
+        let parts = formatParts(entry.value ?? 0, unit: entry.unit)
+        return VStack(spacing: 2) {
             Text(entry.queryName)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
-            Text(formatValue(entry.value ?? 0))
+            Text(parts.value)
                 .font(.system(size: 36, weight: .semibold, design: .rounded).monospacedDigit())
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
 
-            if !entry.unit.isEmpty {
-                Text(entry.unit)
+            if !parts.unit.isEmpty {
+                Text(parts.unit)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
