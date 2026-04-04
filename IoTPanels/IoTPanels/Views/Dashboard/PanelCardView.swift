@@ -1721,23 +1721,37 @@ enum ChartDataParser {
         }
     }
 
-    /// Parses SQL / InfluxQL format: rows have a "time" column and one or more named value columns.
+    /// Parses SQL / InfluxQL / Prometheus format: rows have a "time" column and one or more named value columns.
     /// Each numeric non-time column produces a ChartDataPoint with the column name as field.
+    /// For Prometheus multi-series results, label columns are used to distinguish series.
     private nonisolated static func parseGeneric(result: QueryResult) -> [ChartDataPoint] {
         let (fmt, fallback) = makeFormatters()
+        let skipColumns: Set<String> = ["time", "_time", "iox::measurement"]
         var points: [ChartDataPoint] = []
 
         for row in result.rows {
             let timeStr = row.values["time"] ?? row.values["_time"] ?? ""
             guard let time = parseTime(timeStr, fmt: fmt, fallback: fallback) else { continue }
 
-            let valueColumns = row.values.filter { key, val in
-                key != "time" && key != "_time" && key != "iox::measurement" && Double(val) != nil
+            // Separate numeric columns (values) from string columns (labels)
+            var valueColumns: [(String, Double)] = []
+            var labelParts: [String] = []
+
+            for (key, val) in row.values where !skipColumns.contains(key) {
+                if let numVal = Double(val) {
+                    valueColumns.append((key, numVal))
+                } else if !val.isEmpty {
+                    // String column — likely a Prometheus label
+                    labelParts.append(val)
+                }
             }
 
-            for (colName, valStr) in valueColumns {
-                guard let value = Double(valStr) else { continue }
-                points.append(ChartDataPoint(time: time, value: value, field: colName))
+            // Build a label suffix to distinguish multi-series (e.g., "eth0" from device column)
+            let labelSuffix = labelParts.sorted().joined(separator: ", ")
+
+            for (colName, value) in valueColumns {
+                let field = labelSuffix.isEmpty ? colName : "\(colName) (\(labelSuffix))"
+                points.append(ChartDataPoint(time: time, value: value, field: field))
             }
         }
         return points

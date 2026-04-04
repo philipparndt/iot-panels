@@ -206,7 +206,7 @@ enum DashboardTemplateRegistry {
                 styleConfig: nil,
                 query: QueryTemplate(
                     name: "Network Receive",
-                    rawQuery: "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+                    rawQuery: "sum(rate(node_network_receive_bytes_total{device=~\"eth.*|en.*|wlan.*\"}[5m]))",
                     timeRange: .sixHours,
                     aggregateWindow: .oneMinute,
                     unit: "B/s"
@@ -219,7 +219,7 @@ enum DashboardTemplateRegistry {
                 styleConfig: nil,
                 query: QueryTemplate(
                     name: "Disk Read",
-                    rawQuery: "rate(node_disk_read_bytes_total[5m])",
+                    rawQuery: "sum(rate(node_disk_read_bytes_total{device=~\"sd.*|nvme.*|vd.*\"}[5m]))",
                     timeRange: .sixHours,
                     aggregateWindow: .oneMinute,
                     unit: "B/s"
