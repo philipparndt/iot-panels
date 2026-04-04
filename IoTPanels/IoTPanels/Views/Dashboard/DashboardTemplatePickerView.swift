@@ -48,8 +48,7 @@ struct DashboardTemplatePickerView: View {
                     Section("Templates") {
                         ForEach(templates) { template in
                             Button {
-                                selectedTemplate = template
-                                showDataSourcePicker(for: template)
+                                applyOrPickDataSource(for: template)
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: template.icon)
@@ -102,13 +101,15 @@ struct DashboardTemplatePickerView: View {
         }
     }
 
-    private func showDataSourcePicker(for template: DashboardTemplate) {
+    private func applyOrPickDataSource(for template: DashboardTemplate) {
         let compatible = dataSources.filter { $0.wrappedBackendType == template.backendType }
         if compatible.count == 1, let ds = compatible.first {
             // Auto-select if only one compatible source
             applyTemplate(template, dataSource: ds)
+        } else {
+            // Multiple sources — show picker sheet
+            selectedTemplate = template
         }
-        // Otherwise the sheet will show
     }
 
     private func applyTemplate(_ template: DashboardTemplate, dataSource: DataSource) {
