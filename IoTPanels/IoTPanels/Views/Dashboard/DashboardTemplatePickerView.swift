@@ -186,7 +186,7 @@ struct DataSourcePickerForTemplate: View {
     }
 }
 
-extension DashboardTemplate: @retroactive Equatable {
+extension DashboardTemplate: Equatable {
     static func == (lhs: DashboardTemplate, rhs: DashboardTemplate) -> Bool {
         lhs.id == rhs.id
     }
