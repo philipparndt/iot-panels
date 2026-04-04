@@ -55,7 +55,7 @@ struct WidgetDesignListView: View {
                     }
                 }
         }
-        .onChange(of: navigationState.navigateToWidgetDesignId) {
+        .onChange(of: navigationState.navigateToWidgetDesignId, initial: true) {
             guard let targetId = navigationState.navigateToWidgetDesignId else { return }
             navigationState.navigateToWidgetDesignId = nil
             if let design = designs.first(where: { $0.id == targetId }) {

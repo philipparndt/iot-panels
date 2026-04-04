@@ -6,6 +6,7 @@ import AppIntents
 
 struct SingleValueEntry: TimelineEntry {
     let date: Date
+    let queryId: UUID?
     let queryName: String
     let value: Double?
     let unit: String
@@ -26,13 +27,13 @@ struct SingleValueEntry: TimelineEntry {
     }
 
     static func placeholder(countdown: Bool) -> SingleValueEntry {
-        SingleValueEntry(date: Date(), queryName: countdown ? "Dishwasher" : "Temperature",
+        SingleValueEntry(date: Date(), queryId: nil, queryName: countdown ? "Dishwasher" : "Temperature",
                          value: countdown ? 45 : 21.5, unit: countdown ? "min" : "°C",
                          isPlaceholder: true, isCountdown: countdown, hideWhenZero: false, showCompleted: false)
     }
 
     static func empty(countdown: Bool, hideWhenZero: Bool = false) -> SingleValueEntry {
-        SingleValueEntry(date: Date(), queryName: "Select a query", value: nil, unit: "",
+        SingleValueEntry(date: Date(), queryId: nil, queryName: "Select a query", value: nil, unit: "",
                          isPlaceholder: false, isCountdown: countdown, hideWhenZero: hideWhenZero, showCompleted: false)
     }
 }
@@ -126,16 +127,16 @@ struct SingleValueTimelineProvider: AppIntentTimelineProvider {
             if now >= completedDeadline {
                 // Already past the 5-minute window — go straight to transparent
                 let transparentEntry = SingleValueEntry(
-                    date: now, queryName: entry.queryName, value: 0, unit: entry.unit,
+                    date: now, queryId: entry.queryId, queryName: entry.queryName, value: 0, unit: entry.unit,
                     isPlaceholder: false, isCountdown: true, hideWhenZero: true, showCompleted: false)
                 return Timeline(entries: [transparentEntry], policy: .after(nextUpdate))
             } else {
                 // Still within 5 minutes — show "Completed" then go transparent
                 let completedEntry = SingleValueEntry(
-                    date: now, queryName: entry.queryName, value: 0, unit: entry.unit,
+                    date: now, queryId: entry.queryId, queryName: entry.queryName, value: 0, unit: entry.unit,
                     isPlaceholder: false, isCountdown: true, hideWhenZero: true, showCompleted: true)
                 let transparentEntry = SingleValueEntry(
-                    date: completedDeadline, queryName: entry.queryName, value: 0, unit: entry.unit,
+                    date: completedDeadline, queryId: entry.queryId, queryName: entry.queryName, value: 0, unit: entry.unit,
                     isPlaceholder: false, isCountdown: true, hideWhenZero: true, showCompleted: false)
                 return Timeline(entries: [completedEntry, transparentEntry], policy: .after(nextUpdate))
             }
@@ -164,17 +165,17 @@ struct SingleValueTimelineProvider: AppIntentTimelineProvider {
 
         // Try live query first
         if let lastValue = await liveQueryValue(query: query, dataSource: dataSource) {
-            let entry = SingleValueEntry(date: Date(), queryName: query.wrappedName, value: lastValue, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
+            let entry = SingleValueEntry(date: Date(), queryId: uuid, queryName: query.wrappedName, value: lastValue, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
             return (entry, query.wrappedCachedAt)
         }
 
         // Fall back to cached data
         if let cached = query.cachedDataPoints, let lastValue = cached.last?.value {
-            let entry = SingleValueEntry(date: Date(), queryName: query.wrappedName, value: lastValue, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
+            let entry = SingleValueEntry(date: Date(), queryId: uuid, queryName: query.wrappedName, value: lastValue, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
             return (entry, cachedAt)
         }
 
-        let entry = SingleValueEntry(date: Date(), queryName: query.wrappedName, value: nil, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
+        let entry = SingleValueEntry(date: Date(), queryId: uuid, queryName: query.wrappedName, value: nil, unit: query.wrappedUnit, isPlaceholder: false, isCountdown: isCountdown, hideWhenZero: hideWhenZero, showCompleted: false)
         return (entry, cachedAt)
     }
 
@@ -482,6 +483,7 @@ struct SingleValueWidget: Widget {
             provider: SingleValueTimelineProvider(isCountdown: false, hideWhenZero: false)
         ) { entry in
             SingleValueWidgetView(entry: entry)
+                .widgetURL(entry.queryId.flatMap { URL(string: "iotpanels://query/\($0)") })
                 .containerBackground(for: .widget) { ContainerRelativeShape().fill(.tertiary) }
         }
         .configurationDisplayName("Single Value")
@@ -500,6 +502,7 @@ struct CountdownValueWidget: Widget {
             provider: SingleValueTimelineProvider(isCountdown: true, hideWhenZero: false)
         ) { entry in
             CountdownValueWidgetView(entry: entry)
+                .widgetURL(entry.queryId.flatMap { URL(string: "iotpanels://query/\($0)") })
                 .containerBackground(for: .widget) { ContainerRelativeShape().fill(.tertiary) }
         }
         .configurationDisplayName("Countdown")
@@ -518,6 +521,7 @@ struct CountdownTransparentWidget: Widget {
             provider: SingleValueTimelineProvider(isCountdown: true, hideWhenZero: true)
         ) { entry in
             CountdownValueWidgetView(entry: entry)
+                .widgetURL(entry.queryId.flatMap { URL(string: "iotpanels://query/\($0)") })
                 .containerBackground(for: .widget) {
                     if entry.isTransparent {
                         Color.clear

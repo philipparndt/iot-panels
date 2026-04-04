@@ -11,6 +11,7 @@ struct ContentView: View {
     private var homes: FetchedResults<Home>
 
     @State private var showingNewHome = false
+    @State private var savedQueryForSheet: SavedQuery?
 
     var body: some View {
         @Bindable var nav = navigationState
@@ -47,6 +48,29 @@ struct ContentView: View {
                 let home = HomeManager.createHome(name: name, context: viewContext)
                 navigationState.selectedHome = home
             }
+        }
+        .onChange(of: navigationState.navigateToSavedQueryId, initial: true) {
+            guard let queryId = navigationState.navigateToSavedQueryId else { return }
+            navigationState.navigateToSavedQueryId = nil
+            let request = SavedQuery.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", queryId as CVarArg)
+            request.fetchLimit = 1
+            if let query = (try? viewContext.fetch(request))?.first {
+                savedQueryForSheet = query
+            }
+        }
+        .sheet(item: $savedQueryForSheet) { query in
+            NavigationStack {
+                if let dataSource = query.dataSource {
+                    SavedQueryDetailView(dataSource: dataSource, savedQuery: query)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") { savedQueryForSheet = nil }
+                            }
+                        }
+                }
+            }
+            .environment(\.managedObjectContext, viewContext)
         }
     }
 
