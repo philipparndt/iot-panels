@@ -35,13 +35,16 @@ struct AddPanelView: View {
                 }
 
                 Section("Display Style") {
-                    Picker("Style", selection: $selectedStyle) {
-                        ForEach(PanelDisplayStyle.allCases) { style in
-                            Label(style.displayName, systemImage: style.icon)
-                                .tag(style)
+                    NavigationLink {
+                        DisplayStylePickerView(selection: $selectedStyle)
+                    } label: {
+                        HStack {
+                            Text("Style")
+                            Spacer()
+                            Label(selectedStyle.displayName, systemImage: selectedStyle.icon)
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .pickerStyle(.menu)
                 }
 
                 ForEach(Array(dataSources.enumerated()), id: \.element.objectID) { _, ds in

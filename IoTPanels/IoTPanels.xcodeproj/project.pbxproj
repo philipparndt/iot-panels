@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -188,25 +188,21 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		DA0000010000000000000001 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 13;
+			dstSubfolder = PlugIns;
 			files = (
 				D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		WA0000010000000000000001 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 13;
+			dstSubfolder = PlugIns;
 			files = (
 				W30000010000000000000001 /* IoTPanelsWatchWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -308,55 +304,47 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = IoTPanelsUITests; sourceTree = "<group>"; };
+		22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = IoTPanelsUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		22D283382F7E674E008CFD8E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A60000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				M50000010000000000000001 /* CocoaMQTT in Frameworks */,
 				M50000020000000000000002 /* CocoaMQTTWebSocket in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A60000020000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D60000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				M50000030000000000000003 /* CocoaMQTT in Frameworks */,
 				M50000040000000000000004 /* CocoaMQTTWebSocket in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		W70000010000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		W70000020000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -594,8 +582,6 @@
 				22D2833C2F7E674E008CFD8E /* IoTPanelsUITests */,
 			);
 			name = IoTPanelsUITests;
-			packageProductDependencies = (
-			);
 			productName = IoTPanelsUITests;
 			productReference = 22D2833B2F7E674E008CFD8E /* IoTPanelsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -649,8 +635,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = IoTPanelsWidgetExtension;
 			packageProductDependencies = (
 				M40000030000000000000003 /* CocoaMQTT */,
@@ -686,8 +670,6 @@
 				W70000020000000000000002 /* Frameworks */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = IoTPanelsWatchWidgetExtension;
 			productName = IoTPanelsWatchWidgetExtension;
@@ -727,7 +709,6 @@
 				};
 			};
 			buildConfigurationList = A80000010000000000000001 /* Build configuration list for PBXProject "IoTPanels" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -740,6 +721,7 @@
 			packageReferences = (
 				M30000010000000000000001 /* XCRemoteSwiftPackageReference "CocoaMQTT" */,
 			);
+			preferredProjectObjectVersion = 100;
 			productRefGroup = A70000090000000000000009 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -757,15 +739,12 @@
 /* Begin PBXResourcesBuildPhase section */
 		22D283392F7E674E008CFD8E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				221A68E22F8182F4007A92B8 /* AppIcon.icon in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AA0000010000000000000001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				A10000100000000000000016 /* Localizable.xcstrings in Resources */,
 				A10000110000000000000017 /* Settings.bundle in Resources */,
@@ -773,21 +752,17 @@
 				A1000011000000000000000B /* Preview Assets.xcassets in Resources */,
 				221A68E12F8182F4007A92B8 /* AppIcon.icon in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		22D283372F7E674E008CFD8E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A90000010000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				A10000010000000000000001 /* IoTPanelsApp.swift in Sources */,
 				22D283342F7D5849008CFD8E /* DataExporter.swift in Sources */,
@@ -859,22 +834,18 @@
 				DT0000020000000000000002 /* DashboardTemplate.swift in Sources */,
 				DT0000060000000000000006 /* DashboardTemplatePickerView.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A90000020000000000000002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				A1000013000000000000000D /* IoTPanelsTests.swift in Sources */,
 				PR0200070000000000000007 /* PrometheusServiceTests.swift in Sources */,
 				UF0200060000000000000006 /* UnitFormatterTests.swift in Sources */,
 				DT0200080000000000000008 /* DashboardTemplateTests.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D90000010000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				D10000010000000000000001 /* IoTPanelsWidget.swift in Sources */,
 				22279B402F7C5A5000BA02B0 /* InfluxDB3Service.swift in Sources */,
@@ -908,19 +879,15 @@
 				PR0200020000000000000002 /* PrometheusService.swift in Sources */,
 				DT0000030000000000000003 /* DashboardTemplate.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		WB0000010000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				W10000010000000000000001 /* IoTPanelsWatchApp.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		WB0000020000000000000002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				W10000020000000000000002 /* IoTPanelsWatchWidget.swift in Sources */,
 				W10000030000000000000003 /* Persistence.swift in Sources */,
@@ -951,7 +918,6 @@
 				W1000021000000000000001B /* BrokerImportExport.swift in Sources */,
 				DT0000040000000000000004 /* DashboardTemplate.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -979,7 +945,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		22D283432F7E674E008CFD8E /* Debug */ = {
+		22D283432F7E674E008CFD8E /* Debug configuration for PBXNativeTarget "IoTPanelsUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -1002,7 +968,7 @@
 			};
 			name = Debug;
 		};
-		22D283442F7E674E008CFD8E /* Release */ = {
+		22D283442F7E674E008CFD8E /* Release configuration for PBXNativeTarget "IoTPanelsUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -1024,7 +990,7 @@
 			};
 			name = Release;
 		};
-		AC0000010000000000000001 /* Debug */ = {
+		AC0000010000000000000001 /* Debug configuration for PBXProject "IoTPanels" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1088,7 +1054,7 @@
 			};
 			name = Debug;
 		};
-		AC0000020000000000000002 /* Release */ = {
+		AC0000020000000000000002 /* Release configuration for PBXProject "IoTPanels" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1145,7 +1111,7 @@
 			};
 			name = Release;
 		};
-		AC0000030000000000000003 /* Debug */ = {
+		AC0000030000000000000003 /* Debug configuration for PBXNativeTarget "IoTPanels" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1180,7 +1146,7 @@
 			};
 			name = Debug;
 		};
-		AC0000040000000000000004 /* Release */ = {
+		AC0000040000000000000004 /* Release configuration for PBXNativeTarget "IoTPanels" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1215,7 +1181,7 @@
 			};
 			name = Release;
 		};
-		AC0000050000000000000005 /* Debug */ = {
+		AC0000050000000000000005 /* Debug configuration for PBXNativeTarget "IoTPanelsTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -1234,7 +1200,7 @@
 			};
 			name = Debug;
 		};
-		AC0000060000000000000006 /* Release */ = {
+		AC0000060000000000000006 /* Release configuration for PBXNativeTarget "IoTPanelsTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -1253,7 +1219,7 @@
 			};
 			name = Release;
 		};
-		DC0000010000000000000001 /* Debug */ = {
+		DC0000010000000000000001 /* Debug configuration for PBXNativeTarget "IoTPanelsWidgetExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IoTPanelsWidget/IoTPanelsWidget.entitlements;
@@ -1280,7 +1246,7 @@
 			};
 			name = Debug;
 		};
-		DC0000020000000000000002 /* Release */ = {
+		DC0000020000000000000002 /* Release configuration for PBXNativeTarget "IoTPanelsWidgetExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IoTPanelsWidget/IoTPanelsWidget.entitlements;
@@ -1307,7 +1273,7 @@
 			};
 			name = Release;
 		};
-		WD0000010000000000000001 /* Debug */ = {
+		WD0000010000000000000001 /* Debug configuration for PBXNativeTarget "IoTPanelsWatch" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1336,7 +1302,7 @@
 			};
 			name = Debug;
 		};
-		WD0000020000000000000002 /* Release */ = {
+		WD0000020000000000000002 /* Release configuration for PBXNativeTarget "IoTPanelsWatch" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1365,7 +1331,7 @@
 			};
 			name = Release;
 		};
-		WD0000030000000000000003 /* Debug */ = {
+		WD0000030000000000000003 /* Debug configuration for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatchWidget/IoTPanelsWatchWidget.entitlements;
@@ -1392,7 +1358,7 @@
 			};
 			name = Debug;
 		};
-		WD0000040000000000000004 /* Release */ = {
+		WD0000040000000000000004 /* Release configuration for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IoTPanelsWatchWidget/IoTPanelsWatchWidget.entitlements;
@@ -1425,64 +1391,57 @@
 		22D283452F7E674E008CFD8E /* Build configuration list for PBXNativeTarget "IoTPanelsUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				22D283432F7E674E008CFD8E /* Debug */,
-				22D283442F7E674E008CFD8E /* Release */,
+				22D283432F7E674E008CFD8E /* Debug configuration for PBXNativeTarget "IoTPanelsUITests" */,
+				22D283442F7E674E008CFD8E /* Release configuration for PBXNativeTarget "IoTPanelsUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		A80000010000000000000001 /* Build configuration list for PBXProject "IoTPanels" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AC0000010000000000000001 /* Debug */,
-				AC0000020000000000000002 /* Release */,
+				AC0000010000000000000001 /* Debug configuration for PBXProject "IoTPanels" */,
+				AC0000020000000000000002 /* Release configuration for PBXProject "IoTPanels" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		A80000030000000000000003 /* Build configuration list for PBXNativeTarget "IoTPanels" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AC0000030000000000000003 /* Debug */,
-				AC0000040000000000000004 /* Release */,
+				AC0000030000000000000003 /* Debug configuration for PBXNativeTarget "IoTPanels" */,
+				AC0000040000000000000004 /* Release configuration for PBXNativeTarget "IoTPanels" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		A80000060000000000000006 /* Build configuration list for PBXNativeTarget "IoTPanelsTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AC0000050000000000000005 /* Debug */,
-				AC0000060000000000000006 /* Release */,
+				AC0000050000000000000005 /* Debug configuration for PBXNativeTarget "IoTPanelsTests" */,
+				AC0000060000000000000006 /* Release configuration for PBXNativeTarget "IoTPanelsTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		D80000010000000000000001 /* Build configuration list for PBXNativeTarget "IoTPanelsWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DC0000010000000000000001 /* Debug */,
-				DC0000020000000000000002 /* Release */,
+				DC0000010000000000000001 /* Debug configuration for PBXNativeTarget "IoTPanelsWidgetExtension" */,
+				DC0000020000000000000002 /* Release configuration for PBXNativeTarget "IoTPanelsWidgetExtension" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		W90000010000000000000001 /* Build configuration list for PBXNativeTarget "IoTPanelsWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				WD0000010000000000000001 /* Debug */,
-				WD0000020000000000000002 /* Release */,
+				WD0000010000000000000001 /* Debug configuration for PBXNativeTarget "IoTPanelsWatch" */,
+				WD0000020000000000000002 /* Release configuration for PBXNativeTarget "IoTPanelsWatch" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		W90000020000000000000002 /* Build configuration list for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				WD0000030000000000000003 /* Debug */,
-				WD0000040000000000000004 /* Release */,
+				WD0000030000000000000003 /* Debug configuration for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */,
+				WD0000040000000000000004 /* Release configuration for PBXNativeTarget "IoTPanelsWatchWidgetExtension" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

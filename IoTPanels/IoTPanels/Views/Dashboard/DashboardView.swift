@@ -152,18 +152,22 @@ struct DashboardView: View {
                                 }
 
                                 Menu("Display Style") {
-                                    ForEach(PanelDisplayStyle.allCases) { style in
-                                        Button {
-                                            panel.wrappedDisplayStyle = style
-                                            panel.modifiedAt = Date()
-                                            dashboard.modifiedAt = Date()
-                                            try? viewContext.save()
-                                            WidgetHelper.reloadWidgets()
-                                            refreshID = UUID()
-                                        } label: {
-                                            Label(style.displayName, systemImage: style.icon)
-                                            if panel.wrappedDisplayStyle == style {
-                                                Image(systemName: "checkmark")
+                                    ForEach(PanelDisplayStyle.grouped(), id: \.category) { group in
+                                        Section(group.category.displayName) {
+                                            ForEach(group.styles) { style in
+                                                Button {
+                                                    panel.wrappedDisplayStyle = style
+                                                    panel.modifiedAt = Date()
+                                                    dashboard.modifiedAt = Date()
+                                                    try? viewContext.save()
+                                                    WidgetHelper.reloadWidgets()
+                                                    refreshID = UUID()
+                                                } label: {
+                                                    Label(style.displayName, systemImage: style.icon)
+                                                    if panel.wrappedDisplayStyle == style {
+                                                        Image(systemName: "checkmark")
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -430,19 +434,14 @@ struct EditPanelView: View {
                 }
 
                 Section("Display Style") {
-                    ForEach(PanelDisplayStyle.allCases) { s in
-                        Button {
-                            style = s
-                        } label: {
-                            HStack {
-                                Label(s.displayName, systemImage: s.icon)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if style == s {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(Color.accentColor)
-                                }
-                            }
+                    NavigationLink {
+                        DisplayStylePickerView(selection: $style)
+                    } label: {
+                        HStack {
+                            Text("Style")
+                            Spacer()
+                            Label(style.displayName, systemImage: style.icon)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -709,6 +708,40 @@ struct ChangeQueryView: View {
             }
         }
         .navigationTitle("Change Query")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Display Style Picker
+
+struct DisplayStylePickerView: View {
+    @Binding var selection: PanelDisplayStyle
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            ForEach(PanelDisplayStyle.grouped(), id: \.category) { group in
+                Section(group.category.displayName) {
+                    ForEach(group.styles) { s in
+                        Button {
+                            selection = s
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Label(s.displayName, systemImage: s.icon)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                if selection == s {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Display Style")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

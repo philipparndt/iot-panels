@@ -1,6 +1,33 @@
 import Foundation
 import CoreData
 
+enum ChartCategory: String, CaseIterable, Identifiable {
+    case timeSeries
+    case values
+    case grid
+    case other
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .timeSeries: return "Time Series"
+        case .values: return "Values"
+        case .grid: return "Grid"
+        case .other: return "Other"
+        }
+    }
+
+    var sortOrder: Int {
+        switch self {
+        case .timeSeries: return 0
+        case .values: return 1
+        case .grid: return 2
+        case .other: return 3
+        }
+    }
+}
+
 enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case auto
     case chart
@@ -56,6 +83,26 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .chart, .linePointChart, .bandChart: return true
         default: return false
         }
+    }
+
+    var category: ChartCategory {
+        switch self {
+        case .chart, .barChart, .scatterChart, .linePointChart, .bandChart:
+            return .timeSeries
+        case .singleValue, .gauge, .circularGauge:
+            return .values
+        case .calendarHeatmap, .calendarHeatmapDense:
+            return .grid
+        case .auto, .text:
+            return .other
+        }
+    }
+
+    static func grouped() -> [(category: ChartCategory, styles: [PanelDisplayStyle])] {
+        let grouped = Dictionary(grouping: allCases) { $0.category }
+        return ChartCategory.allCases
+            .filter { grouped[$0] != nil }
+            .map { (category: $0, styles: grouped[$0]!) }
     }
 }
 

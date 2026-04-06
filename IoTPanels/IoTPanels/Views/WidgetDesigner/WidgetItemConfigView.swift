@@ -143,19 +143,14 @@ struct WidgetItemConfigView: View {
 
     private var styleSection: some View {
         Section("Display Style") {
-            ForEach(PanelDisplayStyle.allCases) { s in
-                Button {
-                    style = s
-                } label: {
-                    HStack {
-                        Label(s.displayName, systemImage: s.icon)
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if style == s {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    }
+            NavigationLink {
+                DisplayStylePickerView(selection: $style)
+            } label: {
+                HStack {
+                    Text("Style")
+                    Spacer()
+                    Label(style.displayName, systemImage: style.icon)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
