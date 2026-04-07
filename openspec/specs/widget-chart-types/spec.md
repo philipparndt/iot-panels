@@ -1,7 +1,7 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Widget items support all dashboard display styles
-The system SHALL allow widget items to use any display style available to dashboard panels: auto, line, bar, scatter, line+points, single value, gauge, calendar heatmap, calendar heatmap dense, and band chart.
+The system SHALL allow widget items to use any display style available to dashboard panels: auto, line, bar, scatter, line+points, single value, gauge, calendar heatmap, calendar heatmap dense, band chart, circular gauge, text, sparkline, stacked bar, stacked area, status indicator, and table.
 
 #### Scenario: Select bar chart for widget item
 - **WHEN** user edits a widget item and selects "Bar" as the display style
@@ -15,20 +15,22 @@ The system SHALL allow widget items to use any display style available to dashbo
 - **WHEN** user edits a widget item and selects "Calendar Dense" as the display style
 - **THEN** the widget renders a compact calendar heatmap grid
 
+#### Scenario: Select sparkline for widget item
+- **WHEN** user edits a widget item and selects "Sparkline" as the display style
+- **THEN** the widget renders a minimal trend line with last value label
+
+#### Scenario: Select stacked bar for widget item
+- **WHEN** user edits a widget item and selects "Stacked Bar" as the display style
+- **THEN** the widget renders stacked bars for multi-series data
+
+#### Scenario: Select status indicator for widget item
+- **WHEN** user edits a widget item and selects "Status" as the display style
+- **THEN** the widget renders a colored status circle with value
+
+#### Scenario: Select table for widget item
+- **WHEN** user edits a widget item and selects "Table" as the display style
+- **THEN** the widget renders a compact table with recent data rows
+
 #### Scenario: Display style picker shows all options
 - **WHEN** user opens the widget item configuration view
 - **THEN** the display style picker shows all available styles with icons, matching the dashboard panel editor
-
-### Requirement: Band chart style configuration in widgets
-The system SHALL allow widget items with band chart style to configure band opacity, matching the dashboard panel editor.
-
-#### Scenario: Configure band opacity
-- **WHEN** user selects band chart style for a widget item
-- **THEN** a band opacity configuration option appears in the item settings
-
-### Requirement: Heatmap color configuration in widgets
-The system SHALL allow widget items with calendar heatmap styles to configure the heatmap color scheme.
-
-#### Scenario: Configure heatmap color
-- **WHEN** user selects a calendar heatmap style for a widget item
-- **THEN** a heatmap color picker appears in the item settings
