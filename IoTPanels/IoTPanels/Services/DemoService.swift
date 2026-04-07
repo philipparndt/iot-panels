@@ -59,6 +59,20 @@ struct DemoService: DataSourceServiceProtocol {
                         ]))
                     }
                 }
+            } else if let stateGen = stateGenerator(measurement: measurement, field: field) {
+                // State-based data (string values)
+                for i in 0..<count {
+                    let time = now.addingTimeInterval(-Double(count - i) * interval - stopOffset)
+                    let stateValue = stateGen(time)
+                    rows.append(QueryResult.Row(values: [
+                        "_time": formatter.string(from: time),
+                        "_measurement": measurement,
+                        "_field": field,
+                        "_value": stateValue,
+                        "result": "_result",
+                        "table": "0"
+                    ]))
+                }
             } else {
                 for i in 0..<count {
                     let time = now.addingTimeInterval(-Double(count - i) * interval - stopOffset)
@@ -84,7 +98,7 @@ struct DemoService: DataSourceServiceProtocol {
     // MARK: - Schema Discovery
 
     func fetchMeasurements() async throws -> [String] {
-        ["temperature", "humidity", "energy", "solar", "battery", "air_quality", "appliance", "motion", "water", "weather"]
+        ["temperature", "humidity", "energy", "solar", "battery", "air_quality", "appliance", "motion", "water", "weather", "door_state", "hvac_mode"]
     }
 
     func fetchFieldKeys(measurement: String) async throws -> [String] {
@@ -101,6 +115,8 @@ struct DemoService: DataSourceServiceProtocol {
         case "motion": return ["zone"]
         case "water": return ["meter"]
         case "weather": return ["station"]
+        case "door_state": return ["location"]
+        case "hvac_mode": return ["zone"]
         default: return ["tag"]
         }
     }
@@ -167,7 +183,29 @@ struct DemoService: DataSourceServiceProtocol {
         case "motion": return ["detected", "count"]
         case "water": return ["flow_rate", "total"]
         case "weather": return ["temperature", "wind_speed", "wind_gust", "rain", "humidity", "pressure"]
+        case "door_state": return ["state"]
+        case "hvac_mode": return ["mode"]
         default: return ["value"]
+        }
+    }
+
+    private func stateGenerator(measurement: String, field: String) -> ((Date) -> String)? {
+        switch (measurement, field) {
+        case ("door_state", _):
+            let states = ["open", "closed"]
+            return { time in
+                let noise = self.smoothNoise(for: time, seed: self.stableHash("door_state_state"), period: 1800)
+                return states[noise > 0.6 ? 0 : 1]
+            }
+        case ("hvac_mode", _):
+            let states = ["idle", "heating", "cooling", "fan"]
+            return { time in
+                let noise = self.smoothNoise(for: time, seed: self.stableHash("hvac_mode_mode"), period: 3600)
+                let index = Int(noise * Double(states.count)) % states.count
+                return states[index]
+            }
+        default:
+            return nil
         }
     }
 

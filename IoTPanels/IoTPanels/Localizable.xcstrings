@@ -415,6 +415,9 @@
     "+" : {
 
     },
+    "≥" : {
+
+    },
     "0" : {
 
     },
@@ -10678,6 +10681,12 @@
         }
       }
     },
+    "Label" : {
+
+    },
+    "Label (e.g. Calm)" : {
+
+    },
     "Last" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11895,6 +11904,12 @@
       }
     },
     "Manual Query" : {
+
+    },
+    "Map numeric value ranges to state labels. \"≥ 20 Windy\" means values from 20 upward show as \"Windy\". Swipe to delete." : {
+
+    },
+    "Map state values to colors. Unmapped states use automatic colors. Swipe to delete." : {
 
     },
     "Max" : {
@@ -17922,6 +17937,12 @@
     "Start from scratch" : {
 
     },
+    "State Colors" : {
+
+    },
+    "State name" : {
+
+    },
     "Stop" : {
       "localizations" : {
         "de" : {
@@ -20074,6 +20095,9 @@
           }
         }
       }
+    },
+    "Value Aliases" : {
+
     },
     "Verifying your certificate" : {
       "extractionState" : "stale",

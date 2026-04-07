@@ -32,6 +32,14 @@ struct ChartDataPoint: Codable {
     let time: Date
     let value: Double
     let field: String
+    let state: String?
+
+    init(time: Date, value: Double, field: String, state: String? = nil) {
+        self.time = time
+        self.value = value
+        self.field = field
+        self.state = state
+    }
 }
 
 // MARK: - Shared Panel Renderer (single and multi-series)
@@ -148,6 +156,8 @@ struct PanelRenderer: View {
             statusIndicatorBody
         case .table:
             tableBody
+        case .stateTimeline:
+            stateTimelineBody
         }
     }
 
@@ -1357,6 +1367,157 @@ struct PanelRenderer: View {
         }
     }
 
+    // MARK: - State Timeline
+
+    private var stateTimelineBody: some View {
+        // If data is numeric and aliases are configured, convert to state points
+        let aliases = styleConfig.stateAliases ?? []
+        let statePoints: [ChartDataPoint] = {
+            let existing = allDataPoints.filter { $0.state != nil }.sorted { $0.time < $1.time }
+            if !existing.isEmpty { return existing }
+            // Try alias mapping on numeric data
+            guard !aliases.isEmpty else { return [] }
+            return allDataPoints.sorted { $0.time < $1.time }.compactMap { point in
+                guard let label = aliases.resolve(point.value) else { return nil }
+                return ChartDataPoint(time: point.time, value: point.value, field: point.field, state: label)
+            }
+        }()
+        let allStates = statePoints.compactMap(\.state)
+        let uniqueStates = allStates.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+
+        return VStack(alignment: .leading, spacing: compact ? 2 : 6) {
+            if !compact {
+                Text(title)
+                    .font(.system(size: sz(14), weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            if statePoints.isEmpty {
+                // Fallback for numeric data or no data
+                Text(lastValue ?? "No data")
+                    .font(.system(size: sz(compact ? 14 : 18), weight: .medium))
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 30 : 60)
+            } else if compact && statePoints.count > 0 {
+                // Compact widget fallback: show current state
+                let currentState = statePoints.last?.state ?? "—"
+                let color = StateColorResolver.color(for: currentState, allStates: uniqueStates, userColors: styleConfig.stateColors)
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 12, height: 12)
+                    Text(currentState)
+                        .font(.system(size: sz(16), weight: .semibold))
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                // Full timeline
+                stateTimelineSegments(points: statePoints, uniqueStates: uniqueStates)
+            }
+        }
+    }
+
+    private func stateTimelineSegments(points: [ChartDataPoint], uniqueStates: [String]) -> some View {
+        let segments = buildStateSegments(from: points)
+
+        return VStack(spacing: 2) {
+            GeometryReader { geo in
+                let totalWidth = geo.size.width
+                let totalDuration = segments.last.map { $0.end.timeIntervalSince(segments.first!.start) } ?? 1
+
+                HStack(spacing: 0) {
+                    ForEach(Array(segments.enumerated()), id: \.offset) { _, segment in
+                        let fraction = segment.end.timeIntervalSince(segment.start) / totalDuration
+                        let segWidth = max(2, totalWidth * fraction)
+                        let color = StateColorResolver.color(for: segment.state, allStates: uniqueStates, userColors: styleConfig.stateColors)
+
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(color)
+                            .frame(width: segWidth)
+                            .overlay {
+                                if segWidth > 40 {
+                                    Text(segment.state)
+                                        .font(.system(size: sz(9), weight: .medium))
+                                        .foregroundStyle(.white)
+                                        .lineLimit(1)
+                                        .padding(.horizontal, 3)
+                                }
+                            }
+                    }
+                }
+            }
+            .frame(height: compact ? 20 : 28)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            // Time axis
+            if !compact, let first = segments.first, let last = segments.last {
+                stateTimeAxis(start: first.start, end: last.end)
+            }
+        }
+    }
+
+    private struct StateSegment {
+        let state: String
+        let start: Date
+        var end: Date
+    }
+
+    private func buildStateSegments(from points: [ChartDataPoint]) -> [StateSegment] {
+        guard let first = points.first, let firstState = first.state else { return [] }
+        var segments = [StateSegment(state: firstState, start: first.time, end: first.time)]
+        for point in points.dropFirst() {
+            guard let state = point.state else { continue }
+            if state == segments.last?.state {
+                segments[segments.count - 1].end = point.time
+            } else {
+                // End previous segment at this point's time
+                segments[segments.count - 1].end = point.time
+                segments.append(StateSegment(state: state, start: point.time, end: point.time))
+            }
+        }
+        // Ensure last segment has some duration
+        if let last = segments.last, last.start == last.end {
+            segments[segments.count - 1].end = last.start.addingTimeInterval(60)
+        }
+        return segments
+    }
+
+    private func stateTimeAxis(start: Date, end: Date) -> some View {
+        let labels = generateTimeLabels(start: start, end: end, count: 5)
+        let totalDuration = end.timeIntervalSince(start)
+        let useDate = totalDuration > 86400 * 2 // > 2 days → show dates
+
+        return GeometryReader { geo in
+            ForEach(Array(labels.enumerated()), id: \.offset) { _, label in
+                let fraction = label.date.timeIntervalSince(start) / totalDuration
+                Text(useDate ? formatDateLabel(label.date) : formatTime(label.date))
+                    .font(.system(size: 8).monospacedDigit())
+                    .foregroundStyle(.tertiary)
+                    .position(x: geo.size.width * fraction, y: 6)
+            }
+        }
+        .frame(height: 14)
+    }
+
+    private func formatDateLabel(_ date: Date) -> String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "dd.MM"
+        return fmt.string(from: date)
+    }
+
+    private struct TimeLabel {
+        let date: Date
+    }
+
+    private func generateTimeLabels(start: Date, end: Date, count: Int) -> [TimeLabel] {
+        let interval = end.timeIntervalSince(start) / Double(count - 1)
+        return (0..<count).map { i in
+            TimeLabel(date: start.addingTimeInterval(interval * Double(i)))
+        }
+    }
+
     private func formatTextValue(_ value: Double) -> String {
         // If the value is a whole number or very close to one, show no decimals
         if abs(value - value.rounded()) < 0.001 {
@@ -1952,10 +2113,13 @@ enum ChartDataParser {
         let (fmt, fallback) = makeFormatters()
         return result.rows.compactMap { row in
             guard let timeStr = row.values["_time"],
-                  let valueStr = row.values["_value"],
-                  let value = Double(valueStr) else { return nil }
+                  let valueStr = row.values["_value"] else { return nil }
             guard let time = fmt.date(from: timeStr) ?? fallback.date(from: timeStr) else { return nil }
-            return ChartDataPoint(time: time, value: value, field: row.values["_field"] ?? "value")
+            if let value = Double(valueStr) {
+                return ChartDataPoint(time: time, value: value, field: row.values["_field"] ?? "value")
+            } else {
+                return ChartDataPoint(time: time, value: 0, field: row.values["_field"] ?? "value", state: valueStr)
+            }
         }
     }
 
@@ -1971,15 +2135,17 @@ enum ChartDataParser {
             let timeStr = row.values["time"] ?? row.values["_time"] ?? ""
             guard let time = parseTime(timeStr, fmt: fmt, fallback: fallback) else { continue }
 
-            // Separate numeric columns (values) from string columns (labels)
+            // Separate numeric columns (values) from string columns (labels/states)
             var valueColumns: [(String, Double)] = []
+            var stateColumns: [(String, String)] = []
             var labelParts: [String] = []
 
             for (key, val) in row.values where !skipColumns.contains(key) {
                 if let numVal = Double(val) {
                     valueColumns.append((key, numVal))
                 } else if !val.isEmpty {
-                    // String column — likely a Prometheus label
+                    // Could be a label or a state value
+                    stateColumns.append((key, val))
                     labelParts.append(val)
                 }
             }
@@ -1987,9 +2153,16 @@ enum ChartDataParser {
             // Build a label suffix to distinguish multi-series (e.g., "eth0" from device column)
             let labelSuffix = labelParts.sorted().joined(separator: ", ")
 
-            for (colName, value) in valueColumns {
-                let field = labelSuffix.isEmpty ? colName : "\(colName) (\(labelSuffix))"
-                points.append(ChartDataPoint(time: time, value: value, field: field))
+            if valueColumns.isEmpty && !stateColumns.isEmpty {
+                // No numeric columns — treat string columns as state data
+                for (colName, stateVal) in stateColumns {
+                    points.append(ChartDataPoint(time: time, value: 0, field: colName, state: stateVal))
+                }
+            } else {
+                for (colName, value) in valueColumns {
+                    let field = labelSuffix.isEmpty ? colName : "\(colName) (\(labelSuffix))"
+                    points.append(ChartDataPoint(time: time, value: value, field: field))
+                }
             }
         }
         return points

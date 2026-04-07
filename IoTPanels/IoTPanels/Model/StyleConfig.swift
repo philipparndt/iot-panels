@@ -16,6 +16,12 @@ struct StyleConfig: Codable, Equatable {
     // Threshold color rules
     var thresholds: [ThresholdRule]?
 
+    // State timeline color mapping
+    var stateColors: [StateColorEntry]?
+
+    // State timeline value-to-state aliases (map numeric ranges to state labels)
+    var stateAliases: [StateAlias]?
+
     static let `default` = StyleConfig()
 
     var resolvedGaugeColorScheme: GaugeColorScheme {
@@ -38,6 +44,85 @@ struct StyleConfig: Codable, Equatable {
         for rule in sorted {
             if value >= rule.value {
                 result = Color(hex: rule.colorHex)
+            } else {
+                break
+            }
+        }
+        return result
+    }
+}
+
+// MARK: - State Color Entry
+
+struct StateColorEntry: Codable, Equatable, Identifiable {
+    var id: String { state }
+    var state: String
+    var colorHex: String
+}
+
+// MARK: - State Color Resolver
+
+enum StateColorResolver {
+    private static let semanticDefaults: [Set<String>: [String: String]] = [
+        Set(["on", "off"]): ["on": "#34C759", "off": "#FF3B30"],
+        Set(["open", "closed"]): ["open": "#34C759", "closed": "#FF3B30"],
+        Set(["home", "away"]): ["home": "#34C759", "away": "#8E8E93"],
+        Set(["true", "false"]): ["true": "#34C759", "false": "#FF3B30"],
+    ]
+
+    static let palette: [(hex: String, name: String)] = [
+        ("#007AFF", "Blue"),
+        ("#34C759", "Green"),
+        ("#FF9500", "Orange"),
+        ("#FF3B30", "Red"),
+        ("#AF52DE", "Purple"),
+        ("#5AC8FA", "Cyan"),
+        ("#FFD60A", "Yellow"),
+        ("#FF2D55", "Pink"),
+        ("#64D2FF", "Light Blue"),
+        ("#30D158", "Mint"),
+    ]
+
+    static let paletteHexValues: [String] = palette.map(\.hex)
+
+    static func color(for state: String, allStates: [String], userColors: [StateColorEntry]?) -> Color {
+        // 1. Check user-configured colors
+        if let entry = userColors?.first(where: { $0.state == state }) {
+            return Color(hex: entry.colorHex)
+        }
+
+        // 2. Check semantic defaults for known binary pairs
+        let stateSet = Set(allStates.map { $0.lowercased() })
+        for (pair, mapping) in semanticDefaults {
+            if stateSet == pair, let hex = mapping[state.lowercased()] {
+                return Color(hex: hex)
+            }
+        }
+
+        // 3. Fall back to automatic palette by order of first appearance
+        let index = allStates.firstIndex(of: state) ?? 0
+        let hex = palette[index % palette.count].hex
+        return Color(hex: hex)
+    }
+}
+
+// MARK: - State Alias
+
+struct StateAlias: Codable, Equatable, Identifiable {
+    var id: Double { value }
+    var value: Double
+    var label: String
+}
+
+extension Array where Element == StateAlias {
+    /// Returns the alias label for a given numeric value, or nil if no aliases match.
+    func resolve(_ value: Double) -> String? {
+        guard !isEmpty else { return nil }
+        let sorted = self.sorted { $0.value < $1.value }
+        var result: String?
+        for alias in sorted {
+            if value >= alias.value {
+                result = alias.label
             } else {
                 break
             }

@@ -46,6 +46,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case stackedArea
     case statusIndicator
     case table
+    case stateTimeline
 
     var id: String { rawValue }
 
@@ -68,6 +69,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .stackedArea: return "Stacked Area"
         case .statusIndicator: return "Status"
         case .table: return "Table"
+        case .stateTimeline: return "State Timeline"
         }
     }
 
@@ -90,6 +92,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .stackedArea: return "chart.line.uptrend.xyaxis"
         case .statusIndicator: return "circle.fill"
         case .table: return "tablecells"
+        case .stateTimeline: return "rectangle.split.3x1.fill"
         }
     }
 
@@ -100,6 +103,24 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Config features supported by this chart type.
+    var supportsThresholds: Bool {
+        switch self {
+        case .gauge, .stateTimeline, .text, .table: return false
+        default: return true
+        }
+    }
+
+    var supportsComparison: Bool { isLineBased }
+
+    var supportsGaugeConfig: Bool { self == .gauge }
+
+    var supportsHeatmapColor: Bool { self == .calendarHeatmap || self == .calendarHeatmapDense }
+
+    var supportsBandConfig: Bool { self == .bandChart }
+
+    var supportsStateConfig: Bool { self == .stateTimeline }
+
     var category: ChartCategory {
         switch self {
         case .chart, .barChart, .scatterChart, .linePointChart, .bandChart, .sparkline, .stackedBar, .stackedArea:
@@ -108,6 +129,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
             return .values
         case .calendarHeatmap, .calendarHeatmapDense, .table:
             return .grid
+        case .stateTimeline:
+            return .timeSeries
         case .auto, .text:
             return .other
         }

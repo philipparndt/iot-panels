@@ -186,7 +186,7 @@ struct WidgetItemConfigView: View {
 
     @ViewBuilder
     private var comparisonSection: some View {
-        if style.isLineBased {
+        if style.supportsComparison {
             Section {
                 Picker("Comparison Period", selection: $comparisonOffset) {
                     ForEach(ComparisonOffset.allCases) { offset in
@@ -206,16 +206,20 @@ struct WidgetItemConfigView: View {
 
     @ViewBuilder
     private var styleConfigSections: some View {
-        if style == .gauge {
+        if style.supportsGaugeConfig {
             gaugeConfigSections
         }
-        if style == .calendarHeatmap || style == .calendarHeatmapDense {
+        if style.supportsHeatmapColor {
             heatmapColorSection
         }
-        if style == .bandChart {
+        if style.supportsBandConfig {
             bandConfigSection
         }
-        if style != .gauge {
+        if style.supportsStateConfig {
+            stateAliasSection
+            stateColorSection
+        }
+        if style.supportsThresholds {
             ThresholdEditorView(thresholds: Binding(
                 get: { styleConfig.thresholds ?? [] },
                 set: { styleConfig.thresholds = $0.isEmpty ? nil : $0 }
@@ -298,6 +302,161 @@ struct WidgetItemConfigView: View {
         } header: {
             Text("Band Chart")
         }
+    }
+
+    @State private var newStateName = ""
+    @State private var newStateColor = "#007AFF"
+    @State private var newAliasValue = ""
+    @State private var newAliasLabel = ""
+    @FocusState private var newAliasValueFocused: Bool
+
+    private var sortedAliasIndices: [(offset: Int, alias: StateAlias)] {
+        guard let aliases = styleConfig.stateAliases else { return [] }
+        return aliases.enumerated()
+            .sorted { $0.element.value < $1.element.value }
+            .map { (offset: $0.offset, alias: $0.element) }
+    }
+
+    private var sortedAliases: [StateAlias] {
+        (styleConfig.stateAliases ?? []).sorted { $0.value < $1.value }
+    }
+
+    private var stateAliasSection: some View {
+        Section {
+            ForEach(sortedAliasIndices, id: \.alias.value) { item in
+                HStack {
+                    Text("≥")
+                        .foregroundStyle(.secondary)
+                    TextField("0", text: Binding(
+                        get: { String(format: "%.0f", styleConfig.stateAliases?[item.offset].value ?? 0) },
+                        set: { if let val = Double($0) { styleConfig.stateAliases?[item.offset].value = val } }
+                    ))
+                    .keyboardType(.decimalPad)
+                    .frame(width: 50)
+                    TextField("Label", text: Binding(
+                        get: { styleConfig.stateAliases?[item.offset].label ?? "" },
+                        set: { styleConfig.stateAliases?[item.offset].label = $0 }
+                    ))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                }
+            }
+            .onDelete { offsets in
+                let toRemove = offsets.map { sortedAliasIndices[$0].offset }
+                for index in toRemove.sorted().reversed() {
+                    styleConfig.stateAliases?.remove(at: index)
+                }
+                if styleConfig.stateAliases?.isEmpty == true { styleConfig.stateAliases = nil }
+            }
+
+            HStack {
+                Text("≥")
+                    .foregroundStyle(.secondary)
+                TextField("0", text: $newAliasValue)
+                    .keyboardType(.decimalPad)
+                    .frame(width: 50)
+                    .focused($newAliasValueFocused)
+                TextField("Label (e.g. Calm)", text: $newAliasLabel)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button {
+                    guard let val = Double(newAliasValue), !newAliasLabel.isEmpty else { return }
+                    if styleConfig.stateAliases == nil { styleConfig.stateAliases = [] }
+                    styleConfig.stateAliases?.removeAll { $0.value == val }
+                    styleConfig.stateAliases?.append(StateAlias(value: val, label: newAliasLabel))
+                    newAliasValue = ""
+                    newAliasLabel = ""
+                    newAliasValueFocused = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+                .disabled(Double(newAliasValue) == nil || newAliasLabel.isEmpty)
+            }
+        } header: {
+            Text("Value Aliases")
+        } footer: {
+            Text("Map numeric value ranges to state labels. \"≥ 20 Windy\" means values from 20 upward show as \"Windy\". Swipe to delete.")
+        }
+    }
+
+    private var stateColorSection: some View {
+        Section {
+            ForEach(Array((styleConfig.stateColors ?? []).enumerated()), id: \.element.state) { index, entry in
+                HStack {
+                    stateColorPicker(currentHex: entry.colorHex) { hex in
+                        styleConfig.stateColors?[index].colorHex = hex
+                    }
+                    Text(entry.state)
+                        .foregroundStyle(.primary)
+                }
+            }
+            .onDelete { offsets in
+                let entries = styleConfig.stateColors ?? []
+                let toRemove = offsets.map { entries[$0].state }
+                styleConfig.stateColors?.removeAll { toRemove.contains($0.state) }
+                if styleConfig.stateColors?.isEmpty == true { styleConfig.stateColors = nil }
+            }
+
+            // Quick-add from alias labels
+            let existingStates = Set((styleConfig.stateColors ?? []).map(\.state))
+            let suggestions = sortedAliases.map(\.label).filter { !existingStates.contains($0) }
+            if !suggestions.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(suggestions, id: \.self) { label in
+                            Button(label) {
+                                if styleConfig.stateColors == nil { styleConfig.stateColors = [] }
+                                styleConfig.stateColors?.append(StateColorEntry(state: label, colorHex: newStateColor))
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        }
+                    }
+                }
+            }
+
+            HStack {
+                stateColorPicker(currentHex: newStateColor) { hex in
+                    newStateColor = hex
+                }
+                TextField("State name", text: $newStateName)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button {
+                    guard !newStateName.isEmpty else { return }
+                    if styleConfig.stateColors == nil { styleConfig.stateColors = [] }
+                    styleConfig.stateColors?.removeAll { $0.state == newStateName }
+                    styleConfig.stateColors?.append(StateColorEntry(state: newStateName, colorHex: newStateColor))
+                    newStateName = ""
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+                .disabled(newStateName.isEmpty)
+            }
+        } header: {
+            Text("State Colors")
+        } footer: {
+            Text("Map state values to colors. Unmapped states use automatic colors. Swipe to delete.")
+        }
+    }
+
+    private func stateColorPicker(currentHex: String, onSelect: @escaping (String) -> Void) -> some View {
+        let binding = Binding<String>(
+            get: { currentHex },
+            set: { onSelect($0) }
+        )
+        return Picker("", selection: binding) {
+            ForEach(StateColorResolver.palette, id: \.hex) { entry in
+                Label(entry.name, systemImage: "circle.fill")
+                    .tint(Color(hex: entry.hex))
+                    .foregroundStyle(Color(hex: entry.hex))
+                    .tag(entry.hex)
+            }
+        }
+        .pickerStyle(.menu)
+        .labelsHidden()
+        .tint(Color(hex: currentHex))
+        .fixedSize()
     }
 
     private var colorSection: some View {
