@@ -138,6 +138,16 @@ struct PanelRenderer: View {
             circularGaugeBody
         case .text:
             textBody
+        case .sparkline:
+            sparklineBody
+        case .stackedBar:
+            stackedChartBody(useBar: true)
+        case .stackedArea:
+            stackedChartBody(useBar: false)
+        case .statusIndicator:
+            statusIndicatorBody
+        case .table:
+            tableBody
         }
     }
 
@@ -1115,6 +1125,234 @@ struct PanelRenderer: View {
                 Text("—")
                     .font(.system(size: sz(18), weight: .medium))
                     .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    // MARK: - Sparkline
+
+    @ChartContentBuilder
+    private var sparklinePrimaryMarks: some ChartContent {
+        let points = series.first(where: { !$0.label.hasPrefix("cmp_") })?.dataPoints ?? series.first?.dataPoints ?? []
+        ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+            LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "primary"))
+                .foregroundStyle(primaryColor)
+                .lineStyle(StrokeStyle(lineWidth: compact ? 1.5 : 2))
+            AreaMark(x: .value("T", point.time), y: .value("V", point.value))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [primaryColor.opacity(0.2), primaryColor.opacity(0.02)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+        }
+    }
+
+    @ChartContentBuilder
+    private var sparklineComparisonMarks: some ChartContent {
+        let compPoints = series.first(where: { $0.label.hasPrefix("cmp_") })?.dataPoints ?? []
+        ForEach(Array(compPoints.enumerated()), id: \.offset) { _, point in
+            LineMark(x: .value("T", point.time), y: .value("V", point.value), series: .value("S", "comparison"))
+                .foregroundStyle(primaryColor.complementary())
+                .lineStyle(StrokeStyle(lineWidth: compact ? 1 : 1.5, dash: [5, 3]))
+        }
+    }
+
+    private var sparklineBody: some View {
+        let hasComparison = series.contains(where: { $0.label.hasPrefix("cmp_") })
+
+        return VStack(spacing: 0) {
+            if allDataPoints.count > 2 {
+                HStack(alignment: .firstTextBaseline) {
+                    Chart {
+                        sparklinePrimaryMarks
+                        if hasComparison {
+                            sparklineComparisonMarks
+                        }
+                    }
+                    .chartXAxis(.hidden)
+                    .chartYAxis(.hidden)
+                    .chartLegend(.hidden)
+                    .frame(height: compact ? 30 : 50)
+
+                    if let lastValue {
+                        VStack(alignment: .trailing, spacing: 1) {
+                            Text(lastValue)
+                                .font(.system(size: sz(compact ? 14 : 20), weight: .semibold, design: .rounded).monospacedDigit())
+                                .foregroundStyle(primaryColor)
+                            if let fieldName {
+                                Text(fieldName)
+                                    .font(.system(size: sz(compact ? 7 : 9)))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                    }
+                }
+            } else {
+                Text(lastValue ?? "—")
+                    .font(.system(size: sz(compact ? 14 : 20), weight: .semibold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(primaryColor)
+            }
+        }
+    }
+
+    // MARK: - Stacked Charts
+
+    @ChartContentBuilder
+    private func stackedBarMarks() -> some ChartContent {
+        ForEach(series.filter { !$0.label.hasPrefix("cmp_") }) { s in
+            ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
+                BarMark(
+                    x: .value("T", point.time),
+                    y: .value("V", point.value)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+                .position(by: .value("Series", s.label))
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private func stackedAreaMarks() -> some ChartContent {
+        ForEach(series.filter { !$0.label.hasPrefix("cmp_") }) { s in
+            ForEach(Array(s.dataPoints.enumerated()), id: \.offset) { _, point in
+                AreaMark(
+                    x: .value("T", point.time),
+                    y: .value("V", point.value)
+                )
+                .foregroundStyle(by: .value("Series", s.label))
+            }
+        }
+    }
+
+    private var stackedChartModifiers: some View {
+        EmptyView()
+    }
+
+    private func stackedChartBody(useBar: Bool) -> some View {
+        let activeSeries = series.filter { !$0.label.hasPrefix("cmp_") }
+
+        return VStack(spacing: compact ? 4 : 8) {
+            Text(title)
+                .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            if allDataPoints.count > 2 {
+                Chart {
+                    if useBar {
+                        stackedBarMarks()
+                    } else {
+                        stackedAreaMarks()
+                    }
+                }
+                .chartForegroundStyleScale(
+                    domain: activeSeries.map(\.label),
+                    range: activeSeries.map(\.color)
+                )
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisGridLine()
+                        AxisValueLabel(format: .dateTime.hour().minute(), anchor: .top)
+                            .font(.system(size: 8))
+                    }
+                }
+                .chartYAxis { scaledYAxis }
+                .chartLegend(compact ? .hidden : .visible)
+                .frame(height: fillHeight ? nil : (compact ? 80 : 200))
+                .frame(maxHeight: fillHeight ? .infinity : nil)
+            } else {
+                Text("No data")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 30 : 60)
+            }
+        }
+    }
+
+    // MARK: - Status Indicator
+
+    private var statusIndicatorBody: some View {
+        VStack(spacing: compact ? 4 : 10) {
+            Circle()
+                .fill(primaryColor)
+                .frame(width: compact ? 24 : 48, height: compact ? 24 : 48)
+
+            Text(lastValue ?? "—")
+                .font(.system(size: sz(compact ? 16 : 28), weight: .semibold, design: .rounded).monospacedDigit())
+                .foregroundStyle(.primary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+
+            if let fieldName {
+                Text(fieldName)
+                    .font(.system(size: sz(compact ? 8 : 11)))
+                    .foregroundStyle(.secondary)
+            }
+
+            if !compact && !title.isEmpty {
+                Text(title)
+                    .font(.system(size: sz(12), weight: .medium))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Table
+
+    private var tableBody: some View {
+        let points: [ChartDataPoint] = {
+            let all = allDataPoints.sorted { $0.time > $1.time }
+            return compact ? Array(all.prefix(3)) : all
+        }()
+
+        return VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+            if !compact {
+                Text(title)
+                    .font(.system(size: sz(14), weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            if points.isEmpty {
+                Text("No data")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 30 : 60)
+            } else {
+                // Header
+                HStack {
+                    Text("Time")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Field")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Value")
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .font(.system(size: sz(compact ? 8 : 10), weight: .semibold))
+                .foregroundStyle(.secondary)
+
+                Divider()
+
+                ScrollView {
+                    LazyVStack(spacing: compact ? 1 : 3) {
+                        ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                            HStack {
+                                Text(formatTime(point.time))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(point.field)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(formatWithUnit(point.value))
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }
+                            .font(.system(size: sz(compact ? 8 : 11)).monospacedDigit())
+                        }
+                    }
+                }
+                .frame(maxHeight: compact ? nil : 300)
             }
         }
     }

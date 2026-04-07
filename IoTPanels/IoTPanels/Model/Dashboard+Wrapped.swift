@@ -41,6 +41,11 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
     case bandChart
     case circularGauge
     case text
+    case sparkline
+    case stackedBar
+    case stackedArea
+    case statusIndicator
+    case table
 
     var id: String { rawValue }
 
@@ -58,6 +63,11 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .bandChart: return "Band"
         case .circularGauge: return "Circular Gauge"
         case .text: return "Text"
+        case .sparkline: return "Sparkline"
+        case .stackedBar: return "Stacked Bar"
+        case .stackedArea: return "Stacked Area"
+        case .statusIndicator: return "Status"
+        case .table: return "Table"
         }
     }
 
@@ -75,23 +85,28 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
         case .bandChart: return "chart.line.flattrend.xyaxis"
         case .circularGauge: return "gauge.open.with.lines.needle.33percent"
         case .text: return "textformat"
+        case .sparkline: return "waveform.path"
+        case .stackedBar: return "chart.bar.xaxis.ascending"
+        case .stackedArea: return "chart.line.uptrend.xyaxis"
+        case .statusIndicator: return "circle.fill"
+        case .table: return "tablecells"
         }
     }
 
     var isLineBased: Bool {
         switch self {
-        case .chart, .linePointChart, .bandChart: return true
+        case .chart, .linePointChart, .bandChart, .sparkline: return true
         default: return false
         }
     }
 
     var category: ChartCategory {
         switch self {
-        case .chart, .barChart, .scatterChart, .linePointChart, .bandChart:
+        case .chart, .barChart, .scatterChart, .linePointChart, .bandChart, .sparkline, .stackedBar, .stackedArea:
             return .timeSeries
-        case .singleValue, .gauge, .circularGauge:
+        case .singleValue, .gauge, .circularGauge, .statusIndicator:
             return .values
-        case .calendarHeatmap, .calendarHeatmapDense:
+        case .calendarHeatmap, .calendarHeatmapDense, .table:
             return .grid
         case .auto, .text:
             return .other
