@@ -24,6 +24,10 @@
 		<string>processing</string>
 		<string>fetch</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.apple.coredata.cloudkit.activity</string>
+	</array>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
