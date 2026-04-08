@@ -655,36 +655,39 @@ struct DemoService: DataSourceServiceProtocol {
                 17.0 + Double(date.timeIntervalSince1970.truncatingRemainder(dividingBy: 86400)) / 86400.0
             }
         case "sum(kubelet_running_pods) / sum(kube_node_status_allocatable{resource=\"pods\"}) * 100":
-            // Pods used as % of allocatable — slow drift around ~58%.
+            // Pods used as % of allocatable — high pressure (red zone).
             generator = { [self] date in
-                let base = 58.0
-                let n = smoothNoise(for: date, seed: stableHash("pods_pct"), period: 1800) * 18 - 8
-                return min(98, max(10, base + n))
+                let base = 90.0
+                let n = smoothNoise(for: date, seed: stableHash("pods_pct"), period: 2400) * 8 - 4
+                return min(98, max(82, base + n))
             }
         case "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)":
-            // CPU usage % — varies with daily rhythm + spikes.
+            // CPU usage % — mostly idle (green zone) with occasional spikes.
             generator = { [self] date in
-                let hour = Calendar.current.component(.hour, from: date)
-                let base = 18.0 + (Double(hour) - 12).magnitude * -0.8
-                let n = smoothNoise(for: date, seed: stableHash("cpu_usage"), period: 600) * 35
+                let base = 12.0
+                let n = smoothNoise(for: date, seed: stableHash("cpu_usage"), period: 600) * 14
                 let spike = smoothNoise(for: date, seed: stableHash("cpu_spike"), period: 200)
-                let spikeBoost = spike > 0.85 ? (spike - 0.85) * 120 : 0
-                return min(99, max(2, base + n + spikeBoost))
+                let spikeBoost = spike > 0.88 ? (spike - 0.88) * 200 : 0
+                return min(95, max(3, base + n + spikeBoost))
             }
         case "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100":
-            // Memory % used — slow drift around 62%.
+            // Memory % used — high (red zone), slow drift around 84%.
             generator = { [self] date in
-                62.0 + smoothNoise(for: date, seed: stableHash("mem_pct"), period: 1800) * 14 - 5
+                let base = 84.0
+                let n = smoothNoise(for: date, seed: stableHash("mem_pct"), period: 1800) * 10 - 4
+                return min(94, max(76, base + n))
             }
         case "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100":
-            // Disk % used — very slow growth around 47%.
+            // Disk % used — comfortable (green/low-yellow), very slow growth around 38%.
             generator = { [self] date in
-                47.0 + smoothNoise(for: date, seed: stableHash("disk_pct"), period: 7200) * 6
+                38.0 + smoothNoise(for: date, seed: stableHash("disk_pct"), period: 7200) * 6
             }
         case "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes":
-            // Bytes used — drift around 10 GiB.
+            // Bytes used — drift consistent with the % gauge (~84% of 16 GiB).
             generator = { [self] date in
-                let pct = 0.62 + smoothNoise(for: date, seed: stableHash("mem_bytes"), period: 1800) * 0.14 - 0.05
+                let base = 0.84
+                let n = smoothNoise(for: date, seed: stableHash("mem_bytes"), period: 1800) * 0.10 - 0.04
+                let pct = min(0.94, max(0.76, base + n))
                 return pct * 17_179_869_184 // 16 GiB total
             }
         case "sum(rate(node_network_receive_bytes_total{device=~\"eth.*|en.*|wlan.*\"}[5m]))":
