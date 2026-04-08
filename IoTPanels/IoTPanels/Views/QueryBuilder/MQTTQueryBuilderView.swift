@@ -295,6 +295,8 @@ enum MQTTCollectDuration: String, CaseIterable, Identifiable {
 
     static func from(timeRange: TimeRange) -> MQTTCollectDuration {
         switch timeRange {
+        case .fiveMinutes, .tenMinutes: return .fiveSeconds
+        case .thirtyMinutes, .oneHour: return .tenSeconds
         case .twoHours: return .tenSeconds
         case .sixHours: return .fifteenSeconds
         case .twelveHours, .twentyFourHours: return .twentySeconds

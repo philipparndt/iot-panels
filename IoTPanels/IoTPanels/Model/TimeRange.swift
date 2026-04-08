@@ -1,6 +1,10 @@
 import Foundation
 
 enum TimeRange: String, CaseIterable, Identifiable {
+    case fiveMinutes = "5m"
+    case tenMinutes = "10m"
+    case thirtyMinutes = "30m"
+    case oneHour = "1h"
     case twoHours = "2h"
     case sixHours = "6h"
     case twelveHours = "12h"
@@ -17,6 +21,10 @@ enum TimeRange: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .fiveMinutes: return "Last 5 minutes"
+        case .tenMinutes: return "Last 10 minutes"
+        case .thirtyMinutes: return "Last 30 minutes"
+        case .oneHour: return "Last 1 hour"
         case .twoHours: return "Last 2 hours"
         case .sixHours: return "Last 6 hours"
         case .twelveHours: return "Last 12 hours"
@@ -38,6 +46,10 @@ enum TimeRange: String, CaseIterable, Identifiable {
     /// The minimum aggregation window that keeps data points at a usable count.
     var minimumWindow: AggregateWindow {
         switch self {
+        case .fiveMinutes: return .none
+        case .tenMinutes: return .none
+        case .thirtyMinutes: return .none
+        case .oneHour: return .none
         case .twoHours: return .none
         case .sixHours: return .oneMinute
         case .twelveHours: return .fiveMinutes
@@ -77,7 +89,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
     case none = "none"
     case oneMinute = "1m"
     case fiveMinutes = "5m"
+    case tenMinutes = "10m"
     case fifteenMinutes = "15m"
+    case thirtyMinutes = "30m"
     case oneHour = "1h"
     case twoHours = "2h"
     case sixHours = "6h"
@@ -94,7 +108,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .none: return "None (raw)"
         case .oneMinute: return "1 minute"
         case .fiveMinutes: return "5 minutes"
+        case .tenMinutes: return "10 minutes"
         case .fifteenMinutes: return "15 minutes"
+        case .thirtyMinutes: return "30 minutes"
         case .oneHour: return "1 hour"
         case .twoHours: return "2 hours"
         case .sixHours: return "6 hours"
@@ -111,7 +127,9 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .none: return 0
         case .oneMinute: return 60
         case .fiveMinutes: return 300
+        case .tenMinutes: return 600
         case .fifteenMinutes: return 900
+        case .thirtyMinutes: return 1800
         case .oneHour: return 3600
         case .twoHours: return 7200
         case .sixHours: return 21600
@@ -129,15 +147,17 @@ enum AggregateWindow: String, CaseIterable, Identifiable {
         case .none: return 0
         case .oneMinute: return 1
         case .fiveMinutes: return 2
-        case .fifteenMinutes: return 3
-        case .oneHour: return 4
-        case .twoHours: return 5
-        case .sixHours: return 6
-        case .twelveHours: return 7
-        case .oneDay: return 8
-        case .twoDays: return 9
-        case .sevenDays: return 10
-        case .thirtyDays: return 11
+        case .tenMinutes: return 3
+        case .fifteenMinutes: return 4
+        case .thirtyMinutes: return 5
+        case .oneHour: return 6
+        case .twoHours: return 7
+        case .sixHours: return 8
+        case .twelveHours: return 9
+        case .oneDay: return 10
+        case .twoDays: return 11
+        case .sevenDays: return 12
+        case .thirtyDays: return 13
         }
     }
 }
@@ -210,6 +230,10 @@ enum ComparisonOffset: String, CaseIterable, Identifiable {
 extension TimeRange {
     var seconds: TimeInterval {
         switch self {
+        case .fiveMinutes: return 300
+        case .tenMinutes: return 600
+        case .thirtyMinutes: return 1800
+        case .oneHour: return 3600
         case .twoHours: return 7200
         case .sixHours: return 21600
         case .twelveHours: return 43200

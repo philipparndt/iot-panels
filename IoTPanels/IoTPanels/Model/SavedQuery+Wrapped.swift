@@ -160,6 +160,10 @@ extension SavedQuery {
         let fields = wrappedFields
         let rangeSeconds: Int
         switch wrappedTimeRange {
+        case .fiveMinutes: rangeSeconds = 5
+        case .tenMinutes: rangeSeconds = 5
+        case .thirtyMinutes: rangeSeconds = 10
+        case .oneHour: rangeSeconds = 10
         case .twoHours: rangeSeconds = 10
         case .sixHours: rangeSeconds = 15
         case .twelveHours: rangeSeconds = 15
