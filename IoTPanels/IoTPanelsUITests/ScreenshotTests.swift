@@ -87,6 +87,17 @@ class ScreenshotTests: XCTestCase {
             sleep(1)
         }
 
+        // 5. Node Exporter dashboard — showcases the adaptive layout:
+        //    full-width Uptime header, row of small gauges, then medium charts.
+        let nodeExporter = app.staticTexts["Node Exporter"].firstMatch
+        if nodeExporter.waitForExistence(timeout: 5) {
+            nodeExporter.tap()
+            sleep(3) // Wait for gauges + charts to render
+            snapshot(ScreenshotIds.NODE_EXPORTER)
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+            sleep(1)
+        }
+
         // Widgets tab
         let widgetsTab = app.buttons["Widgets"].firstMatch
         if widgetsTab.waitForExistence(timeout: 5) {

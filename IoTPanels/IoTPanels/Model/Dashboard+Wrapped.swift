@@ -1,5 +1,48 @@
 import Foundation
 import CoreData
+import SwiftUI
+
+// MARK: - Panel Width Slot
+
+/// User-facing intent for how much horizontal space a dashboard panel should
+/// take. The slot is *not* a fixed fraction; it resolves to a row fraction at
+/// render time based on the dashboard's horizontal size class. See
+/// `PanelWidthSlot.fraction(for:)`.
+enum PanelWidthSlot: String, CaseIterable, Identifiable {
+    case small
+    case medium
+    case full
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .small:  return String(localized: "Small")
+        case .medium: return String(localized: "Medium")
+        case .full:   return String(localized: "Full width")
+        }
+    }
+
+    /// Human-readable description of how this slot resolves on each device,
+    /// shown in the picker so the user can never be surprised.
+    var resolutionDescription: String {
+        switch self {
+        case .small:  return String(localized: "2 per row on iPhone, 4 per row on iPad")
+        case .medium: return String(localized: "1 per row on iPhone, 2 per row on iPad")
+        case .full:   return String(localized: "1 per row everywhere")
+        }
+    }
+
+    /// Resolves the slot to a row fraction (0..1) for the given size class.
+    func fraction(for sizeClass: UserInterfaceSizeClass?) -> Double {
+        let isCompact = sizeClass != .regular
+        switch self {
+        case .small:  return isCompact ? 0.5 : 0.25
+        case .medium: return isCompact ? 1.0 : 0.5
+        case .full:   return 1.0
+        }
+    }
+}
 
 enum ChartCategory: String, CaseIterable, Identifiable {
     case timeSeries
@@ -142,6 +185,30 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
             .filter { grouped[$0] != nil }
             .map { (category: $0, styles: grouped[$0]!) }
     }
+
+    /// Width slots that this display style supports on the dashboard.
+    ///
+    /// - Compact value displays (single value, gauges, sparkline, text, status
+    ///   indicator) support all three slots — they remain legible even at ¼
+    ///   row width on iPad (~180pt).
+    /// - Chart-type styles support `.medium` and `.full`. `.medium` resolves
+    ///   to half width on iPad so two charts can share a row there, and to
+    ///   full width on iPhone where there isn't room to split. `.small` is
+    ///   excluded because ~180pt is too narrow for a readable chart.
+    /// - Tables need the full row width for their columns and are pinned to
+    ///   `.full`.
+    var allowedWidthSlots: [PanelWidthSlot] {
+        switch self {
+        case .singleValue, .gauge, .circularGauge, .statusIndicator, .sparkline, .text:
+            return [.small, .medium, .full]
+        case .auto, .chart, .barChart, .scatterChart, .linePointChart, .bandChart,
+             .stackedBar, .stackedArea, .calendarHeatmap, .calendarHeatmapDense,
+             .stateTimeline:
+            return [.medium, .full]
+        case .table:
+            return [.full]
+        }
+    }
 }
 
 extension Dashboard {
@@ -231,6 +298,22 @@ extension DashboardPanel {
     var wrappedComparisonOffset: ComparisonOffset {
         get { ComparisonOffset(rawValue: comparisonOffset ?? "") ?? .none }
         set { comparisonOffset = newValue == .none ? nil : newValue.rawValue }
+    }
+
+    /// User-chosen width slot. `nil` (the default for any pre-existing or
+    /// freshly-created panel) resolves to `.full`, preserving the original
+    /// one-panel-per-row layout.
+    var wrappedWidthSlot: PanelWidthSlot {
+        get { PanelWidthSlot(rawValue: widthSlot ?? "") ?? .full }
+        set { widthSlot = newValue == .full ? nil : newValue.rawValue }
+    }
+
+    /// User-chosen forced row break before this panel. The flag on the first
+    /// panel in `sortOrder` is ignored by the renderer (there is no row to
+    /// break from).
+    var wrappedLineBreakBefore: Bool {
+        get { lineBreakBefore }
+        set { lineBreakBefore = newValue }
     }
 
     /// Whether this panel needs multi-aggregate queries (min/max/mean).

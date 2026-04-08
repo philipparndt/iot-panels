@@ -8,6 +8,15 @@ struct DemoService: DataSourceServiceProtocol {
     }
 
     func query(_ queryString: String) async throws -> QueryResult {
+        // Demo answers for known PromQL strings (used by templates shipped
+        // against demo-flagged Prometheus sources). The raw query is wrapped
+        // by `SavedQuery.buildPrometheusQuery` as `TIMERANGE:<seconds>|<promql>`,
+        // so we route any query with that prefix through the known-query path.
+        if queryString.hasPrefix("TIMERANGE:"),
+           let result = nodeExporterDemoResult(for: queryString) {
+            return result
+        }
+
         let measurement = extractValue(from: queryString, key: "_measurement")
         let fields = extractFields(from: queryString)
         let (rangeMinutes, stopMinutes) = extractRangeWithStop(from: queryString)
@@ -610,5 +619,116 @@ struct DemoService: DataSourceServiceProtocol {
             return String(query[range])
         }
         return Array(Set(names)).sorted() // deduplicate
+    }
+
+    // MARK: - Node Exporter Demo
+
+    /// Returns a synthesized series for the exact PromQL strings used by the
+    /// `nodeExporterLite` template, when executed against a demo-flagged
+    /// Prometheus data source. Returns nil for any unrecognised query, in
+    /// which case the caller falls through to the InfluxDB-style query path.
+    private func nodeExporterDemoResult(for wrappedQuery: String) -> QueryResult? {
+        // The query is wrapped by `SavedQuery.buildPrometheusQuery` as
+        // "TIMERANGE:<seconds>|<promql>". Strip the prefix, parse the range,
+        // and dispatch on the bare PromQL string.
+        guard wrappedQuery.hasPrefix("TIMERANGE:") else { return nil }
+        let afterPrefix = wrappedQuery.dropFirst("TIMERANGE:".count)
+        guard let pipeIndex = afterPrefix.firstIndex(of: "|") else { return nil }
+        let rangeString = String(afterPrefix[afterPrefix.startIndex..<pipeIndex])
+        let promql = String(afterPrefix[afterPrefix.index(after: pipeIndex)...])
+            .trimmingCharacters(in: .whitespaces)
+        guard let rangeSeconds = Double(rangeString), rangeSeconds > 0 else { return nil }
+
+        // Use 1-minute steps for nice smooth curves regardless of the
+        // selected time range, capped to avoid huge series for very long
+        // ranges. The chart renderer down-samples as needed.
+        let interval: TimeInterval = 60
+        let count = max(20, min(720, Int(rangeSeconds / interval)))
+
+        // Each branch describes how to compute the value at a given time.
+        let generator: ((Date) -> Double)?
+
+        switch promql {
+        case "(time() - node_boot_time_seconds) / 86400":
+            // Uptime in days — slowly increasing.
+            generator = { date in
+                17.0 + Double(date.timeIntervalSince1970.truncatingRemainder(dividingBy: 86400)) / 86400.0
+            }
+        case "sum(kubelet_running_pods) / sum(kube_node_status_allocatable{resource=\"pods\"}) * 100":
+            // Pods used as % of allocatable — slow drift around ~58%.
+            generator = { [self] date in
+                let base = 58.0
+                let n = smoothNoise(for: date, seed: stableHash("pods_pct"), period: 1800) * 18 - 8
+                return min(98, max(10, base + n))
+            }
+        case "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)":
+            // CPU usage % — varies with daily rhythm + spikes.
+            generator = { [self] date in
+                let hour = Calendar.current.component(.hour, from: date)
+                let base = 18.0 + (Double(hour) - 12).magnitude * -0.8
+                let n = smoothNoise(for: date, seed: stableHash("cpu_usage"), period: 600) * 35
+                let spike = smoothNoise(for: date, seed: stableHash("cpu_spike"), period: 200)
+                let spikeBoost = spike > 0.85 ? (spike - 0.85) * 120 : 0
+                return min(99, max(2, base + n + spikeBoost))
+            }
+        case "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100":
+            // Memory % used — slow drift around 62%.
+            generator = { [self] date in
+                62.0 + smoothNoise(for: date, seed: stableHash("mem_pct"), period: 1800) * 14 - 5
+            }
+        case "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100":
+            // Disk % used — very slow growth around 47%.
+            generator = { [self] date in
+                47.0 + smoothNoise(for: date, seed: stableHash("disk_pct"), period: 7200) * 6
+            }
+        case "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes":
+            // Bytes used — drift around 10 GiB.
+            generator = { [self] date in
+                let pct = 0.62 + smoothNoise(for: date, seed: stableHash("mem_bytes"), period: 1800) * 0.14 - 0.05
+                return pct * 17_179_869_184 // 16 GiB total
+            }
+        case "sum(rate(node_network_receive_bytes_total{device=~\"eth.*|en.*|wlan.*\"}[5m]))":
+            // Bytes/s received — bursty around 2 MB/s.
+            generator = { [self] date in
+                let base = 2_000_000.0
+                let n = smoothNoise(for: date, seed: stableHash("net_rx"), period: 800) * 4_000_000
+                let spike = smoothNoise(for: date, seed: stableHash("net_rx_spike"), period: 250)
+                return base + n + (spike > 0.8 ? spike * 8_000_000 : 0)
+            }
+        case "sum(rate(node_disk_read_bytes_total{device=~\"sd.*|nvme.*|vd.*\"}[5m]))":
+            // Bytes/s read — usually low with periodic bursts.
+            generator = { [self] date in
+                let base = 400_000.0
+                let n = smoothNoise(for: date, seed: stableHash("disk_io"), period: 600) * 2_500_000
+                let spike = smoothNoise(for: date, seed: stableHash("disk_io_spike"), period: 180)
+                return base + n + (spike > 0.85 ? spike * 12_000_000 : 0)
+            }
+        default:
+            generator = nil
+        }
+
+        guard let gen = generator else { return nil }
+
+        let now = Date()
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        var rows: [QueryResult.Row] = []
+        for i in 0..<count {
+            let time = now.addingTimeInterval(-Double(count - i) * interval)
+            let value = gen(time)
+            rows.append(QueryResult.Row(values: [
+                "_time": formatter.string(from: time),
+                "_field": "value",
+                "_value": String(format: "%.4f", value),
+                "result": "_result",
+                "table": "0"
+            ]))
+        }
+
+        let columns = ["", "result", "table", "_time", "_field", "_value"]
+            .map { QueryResult.Column(name: $0, type: "string") }
+
+        return QueryResult(columns: columns, rows: rows)
     }
 }

@@ -71,11 +71,11 @@ enum DemoSetup {
 
         // Dashboard: Climate
         let climate = createDashboard(context: context, name: "Climate", home: home)
-        addPanel(context: context, dashboard: climate, query: tempLiving, title: "Living Room", style: .chart, order: 2)
-        addPanel(context: context, dashboard: climate, query: tempBedroom, title: "Bedroom", style: .chart, order: 3)
-        addPanel(context: context, dashboard: climate, query: humidityLiving, title: "Humidity", style: .chart, order: 4)
-        addPanel(context: context, dashboard: climate, query: airCO2, title: "CO₂", style: .chart, order: 5)
-        addPanel(context: context, dashboard: climate, query: airPM25, title: "PM2.5", style: .chart, order: 6)
+        addPanel(context: context, dashboard: climate, query: tempLiving, title: "Living Room", style: .chart, order: 2, widthSlot: .medium)
+        addPanel(context: context, dashboard: climate, query: tempBedroom, title: "Bedroom", style: .chart, order: 3, widthSlot: .medium)
+        addPanel(context: context, dashboard: climate, query: humidityLiving, title: "Humidity", style: .chart, order: 4, widthSlot: .medium)
+        addPanel(context: context, dashboard: climate, query: airCO2, title: "CO₂", style: .chart, order: 5, widthSlot: .medium)
+        addPanel(context: context, dashboard: climate, query: airPM25, title: "PM2.5", style: .chart, order: 6, widthSlot: .medium)
 
         // Dashboard: Energy
         let energy = createDashboard(context: context, name: "Energy", home: home)
@@ -114,10 +114,10 @@ enum DemoSetup {
                                     timeRange: .twentyFourHours, window: .fifteenMinutes, unit: "°C")
 
         // Comparison demo: same as Living Room but with comparison offset
-        let compPanel = addPanel(context: context, dashboard: climate, query: tempLiving, title: "Temperature (vs. Yesterday)", style: .chart, order: 0)
+        let compPanel = addPanel(context: context, dashboard: climate, query: tempLiving, title: "Temperature (vs. Yesterday)", style: .chart, order: 0, widthSlot: .medium)
 
         // Band chart panel on Climate dashboard
-        addPanel(context: context, dashboard: climate, query: tempRange, title: "Temperature Band", style: .bandChart, order: 1)
+        addPanel(context: context, dashboard: climate, query: tempRange, title: "Temperature Band", style: .bandChart, order: 1, widthSlot: .medium)
         compPanel.comparisonOffset = ComparisonOffset.twentyFourHours.rawValue
 
         // Dashboard: Garden
@@ -135,8 +135,31 @@ enum DemoSetup {
         let batteryWidget = addWidgetItem(context: context, design: widget, query: batteryLevel, title: "Battery", style: .gauge, color: "#F39C12", order: 2)
         batteryWidget.wrappedStyleConfig = StyleConfig(gaugeMin: 0, gaugeMax: 100, gaugeColorScheme: GaugeColorScheme.greenToRed.rawValue)
 
+        // Demo Prometheus source for the Node Exporter dashboard. The source
+        // is flagged demo so ServiceFactory routes it through DemoService,
+        // which has hand-crafted answers for the template's PromQL queries.
+        let prometheusDemoDS = createPrometheusDemoSource(context: context, home: home)
+        DashboardTemplateRegistry.nodeExporterLite.apply(
+            to: home,
+            dataSource: prometheusDemoDS,
+            context: context
+        )
+
         try? context.save()
         WidgetHelper.reloadWidgets()
+    }
+
+    private static func createPrometheusDemoSource(context: NSManagedObjectContext, home: Home) -> DataSource {
+        let ds = DataSource(context: context)
+        ds.id = UUID()
+        ds.name = "Demo Server"
+        ds.backendType = BackendType.prometheus.rawValue
+        ds.url = "http://demo.local:9090"
+        ds.isDemo = true
+        ds.home = home
+        ds.createdAt = Date()
+        ds.modifiedAt = Date()
+        return ds
     }
 
     // MARK: - Builders
@@ -199,7 +222,8 @@ enum DemoSetup {
         query: SavedQuery,
         title: String,
         style: PanelDisplayStyle = .auto,
-        order: Int
+        order: Int,
+        widthSlot: PanelWidthSlot = .full
     ) -> DashboardPanel {
         let p = DashboardPanel(context: context)
         p.id = UUID()
@@ -208,6 +232,7 @@ enum DemoSetup {
         p.savedQuery = query
         p.dashboard = dashboard
         p.sortOrder = Int32(order)
+        p.wrappedWidthSlot = widthSlot
         p.createdAt = Date()
         p.modifiedAt = Date()
         return p

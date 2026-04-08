@@ -108,6 +108,8 @@
         <attribute name="cachedComparisonJSON" optional="YES" attributeType="String"/>
         <attribute name="cachedResultJSON" optional="YES" attributeType="String"/>
         <attribute name="cachedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="widthSlot" optional="YES" attributeType="String"/>
+        <attribute name="lineBreakBefore" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <relationship name="dashboard" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Dashboard" inverseName="panels" inverseEntity="Dashboard"/>
         <relationship name="savedQuery" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SavedQuery" inverseName="panels" inverseEntity="SavedQuery"/>
     </entity>

@@ -83,6 +83,8 @@ struct BackupDashboardPanel: Codable {
     let aggregateFunction: String?
     let comparisonOffset: String?
     let savedQueryId: String?
+    let widthSlot: String?
+    let lineBreakBefore: Bool?
 }
 
 struct BackupWidgetDesign: Codable {
@@ -253,6 +255,8 @@ enum BackupService {
                     panel.aggregateWindow = backupPanel.aggregateWindow
                     panel.aggregateFunction = backupPanel.aggregateFunction
                     panel.comparisonOffset = backupPanel.comparisonOffset
+                    panel.widthSlot = backupPanel.widthSlot
+                    panel.lineBreakBefore = backupPanel.lineBreakBefore ?? false
                     panel.createdAt = Date()
                     panel.modifiedAt = Date()
                     panel.dashboard = dash
@@ -385,7 +389,9 @@ enum BackupService {
                         timeRange: panel.timeRange, aggregateWindow: panel.aggregateWindow,
                         aggregateFunction: panel.aggregateFunction,
                         comparisonOffset: panel.comparisonOffset,
-                        savedQueryId: panel.savedQuery?.id?.uuidString
+                        savedQueryId: panel.savedQuery?.id?.uuidString,
+                        widthSlot: panel.widthSlot,
+                        lineBreakBefore: panel.lineBreakBefore ? true : nil
                     )
                 }
             )

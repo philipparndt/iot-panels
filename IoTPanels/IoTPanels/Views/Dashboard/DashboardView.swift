@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ObservedObject var dashboard: Dashboard
 
     @State private var showingAddPanel = false
@@ -15,6 +16,8 @@ struct DashboardView: View {
     @State private var exportCSVURL: URL?
     @State private var showingShareSheet = false
     @State private var isExporting = false
+    @State private var showingAdaptivePopover = false
+    @State private var rearrangeByRow: Bool = true
     @StateObject private var heatmapSelection = HeatmapSelectionState()
 
     var body: some View {
@@ -28,6 +31,14 @@ struct DashboardView: View {
         .environmentObject(heatmapSelection)
         .navigationTitle(dashboard.wrappedName)
         .toolbar {
+            if isWiggling {
+                ToolbarItem(placement: .navigation) {
+                    Toggle(isOn: $rearrangeByRow) {
+                        Label("Group rows", systemImage: rearrangeByRow ? "rectangle.3.group" : "rectangle.grid.1x2")
+                    }
+                    .toggleStyle(.button)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 if isWiggling {
                     Button("Done") {
@@ -110,8 +121,13 @@ struct DashboardView: View {
 
     private var normalContent: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            VStack(spacing: 16) {
                 let panels = dashboard.sortedPanels
+
+                if hasAdaptivePanels(panels) {
+                    adaptiveLayoutChip
+                }
+
                 if panels.isEmpty {
                     ContentUnavailableView(
                         "No Panels",
@@ -122,10 +138,13 @@ struct DashboardView: View {
                 }
 
                 if !panels.isEmpty {
-                    ForEach(panels, id: \.objectID) { panel in
-                        PanelCardView(panel: panel)
-                            .id("\(panel.objectID)-\(refreshID)")
-                            .contextMenu {
+                    PanelFlowLayout {
+                        ForEach(panels, id: \.objectID) { panel in
+                            PanelCardView(panel: panel)
+                                .id("\(panel.objectID)-\(refreshID)")
+                                .panelFraction(panel.wrappedWidthSlot.fraction(for: horizontalSizeClass))
+                                .panelLineBreakBefore(panel.wrappedLineBreakBefore)
+                                .contextMenu {
                                 Button {
                                     exploringPanel = panel
                                 } label: {
@@ -175,18 +194,54 @@ struct DashboardView: View {
                                     }
                                 }
 
+                                Menu("Layout") {
+                                    let allowed = panel.wrappedDisplayStyle.allowedWidthSlots
+                                    let current = panel.wrappedWidthSlot
+                                    Section("Width") {
+                                        ForEach(allowed) { slot in
+                                            Button {
+                                                panel.wrappedWidthSlot = slot
+                                                panel.modifiedAt = Date()
+                                                dashboard.modifiedAt = Date()
+                                                try? viewContext.save()
+                                                refreshID = UUID()
+                                            } label: {
+                                                if slot == current {
+                                                    Label(slot.displayName, systemImage: "checkmark")
+                                                } else {
+                                                    Text(slot.displayName)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    Section {
+                                        Button {
+                                            panel.wrappedLineBreakBefore.toggle()
+                                            panel.modifiedAt = Date()
+                                            dashboard.modifiedAt = Date()
+                                            try? viewContext.save()
+                                            refreshID = UUID()
+                                        } label: {
+                                            if panel.wrappedLineBreakBefore {
+                                                Label("Break to new row", systemImage: "checkmark")
+                                            } else {
+                                                Text("Break to new row")
+                                            }
+                                        }
+                                    }
+                                    Section {
+                                        Button {
+                                            withAnimation { isWiggling = true }
+                                        } label: {
+                                            Label("Rearrange Panels", systemImage: "arrow.up.arrow.down")
+                                        }
+                                    }
+                                }
+
                                 Button {
                                     duplicatePanel(panel)
                                 } label: {
                                     Label("Duplicate", systemImage: "plus.square.on.square")
-                                }
-
-                                Divider()
-
-                                Button {
-                                    withAnimation { isWiggling = true }
-                                } label: {
-                                    Label("Rearrange Panels", systemImage: "arrow.up.arrow.down")
                                 }
 
                                 Divider()
@@ -203,6 +258,7 @@ struct DashboardView: View {
                                     Label("Remove", systemImage: "trash")
                                 }
                             }
+                        }
                     }
                 }
 
@@ -244,30 +300,60 @@ struct DashboardView: View {
 
     @State private var editPanels: [DashboardPanel] = []
 
+    @ViewBuilder
     private var editModeContent: some View {
-        List {
-            ForEach(editPanels, id: \.objectID) { panel in
-                HStack(spacing: 12) {
-                    Button {
-                        withAnimation {
-                            if let idx = editPanels.firstIndex(of: panel) {
-                                editPanels.remove(at: idx)
-                            }
-                            viewContext.delete(panel)
-                            dashboard.modifiedAt = Date()
-                            try? viewContext.save()
-                            WidgetHelper.reloadWidgets()
-                        }
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.plain)
+        Group {
+            if rearrangeByRow {
+                rowGroupRearrangeContent
+            } else {
+                individualRearrangeContent
+            }
+        }
+        .environment(\.editMode, .constant(.active))
+        .onAppear {
+            editPanels = dashboard.sortedPanels
+        }
+    }
 
-                    PanelCardView(panel: panel)
-                        .id("\(panel.objectID)-\(refreshID)")
-                        .allowsHitTesting(false)
+    // MARK: - Per-panel rearrange (toggle off)
+
+    private var individualRearrangeContent: some View {
+        List {
+            ForEach(Array(editPanels.enumerated()), id: \.element.objectID) { index, panel in
+                VStack(spacing: 4) {
+                    if panel.wrappedLineBreakBefore && index > 0 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "return")
+                                .font(.caption2)
+                            Text("Break to new row")
+                                .font(.caption2)
+                            Spacer()
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                    }
+                    HStack(spacing: 12) {
+                        Button {
+                            withAnimation {
+                                if let idx = editPanels.firstIndex(of: panel) {
+                                    editPanels.remove(at: idx)
+                                }
+                                viewContext.delete(panel)
+                                dashboard.modifiedAt = Date()
+                                try? viewContext.save()
+                                WidgetHelper.reloadWidgets()
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+
+                        PanelCardView(panel: panel)
+                            .id("\(panel.objectID)-\(refreshID)")
+                            .allowsHitTesting(false)
+                    }
                 }
                 .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
             }
@@ -276,10 +362,97 @@ struct DashboardView: View {
                 savePanelOrder()
             }
         }
-        .environment(\.editMode, .constant(.active))
-        .onAppear {
-            editPanels = dashboard.sortedPanels
+    }
+
+    // MARK: - Row-group rearrange (default)
+
+    private var rowGroupRearrangeContent: some View {
+        let rows = packPanelsIntoRows(editPanels, horizontalSizeClass: horizontalSizeClass)
+        return List {
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                VStack(spacing: 4) {
+                    if row.first?.wrappedLineBreakBefore == true && rowIndex > 0 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "return")
+                                .font(.caption2)
+                            Text("Break to new row")
+                                .font(.caption2)
+                            Spacer()
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                    }
+                    HStack(spacing: 12) {
+                        Button {
+                            withAnimation {
+                                deleteRow(row)
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+
+                        PanelFlowLayout {
+                            ForEach(row, id: \.objectID) { panel in
+                                PanelCardView(panel: panel)
+                                    .id("\(panel.objectID)-\(refreshID)")
+                                    .panelFraction(panel.wrappedWidthSlot.fraction(for: horizontalSizeClass))
+                                    .panelLineBreakBefore(false)
+                            }
+                        }
+                        .allowsHitTesting(false)
+                    }
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            }
+            .onMove { from, to in
+                moveRows(from: from, to: to, currentRows: rows)
+            }
         }
+    }
+
+    private func deleteRow(_ row: [DashboardPanel]) {
+        for panel in row {
+            if let idx = editPanels.firstIndex(of: panel) {
+                editPanels.remove(at: idx)
+            }
+            viewContext.delete(panel)
+        }
+        dashboard.modifiedAt = Date()
+        try? viewContext.save()
+        WidgetHelper.reloadWidgets()
+        refreshID = UUID()
+    }
+
+    private func moveRows(from: IndexSet, to: Int, currentRows: [[DashboardPanel]]) {
+        var reordered = currentRows
+        reordered.move(fromOffsets: from, toOffset: to)
+
+        // Flatten to a single panel sequence in the new order
+        let newOrder = reordered.flatMap { $0 }
+        editPanels = newOrder
+
+        // Reassign sortOrder
+        for (i, panel) in newOrder.enumerated() {
+            panel.sortOrder = Int32(i)
+        }
+
+        // Preserve the visual grouping the user just chose: force a line
+        // break at the start of every row except the first. The first panel
+        // of the dashboard ignores its own break flag at render time, so we
+        // explicitly clear it for cleanliness.
+        for (rowIdx, row) in reordered.enumerated() {
+            if let first = row.first {
+                first.wrappedLineBreakBefore = (rowIdx > 0)
+            }
+        }
+
+        dashboard.modifiedAt = Date()
+        try? viewContext.save()
+        WidgetHelper.reloadWidgets()
+        refreshID = UUID()
     }
 
     private func savePanelOrder() {
@@ -331,6 +504,67 @@ struct DashboardView: View {
         refreshID = UUID()
     }
 
+    // MARK: - Adaptive Layout Visibility
+
+    private func hasAdaptivePanels(_ panels: [DashboardPanel]) -> Bool {
+        panels.contains { $0.wrappedWidthSlot != .full }
+    }
+
+    private var adaptiveSizeClassLabel: String {
+        horizontalSizeClass == .regular
+            ? String(localized: "iPad view")
+            : String(localized: "iPhone view")
+    }
+
+    private var adaptiveLayoutChip: some View {
+        Button {
+            showingAdaptivePopover = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "rectangle.split.3x1")
+                    .font(.caption2)
+                Text("Adaptive layout · \(adaptiveSizeClassLabel)")
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .popover(isPresented: $showingAdaptivePopover) {
+            adaptiveLayoutExplanation
+                .padding()
+                .presentationCompactAdaptation(.popover)
+        }
+    }
+
+    private var adaptiveLayoutExplanation: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Adaptive layout")
+                .font(.headline)
+            Text("Each panel has a width slot. The slot resolves to a different number of panels per row depending on the screen size, so the same dashboard makes good use of both iPhone and iPad.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(PanelWidthSlot.allCases) { slot in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(slot.displayName)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .frame(width: 90, alignment: .leading)
+                        Text(slot.resolutionDescription)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: 360)
+    }
+
     enum ExportFormat { case csv, json }
 
     private func exportPanel(_ panel: DashboardPanel, format: ExportFormat) {
@@ -374,6 +608,8 @@ struct EditPanelView: View {
     @State private var aggregateWindow: AggregateWindow = .fiveMinutes
     @State private var aggregateFunction: AggregateFunction = .mean
     @State private var comparisonOffset: ComparisonOffset = .none
+    @State private var widthSlot: PanelWidthSlot = .full
+    @State private var lineBreakBefore: Bool = false
     @State private var bandOpacityText = ""
     @State private var newAliasValue = ""
     @State private var newAliasLabel = ""
@@ -451,6 +687,20 @@ struct EditPanelView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                }
+
+                Section {
+                    let allowed = style.allowedWidthSlots
+                    Picker("Width", selection: $widthSlot) {
+                        ForEach(allowed) { slot in
+                            Text("\(slot.displayName) — \(slot.resolutionDescription)").tag(slot)
+                        }
+                    }
+                    Toggle("Break to new row", isOn: $lineBreakBefore)
+                } header: {
+                    Text("Layout")
+                } footer: {
+                    Text("Width adapts to screen size. \"Small\" shows 2 panels per row on iPhone and 4 on iPad.")
                 }
 
                 if style.supportsGaugeConfig {
@@ -604,6 +854,11 @@ struct EditPanelView: View {
                         panel.effectiveAggregateWindow = aggregateWindow
                         panel.effectiveAggregateFunction = aggregateFunction
                         panel.wrappedComparisonOffset = comparisonOffset
+                        // Clamp the width slot to a value the (possibly newly chosen)
+                        // display style supports.
+                        let allowed = style.allowedWidthSlots
+                        panel.wrappedWidthSlot = allowed.contains(widthSlot) ? widthSlot : .full
+                        panel.wrappedLineBreakBefore = lineBreakBefore
                         panel.modifiedAt = Date()
                         try? viewContext.save()
                         WidgetHelper.reloadWidgets()
@@ -621,6 +876,8 @@ struct EditPanelView: View {
                 aggregateWindow = panel.effectiveAggregateWindow
                 aggregateFunction = panel.effectiveAggregateFunction
                 comparisonOffset = panel.wrappedComparisonOffset
+                widthSlot = panel.wrappedWidthSlot
+                lineBreakBefore = panel.wrappedLineBreakBefore
                 if let opacity = styleConfig.bandOpacity { bandOpacityText = String(format: "%.1f", opacity) }
 
                 // Save originals for cancel/restore
@@ -634,6 +891,10 @@ struct EditPanelView: View {
             }
             .onChange(of: style) {
                 panel.wrappedDisplayStyle = style
+                // Clamp width slot if the new style doesn't support the current one.
+                if !style.allowedWidthSlots.contains(widthSlot) {
+                    widthSlot = .full
+                }
                 // Auto-select minimum aggregate window for band chart
                 if style == .bandChart && aggregateWindow == .none {
                     aggregateWindow = timeRange.minimumWindow

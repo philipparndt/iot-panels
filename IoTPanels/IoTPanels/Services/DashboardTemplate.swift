@@ -17,6 +17,8 @@ struct PanelTemplate {
     let styleConfig: StyleConfig?
     let query: QueryTemplate
     let sortOrder: Int
+    var widthSlot: PanelWidthSlot = .full
+    var lineBreakBefore: Bool = false
 }
 
 struct DashboardTemplate: Identifiable {
@@ -69,6 +71,8 @@ extension DashboardTemplate {
             p.savedQuery = query
             p.dashboard = dashboard
             p.sortOrder = Int32(panel.sortOrder)
+            p.wrappedWidthSlot = panel.widthSlot
+            p.wrappedLineBreakBefore = panel.lineBreakBefore
             p.createdAt = Date()
             p.modifiedAt = Date()
 
@@ -133,7 +137,22 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .fiveMinutes,
                     unit: "days"
                 ),
-                sortOrder: 0
+                sortOrder: 0,
+                widthSlot: .full
+            ),
+            PanelTemplate(
+                title: "Pods",
+                displayStyle: .circularGauge,
+                styleConfig: StyleConfig(gaugeMin: 0, gaugeMax: 100, gaugeColorScheme: GaugeColorScheme.greenToRed.rawValue),
+                query: QueryTemplate(
+                    name: "Pod Usage %",
+                    rawQuery: "sum(kubelet_running_pods) / sum(kube_node_status_allocatable{resource=\"pods\"}) * 100",
+                    timeRange: .twoHours,
+                    aggregateWindow: .fiveMinutes,
+                    unit: "%"
+                ),
+                sortOrder: 1,
+                widthSlot: .small
             ),
             PanelTemplate(
                 title: "CPU Usage",
@@ -146,7 +165,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .fiveMinutes,
                     unit: "%"
                 ),
-                sortOrder: 1
+                sortOrder: 2,
+                widthSlot: .small
             ),
             PanelTemplate(
                 title: "Memory Usage",
@@ -159,7 +179,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .fiveMinutes,
                     unit: "%"
                 ),
-                sortOrder: 2
+                sortOrder: 3,
+                widthSlot: .small
             ),
             PanelTemplate(
                 title: "Disk Usage",
@@ -172,7 +193,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .fiveMinutes,
                     unit: "%"
                 ),
-                sortOrder: 3
+                sortOrder: 4,
+                widthSlot: .small
             ),
             PanelTemplate(
                 title: "CPU Over Time",
@@ -185,7 +207,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .oneMinute,
                     unit: "%"
                 ),
-                sortOrder: 4
+                sortOrder: 5,
+                widthSlot: .medium
             ),
             PanelTemplate(
                 title: "Memory Over Time",
@@ -198,7 +221,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .oneMinute,
                     unit: "B"
                 ),
-                sortOrder: 5
+                sortOrder: 6,
+                widthSlot: .medium
             ),
             PanelTemplate(
                 title: "Network Traffic",
@@ -211,7 +235,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .oneMinute,
                     unit: "B/s"
                 ),
-                sortOrder: 6
+                sortOrder: 7,
+                widthSlot: .medium
             ),
             PanelTemplate(
                 title: "Disk I/O",
@@ -224,7 +249,8 @@ enum DashboardTemplateRegistry {
                     aggregateWindow: .oneMinute,
                     unit: "B/s"
                 ),
-                sortOrder: 7
+                sortOrder: 8,
+                widthSlot: .medium
             ),
         ]
     )

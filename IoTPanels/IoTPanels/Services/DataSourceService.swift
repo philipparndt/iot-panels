@@ -26,6 +26,12 @@ protocol DataSourceServiceProtocol {
 /// Creates the appropriate service for a DataSource based on its backend type.
 enum ServiceFactory {
     static func service(for dataSource: DataSource) -> any DataSourceServiceProtocol {
+        // Demo-flagged sources always route through DemoService, regardless of
+        // backendType. This lets us ship demo dashboards that look like
+        // Prometheus / InfluxDB / etc. against synthesized data.
+        if dataSource.isDemo {
+            return DemoService()
+        }
         switch dataSource.wrappedBackendType {
         case .demo:
             return DemoService()
