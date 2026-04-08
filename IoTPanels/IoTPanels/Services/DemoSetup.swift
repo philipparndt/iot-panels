@@ -17,7 +17,10 @@ enum DemoSetup {
     }
 
     static func install(context: NSManagedObjectContext) {
-        let home = HomeManager.demoHome(context: context)
+        install(into: HomeManager.demoHome(context: context), context: context)
+    }
+
+    static func install(into home: Home, context: NSManagedObjectContext) {
         let ds = createDataSource(context: context, home: home)
 
         // Queries

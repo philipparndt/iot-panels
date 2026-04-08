@@ -118,6 +118,14 @@ struct DashboardListView: View {
                         Label("New Home", systemImage: "plus")
                     }
 
+                    Button {
+                        let demo = HomeManager.createDemoHome(context: viewContext)
+                        DemoSetup.install(into: demo, context: viewContext)
+                        navigationState.selectedHome = demo
+                    } label: {
+                        Label("New Demo Home", systemImage: "house.and.flag")
+                    }
+
                     if home?.isDemo == true {
                         Button {
                             showingResetDemo = true
@@ -126,13 +134,11 @@ struct DashboardListView: View {
                         }
                     }
 
-                    if !(home?.isDemo == true) {
-                        Divider()
-                        Button(role: .destructive) {
-                            showingDeleteHome = true
-                        } label: {
-                            Label("Delete Home", systemImage: "trash")
-                        }
+                    Divider()
+                    Button(role: .destructive) {
+                        showingDeleteHome = true
+                    } label: {
+                        Label("Delete Home", systemImage: "trash")
                     }
                 } label: {
                     Label("Home Settings", systemImage: "ellipsis.circle")

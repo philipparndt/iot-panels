@@ -92,6 +92,13 @@ struct ContentView: View {
             } label: {
                 Label("New Home", systemImage: "plus")
             }
+            Button {
+                let demo = HomeManager.createDemoHome(context: viewContext)
+                DemoSetup.install(into: demo, context: viewContext)
+                navigationState.selectedHome = demo
+            } label: {
+                Label("New Demo Home", systemImage: "house.and.flag")
+            }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: navigationState.selectedHome?.wrappedIcon ?? "house")

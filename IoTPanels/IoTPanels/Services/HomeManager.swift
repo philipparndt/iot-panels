@@ -56,16 +56,10 @@ enum HomeManager {
             myHome.createdAt = Date()
         }
 
-        // Create "Demo Home" if missing
-        if demoHomes.isEmpty {
-            let demo = Home(context: context)
-            demo.id = UUID()
-            demo.name = "Demo Home"
-            demo.icon = "house.and.flag"
-            demo.isDemo = true
-            demo.sortOrder = 1
-            demo.createdAt = Date()
-        }
+        // Note: the demo home is no longer auto-created here. CloudKit has no
+        // unique constraints, so creating one per device on first launch led to
+        // demo homes accumulating across devices. The demo home is now created
+        // on demand via the "Try Demo Home" button in DashboardListView.
 
         // Remove orphaned entities (home == nil) from older app versions
         deleteOrphans(of: Dashboard.self, context: context)
@@ -102,6 +96,24 @@ enum HomeManager {
         home.icon = "house.and.flag"
         home.isDemo = true
         home.sortOrder = 1
+        home.createdAt = Date()
+        try? context.save()
+        return home
+    }
+
+    /// Creates a new demo home (always a fresh record). Caller is responsible
+    /// for populating it with `DemoSetup.install(into:context:)`.
+    @discardableResult
+    static func createDemoHome(name: String = "Demo Home", context: NSManagedObjectContext) -> Home {
+        let request: NSFetchRequest<Home> = Home.fetchRequest()
+        let count = (try? context.count(for: request)) ?? 0
+
+        let home = Home(context: context)
+        home.id = UUID()
+        home.name = name
+        home.icon = "house.and.flag"
+        home.isDemo = true
+        home.sortOrder = Int32(count)
         home.createdAt = Date()
         try? context.save()
         return home
