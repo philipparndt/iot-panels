@@ -17,6 +17,13 @@ struct MacRootView: View {
 
     @State private var selection: NavigationState.AppTab = .dashboards
     @State private var showingNewHome = false
+    @State private var showingRenameHome = false
+    @State private var showingDeleteHome = false
+    @State private var showingResetDemo = false
+    @State private var showingIconPicker = false
+    @State private var homeRenameText = ""
+
+    private var selectedHome: Home? { navigationState.selectedHome }
 
     var body: some View {
         @Bindable var nav = navigationState
@@ -24,7 +31,11 @@ struct MacRootView: View {
         NavigationSplitView {
             List(selection: $selection) {
                 Section("Home") {
-                    homeMenu
+                    HStack(spacing: 4) {
+                        homeMenu
+                        Spacer()
+                        homeSettingsMenu
+                    }
                 }
 
                 Section {
@@ -39,7 +50,7 @@ struct MacRootView: View {
                 }
             }
             .navigationTitle("IoT Panels")
-            .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
+            .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 320)
         } detail: {
             NavigationStack {
                 detailView
@@ -57,6 +68,42 @@ struct MacRootView: View {
             NewHomeAlert { name in
                 let home = HomeManager.createHome(name: name, context: viewContext)
                 navigationState.selectedHome = home
+            }
+        }
+        .alert("Rename Home", isPresented: $showingRenameHome) {
+            TextField("Home name", text: $homeRenameText)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") {
+                selectedHome?.name = homeRenameText
+                try? viewContext.save()
+            }
+            .disabled(homeRenameText.isEmpty)
+        }
+        .alert("Delete \"\(selectedHome?.wrappedName ?? "Home")\"?", isPresented: $showingDeleteHome) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete \"\(selectedHome?.wrappedName ?? "Home")\"", role: .destructive) {
+                if let home = selectedHome {
+                    let fallback = HomeManager.bootstrap(context: viewContext)
+                    navigationState.selectedHome = fallback
+                    viewContext.delete(home)
+                    try? viewContext.save()
+                }
+            }
+        } message: {
+            Text("This will permanently delete \"\(selectedHome?.wrappedName ?? "this home")\" and all its dashboards, data sources, and widgets.")
+        }
+        .alert("Reset Demo?", isPresented: $showingResetDemo) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                DemoSetup.reset(context: viewContext)
+            }
+        } message: {
+            Text("This will delete all demo dashboards, data sources, and widgets, then recreate them.")
+        }
+        .sheet(isPresented: $showingIconPicker) {
+            HomeIconPickerView(currentIcon: selectedHome?.wrappedIcon ?? "house") { icon in
+                selectedHome?.icon = icon
+                try? viewContext.save()
             }
         }
     }
@@ -105,12 +152,62 @@ struct MacRootView: View {
                 Image(systemName: navigationState.selectedHome?.wrappedIcon ?? "house")
                 Text(navigationState.selectedHome?.wrappedName ?? "Home")
                     .fontWeight(.semibold)
+                    .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
             .font(.subheadline)
+            .foregroundStyle(.primary)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+    }
+
+    private var homeSettingsMenu: some View {
+        Menu {
+            Button {
+                homeRenameText = selectedHome?.wrappedName ?? ""
+                showingRenameHome = true
+            } label: {
+                Label("Rename Home", systemImage: "pencil")
+            }
+            .disabled(selectedHome == nil)
+
+            Button {
+                showingIconPicker = true
+            } label: {
+                Label("Change Icon", systemImage: "face.smiling")
+            }
+            .disabled(selectedHome == nil)
+
+            if selectedHome?.isDemo == true {
+                Button {
+                    showingResetDemo = true
+                } label: {
+                    Label("Reset Demo", systemImage: "arrow.counterclockwise")
+                }
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                showingDeleteHome = true
+            } label: {
+                Label("Delete Home", systemImage: "trash")
+            }
+            .disabled(selectedHome == nil)
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
     }
 }
 #endif

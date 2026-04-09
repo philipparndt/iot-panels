@@ -79,6 +79,9 @@ struct PrometheusSetupView: View {
                         }
                     }
                 }
+                #if os(macOS)
+                .formStyle(.grouped)
+                #endif
             }
             .navigationTitle("Prometheus Setup")
             .inlineNavigationTitle()

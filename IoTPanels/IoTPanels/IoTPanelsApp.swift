@@ -48,9 +48,9 @@ struct IoTPanelsApp: App {
         #endif
 
         #if os(macOS)
-        WindowGroup("Chart Explorer", for: UUID.self) { $panelID in
-            if let panelID {
-                ChartExplorerWindowView(panelID: panelID)
+        WindowGroup("Chart Explorer", for: ChartExplorerWindowID.self) { $windowID in
+            if let windowID {
+                ChartExplorerWindowView(panelID: windowID.panelID)
                     .environment(\.managedObjectContext, persistenceController.container.viewContext)
             }
         }

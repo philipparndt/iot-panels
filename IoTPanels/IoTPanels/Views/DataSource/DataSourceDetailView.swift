@@ -376,6 +376,9 @@ struct DataSourceDetailView: View {
                 }
             }
         }
+        #if os(macOS)
+        .formStyle(.grouped)
+        #endif
         .sheet(isPresented: $showingInflux1Setup) {
             InfluxDB1SetupView { result in
                 url = result.url

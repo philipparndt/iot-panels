@@ -112,6 +112,9 @@ struct MQTTSetupView: View {
                 // Test & Finish
                 testSection
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("MQTT Setup")
             .inlineNavigationTitle()
             .toolbar {

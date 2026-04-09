@@ -4867,6 +4867,9 @@
         }
       }
     },
+    "Change" : {
+
+    },
     "Change Icon" : {
       "localizations" : {
         "de" : {
@@ -7966,6 +7969,9 @@
         }
       }
     },
+    "Data Source" : {
+
+    },
     "Data Sources" : {
       "localizations" : {
         "de" : {
@@ -8198,6 +8204,12 @@
         }
       }
     },
+    "Delete \"%@\"" : {
+
+    },
+    "Delete \"%@\"?" : {
+
+    },
     "Delete Home" : {
       "localizations" : {
         "de" : {
@@ -8245,6 +8257,7 @@
       }
     },
     "Delete Home?" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16916,6 +16929,9 @@
         }
       }
     },
+    "No saved queries" : {
+
+    },
     "No Saved Queries" : {
       "localizations" : {
         "de" : {
@@ -22606,7 +22622,11 @@
         }
       }
     },
+    "This will permanently delete \"%@\" and all its dashboards, data sources, and widgets." : {
+
+    },
     "This will permanently delete this home and all its dashboards, data sources, and widgets." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

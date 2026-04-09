@@ -13,7 +13,7 @@ struct WidgetDesignEditorView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 20) {
                 if !isRearranging {
                     sizePicker
                     textScalePicker
@@ -25,6 +25,7 @@ struct WidgetDesignEditorView: View {
                 }
                 itemsSection
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
         .navigationTitle(design.wrappedName)
@@ -78,6 +79,7 @@ struct WidgetDesignEditorView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
         }
     }
 
@@ -103,6 +105,7 @@ struct WidgetDesignEditorView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
         }
     }
 
@@ -128,6 +131,7 @@ struct WidgetDesignEditorView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
         }
     }
 

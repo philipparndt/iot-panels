@@ -140,7 +140,7 @@ struct DashboardView: View {
 
     #if os(macOS)
     private func openExplorerWindow(_ panel: DashboardPanel) {
-        openWindow(value: panel.wrappedId)
+        openWindow(value: ChartExplorerWindowID(panelID: panel.wrappedId))
     }
     #endif
 
@@ -859,6 +859,9 @@ struct EditPanelView: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Edit Panel")
             .inlineNavigationTitle()
             .toolbar {

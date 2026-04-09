@@ -95,6 +95,9 @@ struct ManualQueryEditorView: View {
                     .disabled(queryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle(existingQuery != nil ? "Edit Query" : "Manual Query")
             .inlineNavigationTitle()
             .toolbar {

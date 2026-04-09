@@ -169,6 +169,9 @@ struct NewWidgetDesignSheet: View {
                     .pickerStyle(.segmented)
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("New Widget")
             .inlineNavigationTitle()
             .toolbar {

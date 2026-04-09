@@ -97,6 +97,7 @@ struct DashboardListView: View {
         }
         .navigationTitle("Dashboards")
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .navigation) {
                 Menu {
                     Button {
@@ -144,6 +145,7 @@ struct DashboardListView: View {
                     Label("Home Settings", systemImage: "ellipsis.circle")
                 }
             }
+            #endif
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showingAdd = true }) {
                     Label("Add", systemImage: "plus")
@@ -173,9 +175,9 @@ struct DashboardListView: View {
                 navigationState.selectedHome = newHome
             }
         }
-        .alert("Delete Home?", isPresented: $showingDeleteHome) {
+        .alert("Delete \"\(home?.wrappedName ?? "Home")\"?", isPresented: $showingDeleteHome) {
             Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {
+            Button("Delete \"\(home?.wrappedName ?? "Home")\"", role: .destructive) {
                 if let home {
                     let myHome = HomeManager.bootstrap(context: viewContext)
                     navigationState.selectedHome = myHome
@@ -184,7 +186,7 @@ struct DashboardListView: View {
                 }
             }
         } message: {
-            Text("This will permanently delete this home and all its dashboards, data sources, and widgets.")
+            Text("This will permanently delete \"\(home?.wrappedName ?? "this home")\" and all its dashboards, data sources, and widgets.")
         }
         .sheet(isPresented: $showingAdd) {
             DashboardTemplatePickerView(

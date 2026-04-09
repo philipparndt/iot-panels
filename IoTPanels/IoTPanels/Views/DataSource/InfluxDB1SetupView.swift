@@ -86,6 +86,9 @@ struct InfluxDB1SetupView: View {
                         }
                     }
                 }
+                #if os(macOS)
+                .formStyle(.grouped)
+                #endif
             }
             .navigationTitle("InfluxDB 1 Setup")
             .inlineNavigationTitle()

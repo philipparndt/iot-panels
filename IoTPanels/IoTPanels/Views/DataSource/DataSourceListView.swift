@@ -75,6 +75,12 @@ struct DataSourceListView: View {
                         } label: {
                             Label("Share (without credentials)", systemImage: "square.and.arrow.up")
                         }
+                        Divider()
+                    }
+                    Button(role: .destructive) {
+                        delete(dataSource)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
                 }
             }
@@ -174,6 +180,13 @@ struct DataSourceListView: View {
     private func deleteDataSources(offsets: IndexSet) {
         withAnimation {
             offsets.map { dataSources[$0] }.forEach(viewContext.delete)
+            try? viewContext.save()
+        }
+    }
+
+    private func delete(_ dataSource: DataSource) {
+        withAnimation {
+            viewContext.delete(dataSource)
             try? viewContext.save()
         }
     }

@@ -42,6 +42,9 @@ struct WidgetItemConfigView: View {
                 colorSection
                 groupSection
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Configure Item")
             .inlineNavigationTitle()
             .toolbar {

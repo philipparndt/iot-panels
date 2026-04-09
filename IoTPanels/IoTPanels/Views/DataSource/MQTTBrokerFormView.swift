@@ -93,6 +93,9 @@ struct MQTTBrokerFormView: View {
                 .listRowBackground(Color.clear)
             }
         }
+        #if os(macOS)
+        .formStyle(.grouped)
+        #endif
         .navigationTitle("Broker Settings")
         .inlineNavigationTitle()
         .sheet(isPresented: $showCertificateHelp) {

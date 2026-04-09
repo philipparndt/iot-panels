@@ -13,13 +13,11 @@ extension View {
     }
 
 
-    /// Gives macOS sheets a sensible default size so Form/List content scrolls
+    /// Gives macOS sheets a sensible fixed size so Form/List content scrolls
     /// instead of expanding the sheet infinitely. No-op on iOS.
-    func macSheet(minWidth: CGFloat = 500, idealWidth: CGFloat = 600,
-                  minHeight: CGFloat = 400, idealHeight: CGFloat = 600) -> some View {
+    func macSheet(width: CGFloat = 560, height: CGFloat = 500) -> some View {
         #if os(macOS)
-        self.frame(minWidth: minWidth, idealWidth: idealWidth,
-                   minHeight: minHeight, idealHeight: idealHeight)
+        self.frame(width: width, height: height)
         #else
         self
         #endif

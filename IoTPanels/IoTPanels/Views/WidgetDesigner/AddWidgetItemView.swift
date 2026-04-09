@@ -61,6 +61,9 @@ struct AddWidgetItemView: View {
                     )
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Add Item")
             .inlineNavigationTitle()
             .toolbar {
