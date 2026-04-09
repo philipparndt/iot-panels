@@ -1,7 +1,14 @@
-#if !os(macOS)
 import WidgetKit
 import SwiftUI
 import AppIntents
+
+private var singleValueSupportedFamilies: [WidgetFamily] {
+    #if os(macOS)
+    [.systemSmall]
+    #else
+    [.systemSmall, .accessoryRectangular, .accessoryCircular, .accessoryInline]
+    #endif
+}
 
 // MARK: - Timeline Entry
 
@@ -220,6 +227,9 @@ struct SingleValueWidgetView: View {
         if entry.value == nil && !entry.isPlaceholder {
             emptyView
         } else {
+            #if os(macOS)
+            homeScreenView
+            #else
             switch family {
             case .accessoryInline:
                 accessoryInlineView
@@ -230,6 +240,7 @@ struct SingleValueWidgetView: View {
             default:
                 homeScreenView
             }
+            #endif
         }
     }
 
@@ -327,6 +338,9 @@ struct CountdownValueWidgetView: View {
         } else if entry.showCompleted {
             completedView
         } else {
+            #if os(macOS)
+            homeScreenView
+            #else
             switch family {
             case .accessoryInline:
                 accessoryInlineView
@@ -337,6 +351,7 @@ struct CountdownValueWidgetView: View {
             default:
                 homeScreenView
             }
+            #endif
         }
     }
 
@@ -347,20 +362,36 @@ struct CountdownValueWidgetView: View {
     private var completedView: some View {
         VStack(spacing: 2) {
             Text(entry.queryName)
-                .font(family == .accessoryCircular ? .system(size: 8, weight: .medium) :
-                      family == .accessoryRectangular ? .system(size: 11, weight: .medium) :
-                      .system(size: 13, weight: .medium))
+                .font(titleFont)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
             Text("Completed")
-                .font(family == .accessoryCircular ? .system(size: 11, weight: .semibold) :
-                      family == .accessoryRectangular ? .system(size: 16, weight: .semibold) :
-                      .system(size: 24, weight: .semibold))
+                .font(completedFont)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var titleFont: Font {
+        #if os(macOS)
+        .system(size: 13, weight: .medium)
+        #else
+        family == .accessoryCircular ? .system(size: 8, weight: .medium) :
+        family == .accessoryRectangular ? .system(size: 11, weight: .medium) :
+        .system(size: 13, weight: .medium)
+        #endif
+    }
+
+    private var completedFont: Font {
+        #if os(macOS)
+        .system(size: 24, weight: .semibold)
+        #else
+        family == .accessoryCircular ? .system(size: 11, weight: .semibold) :
+        family == .accessoryRectangular ? .system(size: 16, weight: .semibold) :
+        .system(size: 24, weight: .semibold)
+        #endif
     }
 
     // MARK: - Home Screen
@@ -489,7 +520,7 @@ struct SingleValueWidget: Widget {
         }
         .configurationDisplayName("Single Value")
         .description("Display a single value from a saved query.")
-        .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        .supportedFamilies(singleValueSupportedFamilies)
     }
 }
 
@@ -508,7 +539,7 @@ struct CountdownValueWidget: Widget {
         }
         .configurationDisplayName("Countdown")
         .description("Display a live countdown from a saved query (value in minutes).")
-        .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        .supportedFamilies(singleValueSupportedFamilies)
     }
 }
 
@@ -533,7 +564,6 @@ struct CountdownTransparentWidget: Widget {
         }
         .configurationDisplayName("Countdown with Transparency")
         .description("Live countdown that shows \"Completed\" briefly, then hides when done.")
-        .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryCircular, .accessoryInline])
+        .supportedFamilies(singleValueSupportedFamilies)
     }
 }
-#endif

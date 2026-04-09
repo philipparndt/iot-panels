@@ -1,4 +1,3 @@
-#if !os(macOS)
 import WidgetKit
 import SwiftUI
 import Charts
@@ -236,7 +235,11 @@ struct IoTPanelsWidget: Widget {
                 .widgetURL(entry.designId.flatMap { URL(string: "iotpanels://widget/\($0)") })
                 .containerBackground(for: .widget) {
                     if entry.backgroundColorHex == WidgetDesign.adaptiveBackgroundHex {
+                        #if os(macOS)
+                        Color(nsColor: .windowBackgroundColor)
+                        #else
                         Color(uiColor: .systemBackground)
+                        #endif
                     } else {
                         Color(hex: entry.backgroundColorHex)
                     }
@@ -258,4 +261,3 @@ struct IoTPanelsWidgetBundle: WidgetBundle {
         CountdownTransparentWidget()
     }
 }
-#endif
