@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		221A68E12F8182F4007A92B8 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 221A68E02F8182F4007A92B8 /* AppIcon.icon */; };
 		221A68E22F8182F4007A92B8 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 221A68E02F8182F4007A92B8 /* AppIcon.icon */; };
-		D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D1000011000000000000000B /* IoTPanelsWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D2000002000000000000000C /* IoTPanelsWidgetExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		M50000010000000000000001 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = M40000010000000000000001 /* CocoaMQTT */; };
 		M50000020000000000000002 /* CocoaMQTTWebSocket in Frameworks */ = {isa = PBXBuildFile; productRef = M40000020000000000000002 /* CocoaMQTTWebSocket */; };
 		M50000030000000000000003 /* CocoaMQTT in Frameworks */ = {isa = PBXBuildFile; productRef = M40000030000000000000003 /* CocoaMQTT */; };
@@ -532,6 +532,7 @@
 		};
 		DB0000010000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = D40000010000000000000001 /* IoTPanelsWidgetExtension */;
 			targetProxy = D30000010000000000000001 /* PBXContainerItemProxy */;
 		};
@@ -852,7 +853,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -882,7 +883,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = de.rnd7.iotpanels.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
