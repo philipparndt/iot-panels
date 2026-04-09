@@ -81,7 +81,7 @@ struct PrometheusSetupView: View {
                 }
             }
             .navigationTitle("Prometheus Setup")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .onAppear { focusedField = .url }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -89,6 +89,7 @@ struct PrometheusSetupView: View {
                 }
             }
         }
+        .macSheet()
     }
 
     // MARK: - Step Indicator

@@ -28,12 +28,47 @@ extension Color {
 
 extension Color {
     /// Returns the complementary color by rotating hue 180° in HSB space.
+    ///
+    /// Uses `Color.resolve(in:)` (iOS 17+ / macOS 14+) to read the RGB components
+    /// via pure SwiftUI, without reaching into UIKit or AppKit.
     func complementary() -> Color {
-        let uiColor = UIColor(self)
-        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        uiColor.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        let resolved = self.resolve(in: EnvironmentValues())
+        let (h, s, b) = Self.rgbToHsb(
+            r: Double(resolved.red),
+            g: Double(resolved.green),
+            blue: Double(resolved.blue)
+        )
         let newHue = (h + 0.5).truncatingRemainder(dividingBy: 1.0)
-        return Color(hue: Double(newHue), saturation: Double(s), brightness: Double(b), opacity: Double(a))
+        return Color(
+            hue: newHue,
+            saturation: s,
+            brightness: b,
+            opacity: Double(resolved.opacity)
+        )
+    }
+
+    /// Converts an sRGB triple to HSB. Matches the behavior of `UIColor.getHue(_:saturation:brightness:alpha:)`.
+    private static func rgbToHsb(r: Double, g: Double, blue b: Double) -> (h: Double, s: Double, b: Double) {
+        let maxC = max(r, g, b)
+        let minC = min(r, g, b)
+        let delta = maxC - minC
+
+        let brightness = maxC
+        let saturation = maxC == 0 ? 0 : delta / maxC
+
+        let hue: Double
+        if delta == 0 {
+            hue = 0
+        } else if maxC == r {
+            hue = ((g - b) / delta).truncatingRemainder(dividingBy: 6)
+        } else if maxC == g {
+            hue = (b - r) / delta + 2
+        } else {
+            hue = (r - g) / delta + 4
+        }
+        var normalized = hue / 6
+        if normalized < 0 { normalized += 1 }
+        return (normalized, saturation, brightness)
     }
 }
 

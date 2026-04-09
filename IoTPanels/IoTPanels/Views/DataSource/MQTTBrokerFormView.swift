@@ -94,7 +94,7 @@ struct MQTTBrokerFormView: View {
             }
         }
         .navigationTitle("Broker Settings")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .sheet(isPresented: $showCertificateHelp) {
             MQTTCertificateHelpSheet()
         }

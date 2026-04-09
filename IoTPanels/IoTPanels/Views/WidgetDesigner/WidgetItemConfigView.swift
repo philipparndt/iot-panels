@@ -43,7 +43,7 @@ struct WidgetItemConfigView: View {
                 groupSection
             }
             .navigationTitle("Configure Item")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

@@ -474,7 +474,7 @@ struct MQTTSubscriptionDetailView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .navigationTitle("Subscription")
         .onAppear {
             topic = subscription.topic
@@ -867,7 +867,7 @@ struct MQTTCertificateHelpSheet: View {
                 .padding()
             }
             .navigationTitle("Certificate Help")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

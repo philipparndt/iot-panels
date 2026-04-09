@@ -170,7 +170,7 @@ struct NewWidgetDesignSheet: View {
                 }
             }
             .navigationTitle("New Widget")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

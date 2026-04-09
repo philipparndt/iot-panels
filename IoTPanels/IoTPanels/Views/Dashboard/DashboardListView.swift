@@ -277,7 +277,7 @@ struct HomeIconPickerView: View {
                 }
             }
             .navigationTitle("Choose Icon")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

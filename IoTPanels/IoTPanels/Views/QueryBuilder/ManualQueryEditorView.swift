@@ -96,7 +96,7 @@ struct ManualQueryEditorView: View {
                 }
             }
             .navigationTitle(existingQuery != nil ? "Edit Query" : "Manual Query")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

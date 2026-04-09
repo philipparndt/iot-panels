@@ -1,6 +1,9 @@
 import SwiftUI
 import Charts
 import Combine
+#if os(macOS)
+import AppKit
+#endif
 
 // MARK: - Shared Heatmap Selection
 
@@ -20,6 +23,8 @@ struct PanelCardBackground: View {
             } else {
                 #if os(watchOS)
                 Color(white: 0.2)
+                #elseif os(macOS)
+                Color(NSColor.controlBackgroundColor)
                 #else
                 Color(uiColor: .secondarySystemGroupedBackground)
                 #endif
@@ -585,8 +590,10 @@ struct PanelRenderer: View {
     private func bandChartHeader(groups: [BandGroup]) -> some View {
         if let selectedTime, !compact, let point = closestPoint(to: selectedTime) {
             bandChartSelectionHeader(groups: groups, selectedTime: selectedTime, point: point)
+                .frame(height: compact ? nil : 44, alignment: .top)
         } else {
             bandChartDefaultHeader(groups: groups)
+                .frame(height: compact ? nil : 44, alignment: .top)
         }
     }
 

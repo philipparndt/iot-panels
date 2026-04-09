@@ -479,11 +479,20 @@ struct DataSourceDetailView: View {
                             .disabled(!canSave)
                     }
                 }
+                #if os(iOS)
                 .sheet(isPresented: $showShareSheet) {
                     if let url = shareFileURL {
                         ShareSheetView(activityItems: [url])
                     }
                 }
+                #else
+                .onChange(of: showShareSheet) { _, newValue in
+                    if newValue, let url = shareFileURL {
+                        MacFileExporter.revealOrExport(url: url)
+                        showShareSheet = false
+                    }
+                }
+                #endif
                 .onAppear(perform: loadDataSource)
                 .onDisappear { persistFields() }
         } else {
@@ -501,6 +510,7 @@ struct DataSourceDetailView: View {
                     }
                     .onAppear { }
             }
+            .macSheet()
         }
     }
 

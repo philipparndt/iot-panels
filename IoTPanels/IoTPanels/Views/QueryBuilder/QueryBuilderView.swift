@@ -163,7 +163,7 @@ struct QueryBuilderView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(existingQuery != nil ? "Edit Query" : "New Query")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -181,6 +181,7 @@ struct QueryBuilderView: View {
                 loadMeasurements()
             }
         }
+        .macSheet()
     }
 
     // MARK: - Summary Row

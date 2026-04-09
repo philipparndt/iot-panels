@@ -257,7 +257,9 @@ struct WidgetDesignEditorView: View {
                         saveItemOrder()
                     }
                 }
+                #if os(iOS)
                 .environment(\.editMode, .constant(.active))
+                #endif
                 .frame(minHeight: CGFloat(editItems.count) * 52)
                 .listStyle(.plain)
                 .scrollDisabled(true)
@@ -280,7 +282,7 @@ struct WidgetDesignEditorView: View {
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.platformSecondaryGroupedBackground)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
@@ -370,7 +372,7 @@ struct WidgetDesignEditorView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.platformSecondaryGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
         .onTapGesture { editingItem = item }

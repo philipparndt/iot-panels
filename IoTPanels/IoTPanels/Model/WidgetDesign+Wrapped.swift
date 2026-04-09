@@ -174,7 +174,11 @@ extension WidgetDesign {
 
     var backgroundColor: Color {
         if wrappedBackgroundColorHex == Self.adaptiveBackgroundHex {
+            #if os(macOS)
+            return Color(NSColor.windowBackgroundColor)
+            #else
             return Color(uiColor: .systemBackground)
+            #endif
         }
         return Color(hex: wrappedBackgroundColorHex)
     }

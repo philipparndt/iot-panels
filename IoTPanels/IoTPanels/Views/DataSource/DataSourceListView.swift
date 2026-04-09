@@ -81,7 +81,9 @@ struct DataSourceListView: View {
             .onDelete(perform: deleteDataSources)
         }
         .navigationTitle("Data Sources")
+        #if os(iOS)
         .environment(\.editMode, isEditing ? .constant(.active) : .constant(.inactive))
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -114,11 +116,21 @@ struct DataSourceListView: View {
         } message: {
             Text(importAlertMessage ?? "")
         }
+        #if os(iOS)
         .sheet(isPresented: $showExportShare) {
             if let url = exportFileURL {
                 ShareSheetView(activityItems: [url])
             }
         }
+        #else
+        // On macOS the export flow surfaces as a file exporter from the call site; the sheet is a no-op.
+        .onChange(of: showExportShare) { _, newValue in
+            if newValue, let url = exportFileURL {
+                MacFileExporter.revealOrExport(url: url)
+                showExportShare = false
+            }
+        }
+        #endif
         .onAppear {
             if navigationState.showAddDataSource {
                 navigationState.showAddDataSource = false
@@ -210,6 +222,7 @@ struct MQTTConnectionStatusView: View {
 
 // MARK: - Share Sheet
 
+#if os(iOS)
 struct ShareSheetView: UIViewControllerRepresentable {
     let activityItems: [Any]
 
@@ -219,6 +232,7 @@ struct ShareSheetView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+#endif
 
 #Preview {
     NavigationStack {

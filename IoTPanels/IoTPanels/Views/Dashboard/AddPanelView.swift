@@ -96,7 +96,7 @@ struct AddPanelView: View {
                 }
             }
             .navigationTitle("Add Panel")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -107,6 +107,7 @@ struct AddPanelView: View {
                     .environment(\.managedObjectContext, viewContext)
             }
         }
+        .macSheet()
     }
 
     @ViewBuilder
