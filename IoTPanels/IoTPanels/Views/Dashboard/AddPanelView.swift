@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct AddPanelView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -25,6 +26,7 @@ struct AddPanelView: View {
 
     @State private var panelTitle = ""
     @State private var selectedStyle: PanelDisplayStyle = .auto
+    @State private var selectedDataSource: DataSource?
     @State private var queryBuilderDataSource: DataSource?
 
     var body: some View {
@@ -47,56 +49,17 @@ struct AddPanelView: View {
                     }
                 }
 
-                ForEach(Array(dataSources.enumerated()), id: \.element.objectID) { _, ds in
-                    let queries = fetchQueries(for: ds)
-                    Section(header: HStack {
-                        Text(ds.wrappedName)
-                        Spacer()
-                        Text(ds.wrappedBackendType.displayName)
-                            .font(.caption2)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.secondary.opacity(0.2))
-                            .clipShape(Capsule())
-                    }) {
-                        ForEach(Array(queries.enumerated()), id: \.element.objectID) { _, query in
-                            Button {
-                                addPanel(query: query)
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text(query.wrappedName)
-                                            .font(.headline)
-                                            .foregroundStyle(.primary)
-                                        Text(querySummary(query))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundStyle(Color.accentColor)
-                                }
-                            }
-                        }
-
-                        Button {
-                            queryBuilderDataSource = ds
-                        } label: {
-                            Label("New Query", systemImage: "magnifyingglass.circle")
-                        }
-                    }
-                }
-
-                if dataSources.isEmpty {
-                    ContentUnavailableView(
-                        "No Data Sources",
-                        systemImage: "server.rack",
-                        description: Text("Add a data source first.")
-                    )
+                if let ds = selectedDataSource {
+                    querySection(for: ds)
+                } else {
+                    dataSourcePickerSection
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Add Panel")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -105,6 +68,122 @@ struct AddPanelView: View {
             .sheet(item: $queryBuilderDataSource) { ds in
                 queryBuilderSheet(for: ds)
                     .environment(\.managedObjectContext, viewContext)
+            }
+            .onAppear {
+                // Auto-select if only one data source exists.
+                if selectedDataSource == nil, dataSources.count == 1 {
+                    selectedDataSource = dataSources.first
+                }
+            }
+            .onChange(of: dataSources.count) { _, newValue in
+                if selectedDataSource == nil, newValue == 1 {
+                    selectedDataSource = dataSources.first
+                }
+            }
+        }
+        .macSheet()
+    }
+
+    // MARK: - Data Source Picker
+
+    @ViewBuilder
+    private var dataSourcePickerSection: some View {
+        if dataSources.isEmpty {
+            Section {
+                ContentUnavailableView(
+                    "No Data Sources",
+                    systemImage: "server.rack",
+                    description: Text("Add a data source first.")
+                )
+            }
+        } else {
+            Section("Data Source") {
+                ForEach(dataSources, id: \.objectID) { ds in
+                    Button {
+                        selectedDataSource = ds
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(ds.wrappedName)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(ds.wrappedBackendType.displayName)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    // MARK: - Query Picker
+
+    @ViewBuilder
+    private func querySection(for ds: DataSource) -> some View {
+        let queries = fetchQueries(for: ds)
+        let canSwitchDataSource = dataSources.count > 1
+
+        Section {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(ds.wrappedName)
+                        .font(.headline)
+                    Text(ds.wrappedBackendType.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if canSwitchDataSource {
+                    Button("Change") {
+                        selectedDataSource = nil
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+        } header: {
+            Text("Data Source")
+        }
+
+        Section("Query") {
+            if queries.isEmpty {
+                Text("No saved queries")
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+            } else {
+                ForEach(queries, id: \.objectID) { query in
+                    Button {
+                        addPanel(query: query)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(query.wrappedName)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(querySummary(query))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
+                }
+            }
+
+            Button {
+                queryBuilderDataSource = ds
+            } label: {
+                Label("New Query", systemImage: "magnifyingglass.circle")
             }
         }
     }

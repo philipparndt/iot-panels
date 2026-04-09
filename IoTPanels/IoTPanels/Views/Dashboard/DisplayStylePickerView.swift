@@ -28,6 +28,6 @@ struct DisplayStylePickerView: View {
             }
         }
         .navigationTitle("Display Style")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
     }
 }

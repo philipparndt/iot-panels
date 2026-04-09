@@ -19,6 +19,9 @@ struct DashboardView: View {
     @State private var showingAdaptivePopover = false
     @State private var rearrangeByRow: Bool = true
     @StateObject private var heatmapSelection = HeatmapSelectionState()
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
 
     var body: some View {
         Group {
@@ -90,14 +93,32 @@ struct DashboardView: View {
                 .environment(\.managedObjectContext, viewContext)
                 .environmentObject(heatmapSelection)
         }
+        #if os(macOS)
+        .onChange(of: exploringPanel) { _, panel in
+            if let panel {
+                openExplorerWindow(panel)
+                exploringPanel = nil
+            }
+        }
+        #else
         .fullScreenCover(item: $exploringPanel) { panel in
             ChartExplorerView(panel: panel)
         }
+        #endif
+        #if os(iOS)
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportCSVURL {
                 DataShareSheetView(items: [url])
             }
         }
+        #else
+        .onChange(of: showingShareSheet) { _, newValue in
+            if newValue, let url = exportCSVURL {
+                MacFileExporter.revealOrExport(url: url)
+                showingShareSheet = false
+            }
+        }
+        #endif
         .overlay {
             if isExporting {
                 ZStack {
@@ -116,6 +137,12 @@ struct DashboardView: View {
             }
         }
     }
+
+    #if os(macOS)
+    private func openExplorerWindow(_ panel: DashboardPanel) {
+        openWindow(value: ChartExplorerWindowID(panelID: panel.wrappedId))
+    }
+    #endif
 
     // MARK: - Normal Mode
 
@@ -277,7 +304,7 @@ struct DashboardView: View {
                     .frame(maxWidth: .infinity, minHeight: 100)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.platformSecondaryGroupedBackground)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
@@ -289,11 +316,13 @@ struct DashboardView: View {
             }
             .padding()
         }
+        #if os(iOS)
         .refreshable {
             // Give panels a moment to reload, then update the view
             try? await Task.sleep(for: .milliseconds(300))
             refreshID = UUID()
         }
+        #endif
     }
 
     // MARK: - Edit / Rearrange Mode
@@ -309,7 +338,9 @@ struct DashboardView: View {
                 individualRearrangeContent
             }
         }
+        #if os(iOS)
         .environment(\.editMode, .constant(.active))
+        #endif
         .onAppear {
             editPanels = dashboard.sortedPanels
         }
@@ -828,8 +859,11 @@ struct EditPanelView: View {
                         .listRowBackground(Color.clear)
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Edit Panel")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -916,6 +950,7 @@ struct EditPanelView: View {
                 panel.effectiveAggregateFunction = aggregateFunction
             }
         }
+        .macSheet()
     }
 
     // MARK: - State Timeline Config
@@ -1131,6 +1166,6 @@ struct ChangeQueryView: View {
             }
         }
         .navigationTitle("Change Query")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
     }
 }

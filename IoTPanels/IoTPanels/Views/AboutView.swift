@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 private func getVersion() -> String {
     if let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String,
@@ -63,21 +64,46 @@ struct AboutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .multilineTextAlignment(.leading)
         .navigationTitle("About")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .alert("Backup contains credentials", isPresented: $showingCredentialsWarning) {
             Button("Cancel", role: .cancel) {}
             Button("Continue") { performBackup() }
         } message: {
             Text("The backup file will contain API tokens and passwords. Keep it secure.")
         }
+        #if os(iOS)
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportURL {
                 DataShareSheetView(items: [url])
             }
         }
-        .sheet(isPresented: $showingFilePicker) {
-            BackupDocumentPicker { url in
-                performRestore(from: url)
+        #else
+        .onChange(of: showingShareSheet) { _, newValue in
+            if newValue, let url = exportURL {
+                MacFileExporter.revealOrExport(url: url)
+                showingShareSheet = false
+            }
+        }
+        #endif
+        .fileImporter(
+            isPresented: $showingFilePicker,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                let needsScoped = url.startAccessingSecurityScopedResource()
+                defer { if needsScoped { url.stopAccessingSecurityScopedResource() } }
+
+                // Copy to temp to avoid sandbox issues during async restore.
+                let tempURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(url.lastPathComponent)
+                try? FileManager.default.removeItem(at: tempURL)
+                try? FileManager.default.copyItem(at: url, to: tempURL)
+                performRestore(from: tempURL)
+            case .failure:
+                break
             }
         }
         .alert(resultMessage ?? "", isPresented: $showingResult) {
@@ -139,38 +165,6 @@ struct AboutView: View {
                     showingResult = true
                 }
             }
-        }
-    }
-}
-
-/// Document picker for importing JSON backup files.
-struct BackupDocumentPicker: UIViewControllerRepresentable {
-    let onPick: (URL) -> Void
-
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.json])
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
-
-    class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let onPick: (URL) -> Void
-        init(onPick: @escaping (URL) -> Void) { self.onPick = onPick }
-
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            guard url.startAccessingSecurityScopedResource() else { return }
-            defer { url.stopAccessingSecurityScopedResource() }
-
-            // Copy to temp to avoid sandbox issues
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-            try? FileManager.default.removeItem(at: tempURL)
-            try? FileManager.default.copyItem(at: url, to: tempURL)
-            onPick(tempURL)
         }
     }
 }

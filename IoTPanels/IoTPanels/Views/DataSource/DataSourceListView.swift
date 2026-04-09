@@ -75,13 +75,21 @@ struct DataSourceListView: View {
                         } label: {
                             Label("Share (without credentials)", systemImage: "square.and.arrow.up")
                         }
+                        Divider()
+                    }
+                    Button(role: .destructive) {
+                        delete(dataSource)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
                 }
             }
             .onDelete(perform: deleteDataSources)
         }
         .navigationTitle("Data Sources")
+        #if os(iOS)
         .environment(\.editMode, isEditing ? .constant(.active) : .constant(.inactive))
+        #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -114,11 +122,21 @@ struct DataSourceListView: View {
         } message: {
             Text(importAlertMessage ?? "")
         }
+        #if os(iOS)
         .sheet(isPresented: $showExportShare) {
             if let url = exportFileURL {
                 ShareSheetView(activityItems: [url])
             }
         }
+        #else
+        // On macOS the export flow surfaces as a file exporter from the call site; the sheet is a no-op.
+        .onChange(of: showExportShare) { _, newValue in
+            if newValue, let url = exportFileURL {
+                MacFileExporter.revealOrExport(url: url)
+                showExportShare = false
+            }
+        }
+        #endif
         .onAppear {
             if navigationState.showAddDataSource {
                 navigationState.showAddDataSource = false
@@ -162,6 +180,13 @@ struct DataSourceListView: View {
     private func deleteDataSources(offsets: IndexSet) {
         withAnimation {
             offsets.map { dataSources[$0] }.forEach(viewContext.delete)
+            try? viewContext.save()
+        }
+    }
+
+    private func delete(_ dataSource: DataSource) {
+        withAnimation {
+            viewContext.delete(dataSource)
             try? viewContext.save()
         }
     }
@@ -210,6 +235,7 @@ struct MQTTConnectionStatusView: View {
 
 // MARK: - Share Sheet
 
+#if os(iOS)
 struct ShareSheetView: UIViewControllerRepresentable {
     let activityItems: [Any]
 
@@ -219,6 +245,7 @@ struct ShareSheetView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+#endif
 
 #Preview {
     NavigationStack {

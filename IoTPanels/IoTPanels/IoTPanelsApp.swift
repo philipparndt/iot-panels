@@ -12,7 +12,7 @@ struct IoTPanelsApp: App {
     var body: some Scene {
         WindowGroup {
             if persistenceController.isLoaded {
-                ContentView()
+                rootView
                     .environment(\.managedObjectContext, persistenceController.container.viewContext)
                     .environment(navigationState)
                     .onAppear {
@@ -43,6 +43,36 @@ struct IoTPanelsApp: App {
                 ProgressView("Loading...")
             }
         }
+        #if os(macOS)
+        .defaultSize(width: 1280, height: 800)
+        #endif
+
+        #if os(macOS)
+        WindowGroup("Chart Explorer", for: ChartExplorerWindowID.self) { $windowID in
+            if let windowID {
+                ChartExplorerWindowView(panelID: windowID.panelID)
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            }
+        }
+        .defaultSize(width: 900, height: 650)
+
+        Settings {
+            NavigationStack {
+                AboutView()
+            }
+            .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            .frame(minWidth: 480, minHeight: 400)
+        }
+        #endif
+    }
+
+    @ViewBuilder
+    private var rootView: some View {
+        #if os(macOS)
+        MacRootView()
+        #else
+        ContentView()
+        #endif
     }
 
     private func handleBrokerImport(_ url: URL) {

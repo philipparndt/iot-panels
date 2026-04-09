@@ -141,7 +141,7 @@ struct MQTTQueryBuilderView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(existingQuery != nil ? "Edit Query" : "New MQTT Query")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -161,6 +161,7 @@ struct MQTTQueryBuilderView: View {
                 selectTopic(selectedTopic)
             }
         }
+        .macSheet()
     }
 
     // MARK: - Summary Row

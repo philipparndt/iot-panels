@@ -112,14 +112,18 @@ struct MQTTSetupView: View {
                 // Test & Finish
                 testSection
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("MQTT Setup")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
         }
+        .macSheet()
     }
 
     // MARK: - Server Section

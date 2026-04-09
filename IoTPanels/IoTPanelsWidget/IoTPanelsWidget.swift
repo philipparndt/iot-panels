@@ -1,3 +1,4 @@
+#if !os(macOS)
 import WidgetKit
 import SwiftUI
 import Charts
@@ -257,3 +258,4 @@ struct IoTPanelsWidgetBundle: WidgetBundle {
         CountdownTransparentWidget()
     }
 }
+#endif

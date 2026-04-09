@@ -73,7 +73,7 @@ struct DashboardTemplatePickerView: View {
                 }
             }
             .navigationTitle("New Dashboard")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -99,6 +99,7 @@ struct DashboardTemplatePickerView: View {
                 )
             }
         }
+        .macSheet()
     }
 
     private func applyOrPickDataSource(for template: DashboardTemplate) {
@@ -176,7 +177,7 @@ struct DataSourcePickerForTemplate: View {
                 }
             }
             .navigationTitle("Choose Data Source")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

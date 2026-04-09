@@ -61,14 +61,18 @@ struct AddWidgetItemView: View {
                     )
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle("Add Item")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
         }
+        .macSheet()
     }
 
     private func fetchQueries(for dataSource: DataSource) -> [SavedQuery] {

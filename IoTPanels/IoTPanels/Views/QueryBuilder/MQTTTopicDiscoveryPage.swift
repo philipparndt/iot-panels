@@ -110,7 +110,7 @@ struct MQTTTopicDiscoveryPage: View {
         }
         .searchable(text: $searchText, prompt: "Filter topics")
         .navigationTitle("Select Topic")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .onAppear { startDiscovery() }
         .onDisappear { stopDiscovery() }
     }

@@ -1,6 +1,22 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 #if !os(watchOS)
+
+// Local cross-platform tertiary fill color — lives here (not in a shared helper
+// file) because ChartExplorerView.swift is also compiled into the widget
+// extension target, which does not see the main-app-only helper files.
+private extension Color {
+    static var tertiaryFillCompat: Color {
+        #if os(macOS)
+        Color.secondary.opacity(0.12)
+        #else
+        Color(uiColor: .tertiarySystemFill)
+        #endif
+    }
+}
 
 // MARK: - Chart Explorer View
 
@@ -33,16 +49,22 @@ struct ChartExplorerView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
             }
+            #if os(macOS)
+            .background(Color(NSColor.windowBackgroundColor))
+            #else
             .background(Color(uiColor: .systemGroupedBackground))
+            #endif
             .navigationTitle(state.title)
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
                         dismiss()
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     HStack(spacing: 8) {
                         Menu {
                             Button {
@@ -75,11 +97,28 @@ struct ChartExplorerView: View {
                 }
             }
         }
+        #if os(iOS)
         .sheet(isPresented: $showingShareSheet) {
             if let url = exportCSVURL {
                 DataShareSheetView(items: [url])
             }
         }
+        #elseif os(macOS)
+        .onChange(of: showingShareSheet) { _, newValue in
+            if newValue, let url = exportCSVURL {
+                let panel = NSSavePanel()
+                panel.nameFieldStringValue = url.lastPathComponent
+                panel.canCreateDirectories = true
+                panel.begin { response in
+                    if response == .OK, let destination = panel.url {
+                        try? FileManager.default.removeItem(at: destination)
+                        try? FileManager.default.copyItem(at: url, to: destination)
+                    }
+                }
+                showingShareSheet = false
+            }
+        }
+        #endif
         .overlay {
             if isExporting {
                 ZStack {
@@ -239,7 +278,7 @@ struct ExplorerTagMenu<Content: View>: View {
                 .font(.caption2.weight(.medium))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(isActive ? Color.accentColor.opacity(0.2) : Color(uiColor: .tertiarySystemFill))
+                .background(isActive ? Color.accentColor.opacity(0.2) : Color.tertiaryFillCompat)
                 .foregroundStyle(isActive ? Color.accentColor : .primary)
                 .clipShape(Capsule())
         }
@@ -261,7 +300,7 @@ struct ExplorerToolbar: View {
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 4)
-                            .background(Color(uiColor: .tertiarySystemFill))
+                            .background(Color.tertiaryFillCompat)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -284,7 +323,7 @@ struct ExplorerToolbar: View {
                             .font(.caption2.weight(.semibold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 4)
-                            .background(Color(uiColor: .tertiarySystemFill))
+                            .background(Color.tertiaryFillCompat)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)

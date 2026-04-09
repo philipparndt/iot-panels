@@ -1,3 +1,4 @@
+#if !os(macOS)
 import WidgetKit
 import SwiftUI
 import AppIntents
@@ -535,3 +536,4 @@ struct CountdownTransparentWidget: Widget {
         .supportedFamilies([.systemSmall, .accessoryRectangular, .accessoryCircular, .accessoryInline])
     }
 }
+#endif

@@ -86,9 +86,12 @@ struct InfluxDB1SetupView: View {
                         }
                     }
                 }
+                #if os(macOS)
+                .formStyle(.grouped)
+                #endif
             }
             .navigationTitle("InfluxDB 1 Setup")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .onAppear { focusedField = .url }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -96,6 +99,7 @@ struct InfluxDB1SetupView: View {
                 }
             }
         }
+        .macSheet()
     }
 
     // MARK: - Step Indicator

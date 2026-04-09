@@ -95,8 +95,11 @@ struct ManualQueryEditorView: View {
                     .disabled(queryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            #if os(macOS)
+            .formStyle(.grouped)
+            #endif
             .navigationTitle(existingQuery != nil ? "Edit Query" : "Manual Query")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
