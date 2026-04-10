@@ -156,7 +156,7 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
 
     var supportsComparison: Bool { isLineBased }
 
-    var supportsGaugeConfig: Bool { self == .gauge }
+    var supportsGaugeConfig: Bool { self == .gauge || self == .circularGauge }
 
     var supportsHeatmapColor: Bool { self == .calendarHeatmap || self == .calendarHeatmapDense }
 

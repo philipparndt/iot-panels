@@ -6,6 +6,7 @@ struct IoTPanelsApp: App {
     @State private var navigationState = NavigationState()
     @State private var importAlertMessage: String?
     @State private var showImportAlert = false
+    @Environment(\.scenePhase) private var scenePhase
 
     static let isUITesting = ProcessInfo.processInfo.arguments.contains("--ui-testing")
 
@@ -43,6 +44,9 @@ struct IoTPanelsApp: App {
                 ProgressView("Loading...")
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            handleScenePhaseChange(newPhase)
+        }
         #if os(macOS)
         .defaultSize(width: 1280, height: 800)
         #endif
@@ -72,6 +76,25 @@ struct IoTPanelsApp: App {
         MacRootView()
         #else
         ContentView()
+        #endif
+    }
+
+    /// Keeps MQTT connections live across app suspension. On background we cleanly
+    /// disconnect so iOS can suspend the process; on foreground we force a fresh
+    /// reconnect because sockets typically do not survive iOS background suspension,
+    /// and CocoaMQTT's `autoReconnect` timer cannot be relied on to recover reliably.
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        #if canImport(CocoaMQTT)
+        switch phase {
+        case .background:
+            MQTTConnectionManager.shared.handleAppDidEnterBackground()
+        case .active:
+            MQTTConnectionManager.shared.handleAppWillEnterForeground()
+        case .inactive:
+            break
+        @unknown default:
+            break
+        }
         #endif
     }
 

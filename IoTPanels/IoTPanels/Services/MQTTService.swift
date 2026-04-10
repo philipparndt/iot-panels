@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import Network
 import CocoaMQTT
 import CocoaMQTTWebSocket
 
@@ -17,6 +16,7 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
     let password: String?
     let enableSSL: Bool
     let allowUntrustedSSL: Bool
+    let alpn: String?
     let protocolMethod: MQTTProtocolMethod
     let protocolVersion: MQTTProtocolVersion
     let basePath: String
@@ -37,6 +37,7 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
         self.password = dataSource.wrappedPassword.isEmpty ? nil : dataSource.wrappedPassword
         self.enableSSL = dataSource.wrappedSsl
         self.allowUntrustedSSL = dataSource.wrappedUntrustedSSL
+        self.alpn = dataSource.wrappedAlpn.isEmpty ? nil : dataSource.wrappedAlpn
         self.protocolMethod = dataSource.wrappedProtocolMethod
         self.protocolVersion = dataSource.wrappedProtocolVersion
         self.basePath = dataSource.wrappedBasePath
@@ -49,6 +50,7 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
     init(hostname: String, port: UInt16, clientID: String = "",
          username: String? = nil, password: String? = nil,
          enableSSL: Bool = false, allowUntrustedSSL: Bool = false,
+         alpn: String? = nil,
          protocolMethod: MQTTProtocolMethod = .mqtt,
          protocolVersion: MQTTProtocolVersion = .mqtt3,
          basePath: String = "",
@@ -62,6 +64,7 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
         self.password = password
         self.enableSSL = enableSSL
         self.allowUntrustedSSL = allowUntrustedSSL
+        self.alpn = alpn?.isEmpty == true ? nil : alpn
         self.protocolMethod = protocolMethod
         self.protocolVersion = protocolVersion
         self.basePath = basePath
@@ -72,8 +75,12 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
 
     // MARK: - DataSourceServiceProtocol
 
+    /// Test the connection using a real CocoaMQTT client so that username/password,
+    /// TLS, client certificates (p12), server CA, ALPN and the selected protocol
+    /// version/transport are all exercised — matching what the runtime connection does.
     func testConnection() async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
+            let handler = MQTTConnectionHandler(service: self)
             let lock = NSLock()
             var didResume = false
 
@@ -88,94 +95,24 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
                 }
             }
 
-            let params: NWParameters
-            if enableSSL {
-                let tls = NWProtocolTLS.Options()
-                let secOptions = tls.securityProtocolOptions
-                if allowUntrustedSSL {
-                    sec_protocol_options_set_verify_block(secOptions, { _, _, completionHandler in
-                        completionHandler(true)
-                    }, DispatchQueue.global())
-                }
-                params = NWParameters(tls: tls)
-            } else {
-                params = .tcp
+            // Hard timeout in case the handler never invokes its completion
+            // (e.g. a socket that opens but never sends CONNACK).
+            DispatchQueue.global().asyncAfter(deadline: .now() + 15) {
+                resumeOnce(.failure(MQTTError.timeout))
             }
 
-            let host = NWEndpoint.Host(hostname)
-            let port = NWEndpoint.Port(integerLiteral: self.port)
-            let connection = NWConnection(host: host, port: port, using: params)
-            let queue = DispatchQueue(label: "mqtt.test")
-
-            // Timeout
-            queue.asyncAfter(deadline: .now() + 10) {
-                connection.cancel()
-                resumeOnce(.failure(MQTTError.connectionFailed("Connection timeout")))
-            }
-
-            connection.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    // Send minimal MQTT 3.1.1 CONNECT packet
-                    let packet = Self.buildMQTTConnectPacket()
-                    connection.send(content: packet, completion: .contentProcessed { error in
-                        if let error {
-                            connection.cancel()
-                            resumeOnce(.failure(MQTTError.connectionFailed(error.localizedDescription)))
-                            return
-                        }
-                        // Wait for CONNACK
-                        connection.receive(minimumIncompleteLength: 1, maximumLength: 256) { data, _, _, recvError in
-                            defer { connection.cancel() }
-                            if let recvError {
-                                resumeOnce(.failure(MQTTError.connectionFailed(recvError.localizedDescription)))
-                                return
-                            }
-                            guard let data, !data.isEmpty else {
-                                resumeOnce(.failure(MQTTError.connectionFailed("No response from broker")))
-                                return
-                            }
-                            let bytes = [UInt8](data)
-                            guard bytes.count >= 4, bytes[0] & 0xF0 == 0x20 else {
-                                resumeOnce(.failure(MQTTError.connectionFailed("Not an MQTT broker")))
-                                return
-                            }
-                            let returnCode = bytes[3]
-                            switch returnCode {
-                            case 0x00: resumeOnce(.success(true))   // accepted
-                            case 0x04: resumeOnce(.failure(MQTTError.connectionFailed("Bad credentials")))
-                            case 0x05: resumeOnce(.failure(MQTTError.connectionFailed("Not authorized")))
-                            default:   resumeOnce(.success(true))   // broker responded = reachable
-                            }
-                        }
-                    })
-                case .failed(let error):
-                    connection.cancel()
-                    resumeOnce(.failure(MQTTError.connectionFailed(error.localizedDescription)))
-                case .cancelled:
-                    break
-                default:
-                    break
+            // Capture `handler` in the closure to prevent ARC from releasing it
+            // (and the CocoaMQTT client inside) before the async callback fires.
+            handler.testConnection { [handler] result in
+                _ = handler // prevent unused-capture warning
+                switch result {
+                case .success:
+                    resumeOnce(.success(true))
+                case .failure(let error):
+                    resumeOnce(.failure(error))
                 }
             }
-
-            connection.start(queue: queue)
         }
-    }
-
-    /// Minimal MQTT 3.1.1 CONNECT packet with client ID "diag".
-    private static func buildMQTTConnectPacket() -> Data {
-        var packet = Data()
-        packet.append(0x10) // CONNECT packet type
-        packet.append(0x10) // Remaining length: 16 bytes
-        packet.append(contentsOf: [0x00, 0x04])              // Length of "MQTT"
-        packet.append(contentsOf: [0x4D, 0x51, 0x54, 0x54])  // "MQTT"
-        packet.append(0x04)                                   // Protocol Level (3.1.1)
-        packet.append(0x02)                                   // Connect Flags (clean session)
-        packet.append(contentsOf: [0x00, 0x3C])               // Keep Alive: 60s
-        packet.append(contentsOf: [0x00, 0x04])               // Client ID length
-        packet.append(contentsOf: [0x64, 0x69, 0x61, 0x67])  // "diag"
-        return packet
     }
 
     func fetchMeasurements() async throws -> [String] {
@@ -230,6 +167,10 @@ final class MQTTConnectionManager {
     /// Views can filter by connection key and topic pattern to update on demand.
     let messageReceived = PassthroughSubject<(connectionKey: String, topic: String, payload: String), Never>()
 
+    /// Fires whenever any managed connection's connected/disconnected state changes.
+    /// Carries the connection key so views can filter for the one they care about.
+    let connectionStateChanged = PassthroughSubject<String, Never>()
+
     private let lock = NSLock()
     private var connections: [String: ManagedConnection] = [:]
 
@@ -264,6 +205,14 @@ final class MQTTConnectionManager {
         }
     }
 
+    /// Proactively starts a connection for the given service if one does not
+    /// already exist. Call this when an MQTT data source becomes visible so
+    /// that the dashboard and status indicators are ready before the first
+    /// query runs.
+    func ensureConnected(for service: MQTTService) {
+        _ = getOrCreateConnection(for: service)
+    }
+
     /// Disconnect and remove a specific connection (e.g. when data source is deleted).
     func disconnect(key: String) {
         lock.lock()
@@ -277,6 +226,14 @@ final class MQTTConnectionManager {
         lock.lock()
         defer { lock.unlock() }
         return connections[key]?.isConnected ?? false
+    }
+
+    /// Returns the last connection error for the given key, or nil if
+    /// the connection is healthy or has never been attempted.
+    func connectionError(key: String) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return connections[key]?.lastError
     }
 
     /// Refreshes a subscription by unsubscribing, clearing cache, and resubscribing.
@@ -299,23 +256,54 @@ final class MQTTConnectionManager {
         }
     }
 
+    /// Called when the app is about to be backgrounded. Cleanly disconnects all
+    /// MQTT connections so iOS can suspend the process without leaving zombie
+    /// sockets behind. The connections are NOT removed from the manager — the
+    /// previously subscribed topics are preserved so that `handleAppWillEnterForeground`
+    /// can restore them.
+    func handleAppDidEnterBackground() {
+        lock.lock()
+        let all = Array(connections.values)
+        lock.unlock()
+        for conn in all {
+            conn.disconnect()
+        }
+    }
+
+    /// Called when the app is about to become active again. Forces a fresh
+    /// reconnect on any connection whose socket did not survive suspension.
+    /// This is the primary mechanism that keeps dashboard MQTT panels live
+    /// after the user switches back to the app.
+    func handleAppWillEnterForeground() {
+        lock.lock()
+        let all = Array(connections.values)
+        lock.unlock()
+        for conn in all {
+            conn.reconnect()
+        }
+    }
+
     private func getOrCreateConnection(for service: MQTTService) -> ManagedConnection {
         lock.lock()
         defer { lock.unlock() }
 
         let key = service.connectionKey
         if let existing = connections[key], existing.isAlive {
-            // Reuse existing connection — it has autoReconnect enabled
-            // or a retry timer pending, so it will recover when the network returns.
             return existing
         }
 
         // Remove dead connection if any
         connections[key]?.disconnect()
 
-        let connection = ManagedConnection(service: service) { [weak self] topic, payload in
-            self?.messageReceived.send((connectionKey: key, topic: topic, payload: payload))
-        }
+        let connection = ManagedConnection(
+            service: service,
+            onMessageReceived: { [weak self] topic, payload in
+                self?.messageReceived.send((connectionKey: key, topic: topic, payload: payload))
+            },
+            onStateChanged: { [weak self] in
+                self?.connectionStateChanged.send(key)
+            }
+        )
         connections[key] = connection
         connection.connect()
         return connection
@@ -328,6 +316,7 @@ final class MQTTConnectionManager {
 private class ManagedConnection: NSObject {
     private let service: MQTTService
     private let onMessageReceived: (String, String) -> Void
+    private let onStateChanged: () -> Void
     private var mqtt3: CocoaMQTT?
     private var mqtt5: CocoaMQTT5?
     private let lock = NSLock()
@@ -337,6 +326,7 @@ private class ManagedConnection: NSObject {
     private var waiters: [(id: UInt64, topic: String, completion: ([(topic: String, payload: String, timestamp: Date)]) -> Void)] = []
     private(set) var isConnected = false
     private var isConnecting = false
+    fileprivate var lastError: String?
     private var retryTimer: DispatchSourceTimer?
 
     /// Maximum number of cached messages per topic to prevent unbounded growth.
@@ -351,9 +341,10 @@ private class ManagedConnection: NSObject {
         return isConnected || isConnecting || mqtt3 != nil || mqtt5 != nil
     }
 
-    init(service: MQTTService, onMessageReceived: @escaping (String, String) -> Void) {
+    init(service: MQTTService, onMessageReceived: @escaping (String, String) -> Void, onStateChanged: @escaping () -> Void) {
         self.service = service
         self.onMessageReceived = onMessageReceived
+        self.onStateChanged = onStateChanged
         super.init()
     }
 
@@ -566,6 +557,8 @@ private class ManagedConnection: NSObject {
         mqtt.enableSSL = service.enableSSL
         mqtt.allowUntrustCACertificate = service.allowUntrustedSSL
 
+        if let alpn = service.alpn { mqtt.alpnProtocols = [alpn] }
+
         if let username = service.username { mqtt.username = username }
         if let password = service.password { mqtt.password = password }
 
@@ -582,7 +575,7 @@ private class ManagedConnection: NSObject {
             mqtt.serverCACertificates = certs
         }
 
-        mqtt.keepAlive = 30
+        mqtt.keepAlive = 60
         mqtt.autoReconnect = true
         mqtt.autoReconnectTimeInterval = 5
 
@@ -592,15 +585,19 @@ private class ManagedConnection: NSObject {
             if ack == .accept {
                 self.isConnected = true
                 self.isConnecting = false
+                self.lastError = nil
                 let topics = self.subscribedTopics
                 self.lock.unlock()
+                self.onStateChanged()
                 // Re-subscribe to all topics after (re)connect
                 for topic in topics {
                     self.subscribe(to: topic)
                 }
             } else {
                 self.isConnecting = false
+                self.lastError = Self.describe(ack: ack)
                 self.lock.unlock()
+                self.onStateChanged()
             }
         }
 
@@ -642,6 +639,8 @@ private class ManagedConnection: NSObject {
         mqtt.enableSSL = service.enableSSL
         mqtt.allowUntrustCACertificate = service.allowUntrustedSSL
 
+        if let alpn = service.alpn { mqtt.alpnProtocols = [alpn] }
+
         if let username = service.username { mqtt.username = username }
         if let password = service.password { mqtt.password = password }
 
@@ -658,7 +657,7 @@ private class ManagedConnection: NSObject {
             mqtt.serverCACertificates = certs
         }
 
-        mqtt.keepAlive = 30
+        mqtt.keepAlive = 60
         mqtt.autoReconnect = true
         mqtt.autoReconnectTimeInterval = 5
 
@@ -668,14 +667,18 @@ private class ManagedConnection: NSObject {
             if reasonCode == .success {
                 self.isConnected = true
                 self.isConnecting = false
+                self.lastError = nil
                 let topics = self.subscribedTopics
                 self.lock.unlock()
+                self.onStateChanged()
                 for topic in topics {
                     self.subscribe(to: topic)
                 }
             } else {
                 self.isConnecting = false
+                self.lastError = Self.describe(reasonCode5: reasonCode)
                 self.lock.unlock()
+                self.onStateChanged()
             }
         }
 
@@ -702,6 +705,8 @@ private class ManagedConnection: NSObject {
         for waiter in pending {
             waiter.completion([])
         }
+
+        onStateChanged()
     }
 
     private func subscribe(to topic: String) {
@@ -712,6 +717,78 @@ private class ManagedConnection: NSObject {
     private func unsubscribe(from topic: String) {
         mqtt3?.unsubscribe(topic)
         mqtt5?.unsubscribe(topic)
+    }
+
+    /// Tears down any existing client (zombie socket from iOS suspension, etc.)
+    /// and starts a fresh connection. Used on app resume.
+    func reconnect() {
+        cancelRetryTimer()
+
+        lock.lock()
+        let wasConnecting = isConnecting
+        isConnected = false
+        isConnecting = false
+        let old3 = mqtt3
+        let old5 = mqtt5
+        mqtt3 = nil
+        mqtt5 = nil
+        lock.unlock()
+
+        // Do not notify waiters yet — we want them to wait for the fresh connection.
+        // But if there was nothing connecting, that's fine too.
+        _ = wasConnecting
+
+        // Detach old delegates to prevent stale callbacks from flipping state.
+        old3?.didConnectAck = { _, _ in }
+        old3?.didReceiveMessage = { _, _, _ in }
+        old3?.didDisconnect = { _, _ in }
+        old5?.didConnectAck = { _, _, _ in }
+        old5?.didReceiveMessage = { _, _, _, _ in }
+        old5?.didDisconnect = { _, _ in }
+        old3?.disconnect()
+        old5?.disconnect()
+
+        connect()
+    }
+
+    fileprivate static func describe(ack: CocoaMQTTConnAck) -> String {
+        switch ack {
+        case .accept: return "Accepted"
+        case .unacceptableProtocolVersion: return "Unacceptable protocol version"
+        case .identifierRejected: return "Client identifier rejected"
+        case .serverUnavailable: return "Server unavailable"
+        case .badUsernameOrPassword: return "Bad username or password"
+        case .notAuthorized: return "Not authorized"
+        default: return String(describing: ack)
+        }
+    }
+
+    fileprivate static func describe(reasonCode5: CocoaMQTTCONNACKReasonCode) -> String {
+        switch reasonCode5 {
+        case .success: return "Success"
+        case .unspecifiedError: return "Unspecified error"
+        case .malformedPacket: return "Malformed packet"
+        case .protocolError: return "Protocol error"
+        case .implementationSpecificError: return "Implementation-specific error"
+        case .unsupportedProtocolVersion: return "Unsupported protocol version"
+        case .clientIdentifierNotValid: return "Client identifier not valid"
+        case .badUsernameOrPassword: return "Bad username or password"
+        case .notAuthorized: return "Not authorized"
+        case .serverUnavailable: return "Server unavailable"
+        case .serverBusy: return "Server busy"
+        case .banned: return "Banned"
+        case .badAuthenticationMethod: return "Bad authentication method"
+        case .topicNameInvalid: return "Topic name invalid"
+        case .packetTooLarge: return "Packet too large"
+        case .quotaExceeded: return "Quota exceeded"
+        case .payloadFormatInvalid: return "Payload format invalid"
+        case .retainNotSupported: return "Retain not supported"
+        case .qosNotSupported: return "QoS not supported"
+        case .useAnotherServer: return "Use another server"
+        case .serverMoved: return "Server moved"
+        case .connectionRateExceeded: return "Connection rate exceeded"
+        default: return String(describing: reasonCode5)
+        }
     }
 }
 
@@ -879,6 +956,8 @@ private class MQTTConnectionHandler: NSObject {
         mqtt.enableSSL = service.enableSSL
         mqtt.allowUntrustCACertificate = service.allowUntrustedSSL
 
+        if let alpn = service.alpn { mqtt.alpnProtocols = [alpn] }
+
         if let username = service.username { mqtt.username = username }
         if let password = service.password { mqtt.password = password }
 
@@ -903,7 +982,8 @@ private class MQTTConnectionHandler: NSObject {
                 self?.onConnected?(.success(()))
                 self?.onConnected = nil
             } else {
-                self?.onConnected?(.failure(MQTTError.connectionFailed(String(describing: ack))))
+                let reason = ManagedConnection.describe(ack: ack)
+                self?.onConnected?(.failure(MQTTError.connectionFailed(reason)))
                 self?.onConnected = nil
             }
         }
@@ -925,6 +1005,8 @@ private class MQTTConnectionHandler: NSObject {
     private func configureMQTT5(_ mqtt: CocoaMQTT5) {
         mqtt.enableSSL = service.enableSSL
         mqtt.allowUntrustCACertificate = service.allowUntrustedSSL
+
+        if let alpn = service.alpn { mqtt.alpnProtocols = [alpn] }
 
         if let username = service.username { mqtt.username = username }
         if let password = service.password { mqtt.password = password }
@@ -950,7 +1032,8 @@ private class MQTTConnectionHandler: NSObject {
                 self?.onConnected?(.success(()))
                 self?.onConnected = nil
             } else {
-                self?.onConnected?(.failure(MQTTError.connectionFailed(String(describing: reasonCode))))
+                let reason = ManagedConnection.describe(reasonCode5: reasonCode)
+                self?.onConnected?(.failure(MQTTError.connectionFailed(reason)))
                 self?.onConnected = nil
             }
         }

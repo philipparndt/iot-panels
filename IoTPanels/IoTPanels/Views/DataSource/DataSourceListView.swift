@@ -30,6 +30,7 @@ struct DataSourceListView: View {
     @State private var importAlertMessage: String?
     @State private var showImportAlert = false
     @State private var isEditing = false
+    @State private var selectedDataSource: DataSource?
 
     var body: some View {
         List {
@@ -142,6 +143,21 @@ struct DataSourceListView: View {
                 navigationState.showAddDataSource = false
                 showingAddSheet = true
             }
+            consumeNavigateToDataSource()
+        }
+        .onChange(of: navigationState.navigateToDataSourceId) {
+            consumeNavigateToDataSource()
+        }
+        .navigationDestination(item: $selectedDataSource) { ds in
+            DataSourceDetailView(dataSource: ds)
+        }
+    }
+
+    private func consumeNavigateToDataSource() {
+        guard let targetId = navigationState.navigateToDataSourceId else { return }
+        navigationState.navigateToDataSourceId = nil
+        if let ds = dataSources.first(where: { $0.id == targetId }) {
+            selectedDataSource = ds
         }
     }
 
@@ -198,37 +214,181 @@ struct DataSourceListView: View {
 struct MQTTConnectionStatusView: View {
     let dataSource: DataSource
     @State private var isConnected = false
-    @State private var cancellable: AnyCancellable?
+    @State private var errorMessage: String?
+    @State private var cancellables: Set<AnyCancellable> = []
 
     var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(isConnected ? Color.green : Color.secondary.opacity(0.3))
-                .frame(width: 8, height: 8)
-            Text(isConnected ? "Connected" : "Offline")
-                .font(.caption2)
-                .foregroundStyle(isConnected ? .green : .secondary)
+        VStack(alignment: .trailing, spacing: 2) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                Text(statusLabel)
+                    .font(.caption2)
+                    .foregroundStyle(statusColor)
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .lineLimit(1)
+            }
         }
         .onAppear { startMonitoring() }
-        .onDisappear { cancellable?.cancel() }
+        .onDisappear { cancellables.removeAll() }
+    }
+
+    private var statusColor: Color {
+        if isConnected { return .green }
+        if errorMessage != nil { return .red }
+        return .secondary.opacity(0.5)
+    }
+
+    private var statusLabel: String {
+        if isConnected { return "Connected" }
+        if errorMessage != nil { return "Error" }
+        return "Connecting…"
     }
 
     private func startMonitoring() {
         let service = MQTTService(dataSource: dataSource)
         let key = service.connectionKey
-        isConnected = MQTTConnectionManager.shared.isConnected(key: key)
+        let manager = MQTTConnectionManager.shared
 
-        cancellable = MQTTConnectionManager.shared.messageReceived
-            .filter { $0.connectionKey == key }
+        manager.ensureConnected(for: service)
+        refreshState(manager: manager, key: key)
+
+        manager.connectionStateChanged
+            .filter { $0 == key }
             .receive(on: DispatchQueue.main)
             .sink { _ in
-                isConnected = MQTTConnectionManager.shared.isConnected(key: key)
+                refreshState(manager: manager, key: key)
             }
+            .store(in: &cancellables)
+
+        manager.messageReceived
+            .filter { $0.connectionKey == key }
+            .throttle(for: .seconds(2), scheduler: DispatchQueue.main, latest: true)
+            .sink { _ in
+                refreshState(manager: manager, key: key)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func refreshState(manager: MQTTConnectionManager, key: String) {
+        isConnected = manager.isConnected(key: key)
+        errorMessage = isConnected ? nil : manager.connectionError(key: key)
     }
 }
+/// A dismissible banner that monitors all MQTT data sources in the current home
+/// and surfaces connection errors prominently. Placed in ContentView / MacRootView
+/// so the user sees errors regardless of which tab they're on.
+struct MQTTConnectionBannerView: View {
+    let home: Home?
+    @Environment(\.managedObjectContext) private var viewContext
+
+    @FetchRequest private var mqttSources: FetchedResults<DataSource>
+    @Environment(NavigationState.self) private var navigationState
+    @State private var errors: [(id: UUID, name: String, error: String)] = []
+    @State private var dismissed = false
+    @State private var cancellables: Set<AnyCancellable> = []
+
+    init(home: Home?) {
+        self.home = home
+        let predicate: NSPredicate
+        if let home {
+            predicate = NSPredicate(format: "home == %@ AND backendType == %@", home, BackendType.mqtt.rawValue)
+        } else {
+            predicate = NSPredicate(format: "home == nil AND backendType == %@", BackendType.mqtt.rawValue)
+        }
+        _mqttSources = FetchRequest(sortDescriptors: [NSSortDescriptor(keyPath: \DataSource.name, ascending: true)], predicate: predicate)
+    }
+
+    var body: some View {
+        Group {
+            if !dismissed, !errors.isEmpty {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.white)
+                        .font(.caption)
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(errors, id: \.id) { entry in
+                            Button {
+                                navigationState.navigateToDataSourceId = entry.id
+                                navigationState.selectedTab = .dataSources
+                            } label: {
+                                Text("\(entry.name): \(entry.error)")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                                    .underline()
+                                    .lineLimit(1)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    Spacer()
+                    Button {
+                        withAnimation { dismissed = true }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(10)
+                .background(Color.red.opacity(0.85), in: RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
+                .padding(.top, 4)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .onAppear { setupMonitoring() }
+        .onChange(of: mqttSources.count) { setupMonitoring() }
+    }
+
+    private func setupMonitoring() {
+        cancellables.removeAll()
+        let manager = MQTTConnectionManager.shared
+
+        for ds in mqttSources {
+            manager.ensureConnected(for: MQTTService(dataSource: ds))
+        }
+
+        refreshErrors()
+
+        manager.connectionStateChanged
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                refreshErrors()
+                if !errors.isEmpty { dismissed = false }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func refreshErrors() {
+        let manager = MQTTConnectionManager.shared
+        var newErrors: [(id: UUID, name: String, error: String)] = []
+        for ds in mqttSources {
+            guard let dsId = ds.id else { continue }
+            let key = MQTTService(dataSource: ds).connectionKey
+            if !manager.isConnected(key: key),
+               let error = manager.connectionError(key: key) {
+                newErrors.append((id: dsId, name: ds.wrappedName, error: error))
+            }
+        }
+        errors = newErrors
+    }
+}
+
 #else
 struct MQTTConnectionStatusView: View {
     let dataSource: DataSource
+    var body: some View { EmptyView() }
+}
+
+struct MQTTConnectionBannerView: View {
+    let home: Home?
     var body: some View { EmptyView() }
 }
 #endif

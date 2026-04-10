@@ -18,6 +18,7 @@ struct ContentView: View {
 
         VStack(spacing: 0) {
             homeSelector
+            MQTTConnectionBannerView(home: navigationState.selectedHome)
             TabView(selection: $nav.selectedTab) {
                 Tab("Dashboards", systemImage: "square.grid.2x2", value: .dashboards) {
                     NavigationStack {

@@ -920,12 +920,13 @@ struct PanelRenderer: View {
     private var gaugeBody: some View {
         let allDataValues = series.flatMap { $0.dataPoints.map(\.value) }
         let scheme = styleConfig.resolvedGaugeColorScheme
+        let isPercent = unit == "%"
         let dataMin = allDataValues.min() ?? 0
         let dataMax = allDataValues.max() ?? 100
         // Add 10% padding to auto range so dots aren't at the very edges
         let padding = max((dataMax - dataMin) * 0.1, 1)
-        let autoMin = dataMin - padding
-        let autoMax = dataMax + padding
+        let autoMin = isPercent ? 0.0 : dataMin - padding
+        let autoMax = isPercent ? 100.0 : dataMax + padding
         let minVal = styleConfig.gaugeMin ?? autoMin
         let maxVal = styleConfig.gaugeMax ?? autoMax
 
@@ -1047,11 +1048,12 @@ struct PanelRenderer: View {
     private var circularGaugeBody: some View {
         let allDataValues = series.flatMap { $0.dataPoints.map(\.value) }
         let scheme = styleConfig.resolvedGaugeColorScheme
+        let isPercent = unit == "%"
         let dataMin = allDataValues.min() ?? 0
         let dataMax = allDataValues.max() ?? 100
         let padding = max((dataMax - dataMin) * 0.1, 1)
-        let autoMin = dataMin - padding
-        let autoMax = dataMax + padding
+        let autoMin = isPercent ? 0.0 : dataMin - padding
+        let autoMax = isPercent ? 100.0 : dataMax + padding
         let minVal = styleConfig.gaugeMin ?? autoMin
         let maxVal = styleConfig.gaugeMax ?? autoMax
         let range = maxVal - minVal

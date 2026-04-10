@@ -52,10 +52,13 @@ struct MacRootView: View {
             .navigationTitle("IoT Panels")
             .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 320)
         } detail: {
-            NavigationStack {
-                detailView
+            VStack(spacing: 0) {
+                MQTTConnectionBannerView(home: navigationState.selectedHome)
+                NavigationStack {
+                    detailView
+                }
+                .id(navigationState.homeVersion)
             }
-            .id(navigationState.homeVersion)
         }
         .onChange(of: selection) { _, newValue in
             nav.selectedTab = newValue

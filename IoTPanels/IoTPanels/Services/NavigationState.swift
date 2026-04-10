@@ -6,6 +6,7 @@ class NavigationState {
     var selectedTab: AppTab = .dashboards
     var navigateToWidgetDesignId: UUID?
     var navigateToSavedQueryId: UUID?
+    var navigateToDataSourceId: UUID?
     var showAddDataSource = false
     var selectedHome: Home? {
         didSet { homeVersion += 1 }

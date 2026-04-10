@@ -786,6 +786,7 @@ struct DataSourceDetailView: View {
                 password: mqttUsernamePasswordAuth ? mqttPassword : nil,
                 enableSSL: mqttSsl,
                 allowUntrustedSSL: mqttSsl && mqttUntrustedSSL,
+                alpn: mqttAlpn.isEmpty ? nil : mqttAlpn,
                 protocolMethod: mqttProtocolMethod,
                 protocolVersion: mqttProtocolVersion,
                 basePath: mqttBasePath,
@@ -798,6 +799,11 @@ struct DataSourceDetailView: View {
                     await MainActor.run {
                         testResult = success ? .success : .failure("Connection refused")
                         isTesting = false
+                        if success {
+                            // Establish the persistent connection so the banner
+                            // clears and dashboard panels receive data immediately.
+                            MQTTConnectionManager.shared.ensureConnected(for: service)
+                        }
                     }
                 } catch {
                     await MainActor.run {
