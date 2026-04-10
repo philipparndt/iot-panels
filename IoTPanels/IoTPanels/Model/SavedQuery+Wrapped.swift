@@ -156,25 +156,10 @@ extension SavedQuery {
     }
 
     #if canImport(CocoaMQTT)
-    func buildMQTTQuery() -> String {
+    func buildMQTTQuery(timeRange: TimeRange? = nil) -> String {
         let fields = wrappedFields
-        let rangeSeconds: Int
-        switch wrappedTimeRange {
-        case .fiveMinutes: rangeSeconds = 5
-        case .tenMinutes: rangeSeconds = 5
-        case .thirtyMinutes: rangeSeconds = 10
-        case .oneHour: rangeSeconds = 10
-        case .twoHours: rangeSeconds = 10
-        case .sixHours: rangeSeconds = 15
-        case .twelveHours: rangeSeconds = 15
-        case .twentyFourHours: rangeSeconds = 20
-        case .sevenDays: rangeSeconds = 25
-        case .fourteenDays: rangeSeconds = 30
-        case .thirtyDays: rangeSeconds = 30
-        case .ninetyDays: rangeSeconds = 30
-        case .oneYear, .twoYears, .fiveYears: rangeSeconds = 30
-        }
-        return MQTTQueryParser.build(topic: wrappedMeasurement, fields: fields, rangeSeconds: TimeInterval(rangeSeconds))
+        let range = timeRange ?? wrappedTimeRange
+        return MQTTQueryParser.build(topic: wrappedMeasurement, fields: fields, rangeSeconds: range.seconds)
     }
     #endif
 
@@ -654,7 +639,7 @@ extension SavedQuery {
             return buildPrometheusQuery(timeRange: tr)
         case .mqtt:
             #if canImport(CocoaMQTT)
-            return buildMQTTQuery()
+            return buildMQTTQuery(timeRange: tr)
             #else
             return ""
             #endif

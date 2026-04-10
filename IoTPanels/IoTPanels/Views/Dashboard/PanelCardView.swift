@@ -2030,23 +2030,29 @@ struct PanelCardView: View {
               let connKey = mqttConnectionKey else { return }
 
         #if canImport(CocoaMQTT)
+        // Register with the data store so incoming messages are persisted
+        if let query = panel.savedQuery {
+            let params = MQTTQueryParser.parse(query.buildQuery(for: query.dataSource!, panel: panel))
+            MQTTDataStore.shared.register(connectionKey: connKey, topic: params.topic, fields: params.fields)
+        }
+
         mqttSubscription = MQTTConnectionManager.shared.messageReceived
             .filter { $0.connectionKey == connKey }
             .throttle(for: .milliseconds(500), scheduler: DispatchQueue.main, latest: true)
             .sink { [panel] _ in
                 guard let query = panel.savedQuery,
                       let dataSource = query.dataSource else { return }
-                let service = ServiceFactory.service(for: dataSource)
-                let queryString = query.buildQuery(for: dataSource, panel: panel)
+                // Read from the persistent data store instead of re-querying raw messages
+                let params = MQTTQueryParser.parse(query.buildQuery(for: dataSource, panel: panel))
+                let storeKey = MQTTDataStore.storeKey(connectionKey: connKey, topic: params.topic, fields: params.fields)
+                let rangeSec = panel.effectiveTimeRange.seconds
                 Task {
-                    guard let result = try? await service.query(queryString) else { return }
-                    let parsed = Self.parseChartData(result: result)
+                    let parsed = MQTTDataStore.shared.query(forKey: storeKey, since: rangeSec)
                     guard !parsed.isEmpty else { return }
                     await MainActor.run {
                         dataPoints = parsed
                         isCachedData = false
                         hasReceivedLiveData = true
-                        // Cache MQTT results so they survive view recreation
                         panel.cacheResult(parsed)
                         try? panel.managedObjectContext?.save()
                     }

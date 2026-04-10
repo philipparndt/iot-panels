@@ -149,9 +149,35 @@ final class MQTTService: Sendable, DataSourceServiceProtocol {
         let fields = params.fields
         let rangeSec = params.rangeSeconds
 
+        // Register with the data store so future messages are persisted
+        let storeKey = MQTTDataStore.storeKey(connectionKey: connectionKey, topic: topic, fields: fields)
+        MQTTDataStore.shared.register(connectionKey: connectionKey, topic: topic, fields: fields)
+
+        // Ensure the MQTT connection is alive and subscribed
         let manager = MQTTConnectionManager.shared
-        let messages = try await manager.getMessages(for: self, topic: topic, rangeSeconds: rangeSec)
-        return MQTTConnectionHandler.buildQueryResult(from: messages, fields: fields)
+        _ = try await manager.getMessages(for: self, topic: topic, rangeSeconds: min(rangeSec, 5))
+
+        // Read from the persistent data store
+        let dataPoints = MQTTDataStore.shared.query(forKey: storeKey, since: rangeSec)
+
+        // Convert back to QueryResult for compatibility with the existing parsing pipeline
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let rows = dataPoints.map { dp in
+            QueryResult.Row(values: [
+                "_time": formatter.string(from: dp.time),
+                "_field": dp.field,
+                "_value": String(dp.value),
+                "_measurement": topic
+            ])
+        }
+        let columns = [
+            QueryResult.Column(name: "_time", type: "dateTime:RFC3339"),
+            QueryResult.Column(name: "_field", type: "string"),
+            QueryResult.Column(name: "_value", type: "double"),
+            QueryResult.Column(name: "_measurement", type: "string")
+        ]
+        return QueryResult(columns: columns, rows: rows)
     }
 }
 
@@ -489,6 +515,15 @@ private class ManagedConnection: NSObject {
             let relevant = messages(for: waiter.topic, within: 3600)
             waiter.completion(relevant)
         }
+
+        // Persist parsed data points to MQTTDataStore
+        MQTTDataStore.shared.handleMessage(
+            connectionKey: service.connectionKey,
+            topic: topic,
+            payload: payload,
+            timestamp: entry.timestamp,
+            extractFields: MQTTConnectionHandler.extractFieldValues
+        )
 
         onMessageReceived(topic, payload)
     }

@@ -22,6 +22,7 @@ struct WidgetDesignEntry: TimelineEntry {
         let style: PanelDisplayStyle
         let series: [ChartSeries]
         let styleConfig: StyleConfig
+        let timeRangeSeconds: TimeInterval
     }
 
     static var placeholder: WidgetDesignEntry {
@@ -41,10 +42,10 @@ struct WidgetDesignEntry: TimelineEntry {
                     ChartSeries(id: "b", label: "Outdoor", color: Color(hex: "#2ECC71"), dataPoints:
                         (0..<20).map { i in ChartDataPoint(time: Date().addingTimeInterval(Double(i - 20) * 300), value: 15 + sin(Double(i) * 0.4) * 3, field: "outdoor") }
                     ),
-                ], styleConfig: .default),
+                ], styleConfig: .default, timeRangeSeconds: 7200),
                 RenderedGroup(id: "2", title: "Battery", style: .singleValue, series: [
                     ChartSeries(id: "c", label: "level", color: .green, dataPoints: [ChartDataPoint(time: Date(), value: 87, field: "level")])
-                ], styleConfig: .default),
+                ], styleConfig: .default, timeRangeSeconds: 7200),
             ],
             isPlaceholder: true
         )
@@ -146,7 +147,8 @@ struct WidgetDesignTimelineProvider: AppIntentTimelineProvider {
         for group in design.resolvedGroups {
             let groupSeries = allGroupData[group.id] ?? []
             let config = group.items.first?.wrappedStyleConfig ?? .default
-            renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config))
+            let timeRange = group.items.first?.effectiveTimeRange.seconds ?? 0
+            renderedGroups.append(WidgetDesignEntry.RenderedGroup(id: group.id, title: group.title, style: group.style, series: groupSeries, styleConfig: config, timeRangeSeconds: timeRange))
         }
 
         return WidgetDesignEntry(date: Date(), designId: design.id?.uuidString, designName: design.wrappedName, sizeType: design.wrappedSizeType, textScale: design.wrappedTextScale.factor, refreshMinutes: Int(design.refreshInterval), backgroundColorHex: design.wrappedBackgroundColorHex, groups: renderedGroups, isPlaceholder: false)
@@ -200,7 +202,8 @@ struct WidgetCanvasFromEntry: View {
             compact: compact,
             textScale: textScale,
             styleConfig: group.styleConfig,
-            fillHeight: true
+            fillHeight: true,
+            timeRangeSeconds: group.timeRangeSeconds
         )
         .frame(maxHeight: .infinity)
     }

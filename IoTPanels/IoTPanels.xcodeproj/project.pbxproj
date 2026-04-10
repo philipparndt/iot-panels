@@ -112,6 +112,7 @@
 				Services/InfluxDB1Service.swift,
 				Services/InfluxDB2Service.swift,
 				Services/InfluxDB3Service.swift,
+				Services/MQTTDataStore.swift,
 				Services/MQTTService.swift,
 				Services/PrometheusService.swift,
 				Services/WidgetDataLoader.swift,

@@ -57,6 +57,7 @@ struct WidgetCanvas: View {
         }
         let groupUnit = group.items.first?.savedQuery?.wrappedUnit ?? ""
         let config = group.items.first?.wrappedStyleConfig ?? .default
+        let timeRange = group.items.first?.effectiveTimeRange.seconds ?? 0
 
         return PanelRenderer(
             title: group.title,
@@ -66,7 +67,8 @@ struct WidgetCanvas: View {
             unit: groupUnit,
             textScale: textScale,
             styleConfig: config,
-            fillHeight: true
+            fillHeight: true,
+            timeRangeSeconds: timeRange
         )
         .frame(maxHeight: .infinity)
     }
