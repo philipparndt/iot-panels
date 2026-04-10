@@ -89,6 +89,9 @@ struct SavedQueryDetailView: View {
                 }
             }
         }
+        #if os(macOS)
+        .formStyle(.grouped)
+        #endif
         .navigationTitle(savedQuery.wrappedName)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

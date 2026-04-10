@@ -248,29 +248,66 @@ enum GaugeColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
-    func color(at progress: Double) -> Color {
-        let clamped = max(0, min(1, progress))
+    /// HSB color stops for smooth interpolation.
+    private var colorStops: [(position: Double, h: Double, s: Double, b: Double)] {
         switch self {
         case .blueToRed:
-            switch clamped {
-            case ..<0.25: return .blue
-            case 0.25..<0.5: return .green
-            case 0.5..<0.75: return .orange
-            default: return .red
-            }
+            return [
+                (0.0,  0.60, 0.8, 0.9),  // blue
+                (0.33, 0.33, 0.8, 0.85),  // green
+                (0.55, 0.12, 0.9, 1.0),   // yellow/orange
+                (1.0,  0.0,  0.85, 0.9),  // red
+            ]
         case .greenToRed:
-            switch clamped {
-            case ..<0.33: return .green
-            case 0.33..<0.66: return .yellow
-            default: return .red
-            }
+            return [
+                (0.0,  0.33, 0.8, 0.85),  // green
+                (0.5,  0.15, 0.9, 1.0),   // yellow
+                (1.0,  0.0,  0.85, 0.9),  // red
+            ]
         case .blueToGreen:
-            return clamped < 0.5 ? .blue : .green
+            return [
+                (0.0,  0.58, 0.7, 0.9),   // blue
+                (0.5,  0.48, 0.6, 0.9),   // cyan
+                (1.0,  0.33, 0.8, 0.85),  // green
+            ]
         case .purpleToOrange:
-            return clamped < 0.5 ? .purple : .orange
+            return [
+                (0.0,  0.78, 0.7, 0.87),  // purple
+                (0.5,  0.9,  0.6, 1.0),   // pink
+                (1.0,  0.08, 0.9, 1.0),   // orange
+            ]
         case .mono:
-            return .accentColor
+            return []
         }
+    }
+
+    func color(at progress: Double) -> Color {
+        let clamped = max(0, min(1, progress))
+
+        if self == .mono { return .accentColor }
+
+        let stops = colorStops
+        guard stops.count >= 2 else { return .accentColor }
+
+        // Find the two stops to interpolate between
+        var lower = stops[0]
+        var upper = stops[stops.count - 1]
+        for i in 0..<(stops.count - 1) {
+            if clamped >= stops[i].position && clamped <= stops[i + 1].position {
+                lower = stops[i]
+                upper = stops[i + 1]
+                break
+            }
+        }
+
+        let range = upper.position - lower.position
+        let t = range > 0 ? (clamped - lower.position) / range : 0
+
+        let h = lower.h + (upper.h - lower.h) * t
+        let s = lower.s + (upper.s - lower.s) * t
+        let b = lower.b + (upper.b - lower.b) * t
+
+        return Color(hue: h, saturation: s, brightness: b)
     }
 }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct DataSourceDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -59,6 +60,7 @@ struct DataSourceDetailView: View {
     @State private var shareFileURL: URL?
     @State private var showShareSheet = false
     @State private var didLoad = false
+    @State private var showingQueries = false
     @FocusState private var nameFieldFocused: Bool
 
     enum TestResult {
@@ -343,11 +345,19 @@ struct DataSourceDetailView: View {
 
             if isEditing, let dataSource {
                 Section {
+                    #if os(macOS)
+                    Button {
+                        showingQueries = true
+                    } label: {
+                        Label("Queries", systemImage: "magnifyingglass")
+                    }
+                    #else
                     NavigationLink {
                         SavedQueryListView(dataSource: dataSource)
                     } label: {
                         Label("Queries", systemImage: "magnifyingglass")
                     }
+                    #endif
                 }
             }
 
@@ -452,6 +462,20 @@ struct DataSourceDetailView: View {
                 if name.isEmpty {
                     name = result.hostname
                 }
+            }
+        }
+
+        .sheet(isPresented: $showingQueries) {
+            if let dataSource {
+                NavigationStack {
+                    SavedQueryListView(dataSource: dataSource)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") { showingQueries = false }
+                            }
+                        }
+                }
+                .frame(minWidth: 500, minHeight: 400)
             }
         }
 

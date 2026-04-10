@@ -156,8 +156,8 @@ enum DashboardTemplateRegistry {
             ),
             PanelTemplate(
                 title: "CPU Usage",
-                displayStyle: .circularGauge,
-                styleConfig: StyleConfig(gaugeMin: 0, gaugeMax: 100, gaugeColorScheme: GaugeColorScheme.greenToRed.rawValue),
+                displayStyle: .singleValue,
+                styleConfig: StyleConfig(showSparkline: true, sparklineMin: 0, sparklineMax: 100),
                 query: QueryTemplate(
                     name: "CPU Usage %",
                     rawQuery: "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",

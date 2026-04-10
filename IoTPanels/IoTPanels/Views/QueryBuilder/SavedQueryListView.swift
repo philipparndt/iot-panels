@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 struct SavedQueryListView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -29,7 +30,7 @@ struct SavedQueryListView: View {
                     description: Text("Tap + to create your first query.")
                 )
             } else {
-                ForEach(Array(savedQueries.enumerated()), id: \.element.objectID) { _, query in
+                ForEach(savedQueries, id: \.objectID) { query in
                     NavigationLink {
                         SavedQueryDetailView(dataSource: dataSource, savedQuery: query)
                     } label: {
@@ -39,6 +40,22 @@ struct SavedQueryListView: View {
                             Text(querySummary(query))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                        }
+                    }
+                    .contextMenu {
+                        Button {
+                            selectedQuery = query
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                        Divider()
+                        Button(role: .destructive) {
+                            withAnimation {
+                                viewContext.delete(query)
+                                try? viewContext.save()
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
@@ -76,6 +93,10 @@ struct SavedQueryListView: View {
         }
         .sheet(isPresented: $showingManualEditor) {
             ManualQueryEditorView(dataSource: dataSource, existingQuery: nil)
+                .environment(\.managedObjectContext, viewContext)
+        }
+        .sheet(item: $selectedQuery) { query in
+            queryBuilderSheet(existingQuery: query)
                 .environment(\.managedObjectContext, viewContext)
         }
     }
@@ -117,3 +138,4 @@ struct SavedQueryListView: View {
         }
     }
 }
+
