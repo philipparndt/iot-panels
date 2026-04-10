@@ -19,6 +19,9 @@ struct WidgetItemConfigView: View {
     @State private var aggregateFunction: AggregateFunction = .mean
     @State private var comparisonOffset: ComparisonOffset = .none
     @State private var bandOpacityText = ""
+    @State private var showSparkline = false
+    @State private var sparklineMinText = ""
+    @State private var sparklineMaxText = ""
 
     // Original values for cancel/restore
     @State private var originalTitle = ""
@@ -96,6 +99,9 @@ struct WidgetItemConfigView: View {
                 aggregateFunction = item.effectiveAggregateFunction
                 comparisonOffset = item.wrappedComparisonOffset
                 if let opacity = styleConfig.bandOpacity { bandOpacityText = String(format: "%.1f", opacity) }
+                showSparkline = styleConfig.showSparkline ?? false
+                if let min = styleConfig.sparklineMin { sparklineMinText = String(format: "%.1f", min) }
+                if let max = styleConfig.sparklineMax { sparklineMaxText = String(format: "%.1f", max) }
 
                 // Save originals for cancel/restore
                 originalTitle = item.wrappedTitle
@@ -218,6 +224,9 @@ struct WidgetItemConfigView: View {
         if style.supportsBandConfig {
             bandConfigSection
         }
+        if style.supportsSparkline {
+            sparklineSection
+        }
         if style.supportsStateConfig {
             stateAliasSection
             stateColorSection
@@ -304,6 +313,35 @@ struct WidgetItemConfigView: View {
             }
         } header: {
             Text("Band Chart")
+        }
+    }
+
+    private var sparklineSection: some View {
+        Section {
+            Toggle("Show Sparkline", isOn: $showSparkline)
+                .onChange(of: showSparkline) {
+                    styleConfig.showSparkline = showSparkline ? true : nil
+                }
+            if showSparkline {
+                HStack {
+                    Text("Min").frame(width: 40)
+                    TextField("Auto", text: $sparklineMinText)
+                        .keyboardType(.decimalPad)
+                        .textInputAutocapitalization(.never)
+                        .onChange(of: sparklineMinText) { styleConfig.sparklineMin = Double(sparklineMinText) }
+                }
+                HStack {
+                    Text("Max").frame(width: 40)
+                    TextField("Auto", text: $sparklineMaxText)
+                        .keyboardType(.decimalPad)
+                        .textInputAutocapitalization(.never)
+                        .onChange(of: sparklineMaxText) { styleConfig.sparklineMax = Double(sparklineMaxText) }
+                }
+            }
+        } header: {
+            Text("Sparkline")
+        } footer: {
+            Text("Shows a subtle background sparkline. Leave range empty for auto.")
         }
     }
 

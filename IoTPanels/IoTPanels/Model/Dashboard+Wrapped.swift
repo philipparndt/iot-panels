@@ -164,6 +164,8 @@ enum PanelDisplayStyle: String, CaseIterable, Identifiable {
 
     var supportsStateConfig: Bool { self == .stateTimeline }
 
+    var supportsSparkline: Bool { self == .singleValue || self == .circularGauge }
+
     var category: ChartCategory {
         switch self {
         case .chart, .barChart, .scatterChart, .linePointChart, .bandChart, .sparkline, .stackedBar, .stackedArea:

@@ -22,6 +22,11 @@ struct StyleConfig: Codable, Equatable {
     // State timeline value-to-state aliases (map numeric ranges to state labels)
     var stateAliases: [StateAlias]?
 
+    // Background sparkline settings
+    var showSparkline: Bool?        // nil/false = hidden
+    var sparklineMin: Double?       // nil = auto from data (0 if unit is %)
+    var sparklineMax: Double?       // nil = auto from data (100 if unit is %)
+
     static let `default` = StyleConfig()
 
     var resolvedGaugeColorScheme: GaugeColorScheme {

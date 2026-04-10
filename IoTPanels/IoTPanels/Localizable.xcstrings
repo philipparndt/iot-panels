@@ -21200,6 +21200,12 @@
         }
       }
     },
+    "Show Sparkline" : {
+
+    },
+    "Shows a subtle background sparkline. Leave range empty for auto." : {
+
+    },
     "Single-level: matches exactly one level" : {
       "localizations" : {
         "de" : {
@@ -21383,6 +21389,9 @@
           }
         }
       }
+    },
+    "Sparkline" : {
+
     },
     "Speed" : {
       "extractionState" : "stale",

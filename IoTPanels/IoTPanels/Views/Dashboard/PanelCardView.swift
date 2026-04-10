@@ -59,9 +59,12 @@ struct PanelRenderer: View {
     let styleConfig: StyleConfig
     /// When true, chart fills available height instead of using a fixed height.
     let fillHeight: Bool
+    /// Duration of the time window in seconds (e.g. 7200 for 2h). Used by background sparkline
+    /// to position data points correctly in time. 0 = derive from data.
+    let timeRangeSeconds: TimeInterval
 
     /// Single-series convenience init (backward compatible)
-    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false) {
+    init(title: String, style: PanelDisplayStyle, dataPoints: [ChartDataPoint], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false, timeRangeSeconds: TimeInterval = 0) {
         self.title = title
         self.style = style
         self.series = [ChartSeries(id: "default", label: dataPoints.first?.field ?? "value", color: .accentColor, dataPoints: dataPoints)]
@@ -70,10 +73,11 @@ struct PanelRenderer: View {
         self.textScale = textScale
         self.styleConfig = styleConfig
         self.fillHeight = fillHeight
+        self.timeRangeSeconds = timeRangeSeconds
     }
 
     /// Multi-series init
-    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false) {
+    init(title: String, style: PanelDisplayStyle, series: [ChartSeries], compact: Bool, unit: String = "", textScale: CGFloat = 1.0, styleConfig: StyleConfig = .default, fillHeight: Bool = false, timeRangeSeconds: TimeInterval = 0) {
         self.title = title
         self.style = style
         self.series = series
@@ -82,6 +86,7 @@ struct PanelRenderer: View {
         self.textScale = textScale
         self.styleConfig = styleConfig
         self.fillHeight = fillHeight
+        self.timeRangeSeconds = timeRangeSeconds
     }
 
     @State private var selectedTime: Date?
@@ -860,7 +865,7 @@ struct PanelRenderer: View {
     // MARK: - Single Value
 
     private var singleValueBody: some View {
-        VStack(alignment: compact ? .center : .leading, spacing: compact ? 2 : 6) {
+        let content = VStack(alignment: compact ? .center : .leading, spacing: compact ? 2 : 6) {
             Text(title)
                 .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
                 .foregroundStyle(.secondary)
@@ -886,6 +891,13 @@ struct PanelRenderer: View {
 
                 trendView
             }
+        }
+
+        return ZStack {
+            if let sparkline = sparklineBackground(circleClipped: false) {
+                sparkline
+            }
+            content
         }
     }
 
@@ -1058,7 +1070,7 @@ struct PanelRenderer: View {
         let maxVal = styleConfig.gaugeMax ?? autoMax
         let range = maxVal - minVal
 
-        return VStack(spacing: compact ? 4 : 8) {
+        let content = VStack(spacing: compact ? 4 : 8) {
             Text(title)
                 .font(.system(size: sz(compact ? 10 : 14), weight: .medium))
                 .foregroundStyle(.secondary)
@@ -1120,6 +1132,13 @@ struct PanelRenderer: View {
                     }
                 }
             }
+        }
+
+        return ZStack {
+            if let sparkline = sparklineBackground(circleClipped: false) {
+                sparkline
+            }
+            content
         }
     }
 
@@ -1615,6 +1634,27 @@ struct PanelRenderer: View {
     private func formatParts(_ value: Double) -> UnitFormatter.FormattedValue {
         UnitFormatter.format(value: value, unit: unit)
     }
+
+    // MARK: - Background Sparkline
+
+    private func sparklineBackground(circleClipped: Bool) -> BackgroundSparklineView? {
+        guard styleConfig.showSparkline == true else { return nil }
+        let points = series.first?.dataPoints ?? []
+        guard !points.isEmpty else { return nil }
+        let values = points.map(\.value)
+        let isPercent = unit == "%"
+        let dataMin = values.min() ?? 0
+        let dataMax = values.max() ?? 1
+        let autoMin = isPercent ? 0.0 : dataMin
+        let autoMax = isPercent ? 100.0 : dataMax
+        return BackgroundSparklineView(
+            dataPoints: points,
+            minVal: styleConfig.sparklineMin ?? autoMin,
+            maxVal: styleConfig.sparklineMax ?? autoMax,
+            color: primaryColor,
+            timeRangeSeconds: timeRangeSeconds
+        )
+    }
 }
 
 // MARK: - Calendar Heatmap View
@@ -1862,7 +1902,8 @@ struct PanelCardView: View {
                         series: buildSeries(),
                         compact: false,
                         unit: panel.savedQuery?.wrappedUnit ?? "",
-                        styleConfig: panel.wrappedStyleConfig
+                        styleConfig: panel.wrappedStyleConfig,
+                        timeRangeSeconds: panel.effectiveTimeRange.seconds
                     )
 
                     // Comparison legend
