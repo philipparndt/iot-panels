@@ -91,6 +91,7 @@ struct DashboardListView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .accessibilityIdentifier("dashboard-\(dashboard.wrappedName)")
                 }
                 .onDelete(perform: deleteDashboards)
             }

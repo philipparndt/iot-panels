@@ -102,6 +102,7 @@ struct WidgetDesignListView: View {
                             }
                         }
                     }
+                    .accessibilityIdentifier("widget-\(design.wrappedName)")
                 }
                 .onDelete(perform: deleteDesigns)
             }
